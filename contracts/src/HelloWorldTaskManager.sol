@@ -6,7 +6,7 @@ import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@eigenlayer/contracts/permissions/Pausable.sol";
 import "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
-import {RegistryCoordinator} from "@eigenlayer-middleware/src/RegistryCoordinator.sol";
+import {IRegistryCoordinator} from "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
 import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import "./IHelloWorldTaskManager.sol";
 
@@ -32,7 +32,18 @@ contract HelloWorldTaskManager is
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(address => mapping(uint32 => bytes32)) public allTaskResponses;
 
-    IRegistryCoordinator public _registryCoordinator;
+    IRegistryCoordinator public registryCoordinator;
+
+    /* MODIFIERS */
+    modifier onlyOperator() {
+        require(
+            registryCoordinator.getOperator(msg.sender).status 
+            == 
+            registryCoordinator.OperatorStatus.REGISTERED, 
+            "Operator must be the caller"
+        );
+        _;
+    }
 
     constructor(
         IRegistryCoordinator _registryCoordinator
@@ -69,7 +80,7 @@ contract HelloWorldTaskManager is
         Task calldata task,
         uint32 referenceTaskIndex,
         bytes calldata signature
-    ) external {
+    ) external onlyOperator {
         uint32 taskCreatedBlock = task.taskCreatedBlock;
 
         // check that the task is valid, hasn't been responsed yet, and is being responsed in time
