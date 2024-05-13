@@ -1,3 +1,6 @@
 [submodule "contracts/lib/eigenlayer-middleware"]
 	path = contracts/lib/eigenlayer-middleware
 	url = https://github.com/layr-Labs/eigenlayer-middleware
+[submodule "contracts/lib/eigenlayer-contracts"]
+	path = contracts/lib/eigenlayer-contracts
+	url = https://github.com/layr-Labs/eigenlayer-contracts
