@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 import "@eigenlayer/contracts/permissions/Pausable.sol";
 import "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {IRegistryCoordinator} from "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
@@ -17,7 +17,7 @@ contract HelloWorldTaskManager is
     OperatorStateRetriever,
     IHelloWorldTaskManager
 {
-    using ECDSA for bytes32;
+    using ECDSAUpgradeable for bytes32;
 
     /* STORAGE */
     // The latest task index
@@ -30,16 +30,16 @@ contract HelloWorldTaskManager is
     mapping(uint32 => bytes32) public allTaskHashes;
 
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
-    mapping(address => mapping(uint32 => bytes32)) public allTaskResponses;
+    mapping(address => mapping(uint32 => bytes)) public allTaskResponses;
 
     IRegistryCoordinator public registryCoordinator;
 
     /* MODIFIERS */
     modifier onlyOperator() {
         require(
-            registryCoordinator.getOperator(msg.sender).status 
+            registryCoordinator.getOperatorStatus(msg.sender) 
             == 
-            registryCoordinator.OperatorStatus.REGISTERED, 
+            IRegistryCoordinator.OperatorStatus.REGISTERED, 
             "Operator must be the caller"
         );
         _;
@@ -81,8 +81,6 @@ contract HelloWorldTaskManager is
         uint32 referenceTaskIndex,
         bytes calldata signature
     ) external onlyOperator {
-        uint32 taskCreatedBlock = task.taskCreatedBlock;
-
         // check that the task is valid, hasn't been responsed yet, and is being responsed in time
         require(
             keccak256(abi.encode(task)) ==
@@ -91,12 +89,12 @@ contract HelloWorldTaskManager is
         );
         // some logical checks
         require(
-            allTaskResponses[msg.sender][referenceTaskIndex] == bytes32(0),
+            allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
             "Operator has already responded to the task"
         );
 
         // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, "+name));
+        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
 
         // Recover the signer address from the signature

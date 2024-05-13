@@ -24,6 +24,6 @@ optimizer_runs = 200
 # Whether or not to use the Yul intermediate representation compilation pipeline
 via_ir = false
 # Override the Solidity version (this overrides `auto_detect_solc`)
-solc_version = '0.8.12'
+auto_detect_solc = true
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "../lib//contracts/libraries/BytesLib.sol";
+import "@eigenlayer/contracts/libraries/BytesLib.sol";
 import "./IHelloWorldTaskManager.sol";
 import "@eigenlayer-middleware/src/ServiceManagerBase.sol";
 
@@ -37,7 +37,7 @@ contract HelloWorldServiceManager is ServiceManagerBase {
             _stakeRegistry
         )
     {
-        HelloWorldTaskManager = _helloWorldTaskManager;
+        helloWorldTaskManager = _helloWorldTaskManager;
     }
 
     /// @notice Called in the event of challenge resolution, in order to forward a call to the Slasher, which 'freezes' the `operator`.
@@ -46,6 +46,6 @@ contract HelloWorldServiceManager is ServiceManagerBase {
     function freezeOperator(
         address operatorAddr
     ) external onlyHelloWorldTaskManager {
-
+        
     }
 }
