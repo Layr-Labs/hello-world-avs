@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "@eigenlayer/contracts/libraries/BytesLib.sol";
+import "../lib//contracts/libraries/BytesLib.sol";
 import "./IHelloWorldTaskManager.sol";
 import "@eigenlayer-middleware/src/ServiceManagerBase.sol";
 
@@ -46,6 +46,6 @@ contract HelloWorldServiceManager is ServiceManagerBase {
     function freezeOperator(
         address operatorAddr
     ) external onlyHelloWorldTaskManager {
-        
+
     }
 }
