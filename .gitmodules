@@ -1,9 +1,0 @@
-[submodule "lib/openzeppelin-contracts"]
-	path = lib/openzeppelin-contracts
-	url = https://github.com/Openzeppelin/openzeppelin-contracts
-[submodule "lib/eigenlayer-contracts"]
-	path = lib/eigenlayer-contracts
-	url = https://github.com/layr-Labs/eigenlayer-contracts
-[submodule "lib/eigenlayer-middleware"]
-	path = lib/eigenlayer-middleware
-	url = https://github.com/layr-Labs/eigenlayer-middleware
