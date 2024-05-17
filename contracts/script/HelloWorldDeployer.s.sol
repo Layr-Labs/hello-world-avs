@@ -287,8 +287,8 @@ contract HelloWorldDeployer is Script, Utils {
                     .IRegistryCoordinator
                     .OperatorSetParam({
                         maxOperatorCount: 10000,
-                        kickBIPsOfOperatorStake: 15000,
-                        kickBIPsOfTotalStake: 100
+                        kickBIPsOfOperatorStake: 0,
+                        kickBIPsOfTotalStake: 0
                     });
             }
             // set to 0 for every quorum

@@ -67,13 +67,13 @@ const signAndRespondToTask = (taskIndex, taskName) => __awaiter(void 0, void 0, 
 });
 const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
     // Operator Registration to EL (commented out for now)
-    // const tx1 = await delegationManager.registerAsOperator({
-    //     earningsReceiver: await wallet.address,
-    //     delegationApprover: "0x0000000000000000000000000000000000000000",
-    //     stakerOptOutWindowBlocks: 0
-    // }, "");
-    // await tx1.wait();
-    // console.log("Operator registered on EL successfully");
+    const tx1 = yield delegationManager.registerAsOperator({
+        earningsReceiver: yield wallet.address,
+        delegationApprover: "0x0000000000000000000000000000000000000000",
+        stakerOptOutWindowBlocks: 0
+    }, "");
+    yield tx1.wait();
+    console.log("Operator registered on EL successfully");
     const BLS = yield (0, bls_signatures_1.default)();
     const quorumNumbers = ethers_1.ethers.utils.hexlify([0x00]); // Example quorum number, modify as needed
     const socket = "127.0.0.1:8000"; // Example socket, modify as needed

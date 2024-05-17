@@ -40,13 +40,13 @@ const signAndRespondToTask = async (taskIndex: number, taskName: string) => {
 
 const registerOperator = async () => {
     // Operator Registration to EL (commented out for now)
-    // const tx1 = await delegationManager.registerAsOperator({
-    //     earningsReceiver: await wallet.address,
-    //     delegationApprover: "0x0000000000000000000000000000000000000000",
-    //     stakerOptOutWindowBlocks: 0
-    // }, "");
-    // await tx1.wait();
-    // console.log("Operator registered on EL successfully");
+    const tx1 = await delegationManager.registerAsOperator({
+        earningsReceiver: await wallet.address,
+        delegationApprover: "0x0000000000000000000000000000000000000000",
+        stakerOptOutWindowBlocks: 0
+    }, "");
+    await tx1.wait();
+    console.log("Operator registered on EL successfully");
 
     const BLS = await loadBls();
 
