@@ -66,16 +66,12 @@ const signAndRespondToTask = (taskIndex, taskName) => __awaiter(void 0, void 0, 
     console.log(`Responded to task ${taskIndex} with signature ${signature}`);
 });
 const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
-    // Operator Registration to EL
-    // const tx1 = await delegationManager.registerAsOperator(
-    //     {
-    //         earningsReceiver: await wallet.address,
-    //         delegationApprover: "0x0000000000000000000000000000000000000000",
-    //         stakerOptOutWindowBlocks: 0
-    //     },
-    //     ""
-    // )
-    // console.log(tx1)
+    // Operator Registration to EL (commented out for now)
+    // const tx1 = await delegationManager.registerAsOperator({
+    //     earningsReceiver: await wallet.address,
+    //     delegationApprover: "0x0000000000000000000000000000000000000000",
+    //     stakerOptOutWindowBlocks: 0
+    // }, "");
     // await tx1.wait();
     // console.log("Operator registered on EL successfully");
     const BLS = yield (0, bls_signatures_1.default)();
@@ -90,44 +86,33 @@ const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
     const sk = BLS.AugSchemeMPL.key_gen(seed);
     const pkG1 = sk.get_g1();
     const pkG2 = sk.get_g2();
-    const g1HashedMsgToSign = yield registryContract.pubkeyRegistrationMessageHash("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
-    console.log("msg:", g1HashedMsgToSign);
-    const g1HashedMsgArray = Uint8Array.from(g1HashedMsgToSign.serialize());
+    const g1HashedMsgToSign = yield registryContract.pubkeyRegistrationMessageHash(wallet.address);
+    const g1HashedMsgArray = new Uint8Array([
+        ...ethers_1.ethers.utils.arrayify(g1HashedMsgToSign[0]),
+        ...ethers_1.ethers.utils.arrayify(g1HashedMsgToSign[1])
+    ]);
     const signedMsg = BLS.AugSchemeMPL.sign(sk, g1HashedMsgArray).serialize();
     const pubkeyG1 = pkG1.serialize();
     const pubkeyG2 = pkG2.serialize();
+    console.log(signedMsg, pubkeyG1, pubkeyG2);
     const pubkeyRegParams = {
-        pubkeyRegistrationSignature: {
-            X: ethers_1.ethers.BigNumber.from(signedMsg.slice(0, 32)),
-            Y: ethers_1.ethers.BigNumber.from(signedMsg.slice(32, 64))
-        },
-        pubkeyG1: {
-            X: ethers_1.ethers.BigNumber.from(pubkeyG1.slice(0, 32)),
-            Y: ethers_1.ethers.BigNumber.from(pubkeyG1.slice(32, 64))
-        },
-        pubkeyG2: {
-            X: [
-                ethers_1.ethers.BigNumber.from(pubkeyG2.slice(0, 32)),
-                ethers_1.ethers.BigNumber.from(pubkeyG2.slice(32, 64))
-            ],
-            Y: [
-                ethers_1.ethers.BigNumber.from(pubkeyG2.slice(64, 96)),
-                ethers_1.ethers.BigNumber.from(pubkeyG2.slice(96, 128))
-            ]
-        }
+        pubkeyRegistrationSignature: signedMsg,
+        pubkeyG1: pubkeyG1,
+        pubkeyG2: pubkeyG2
     };
+    console.log("pubkeyRegParams:", pubkeyRegParams);
     // Generate operator signature with ECDSA key
     const salt = ethers_1.ethers.utils.hexlify(ethers_1.ethers.utils.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
     const msgToSign = ethers_1.ethers.utils.solidityKeccak256(["address", "address", "bytes32", "uint256"], [wallet.address, registryCoordinatorAddress, salt, expiry]);
-    const operatorSignature = yield wallet.signMessage(msgToSign);
+    const operatorSignature = yield wallet.signMessage(ethers_1.ethers.utils.arrayify(msgToSign));
     const operatorSignatureWithSaltAndExpiry = {
         signature: ethers_1.ethers.utils.arrayify(operatorSignature),
         salt: ethers_1.ethers.utils.arrayify(salt),
         expiry: expiry
     };
     console.log(quorumNumbers, socket, pubkeyRegParams, operatorSignatureWithSaltAndExpiry);
-    const tx2 = yield registryContract.registerOperator(quorumNumbers, socket, pubkeyRegParams, operatorSignatureWithSaltAndExpiry);
+    const tx2 = yield registryContract.registerOperator(0x00, socket, pubkeyRegParams, operatorSignatureWithSaltAndExpiry);
     console.log(tx2);
     yield tx2.wait();
     console.log("Operator registered on AVS successfully");

@@ -37,17 +37,14 @@ const signAndRespondToTask = async (taskIndex: number, taskName: string) => {
     console.log(`Responded to task ${taskIndex} with signature ${signature}`);
 };
 
+
 const registerOperator = async () => {
-    // Operator Registration to EL
-    // const tx1 = await delegationManager.registerAsOperator(
-    //     {
-    //         earningsReceiver: await wallet.address,
-    //         delegationApprover: "0x0000000000000000000000000000000000000000",
-    //         stakerOptOutWindowBlocks: 0
-    //     },
-    //     ""
-    // )
-    // console.log(tx1)
+    // Operator Registration to EL (commented out for now)
+    // const tx1 = await delegationManager.registerAsOperator({
+    //     earningsReceiver: await wallet.address,
+    //     delegationApprover: "0x0000000000000000000000000000000000000000",
+    //     stakerOptOutWindowBlocks: 0
+    // }, "");
     // await tx1.wait();
     // console.log("Operator registered on EL successfully");
 
@@ -58,42 +55,33 @@ const registerOperator = async () => {
 
     // Generate a new BLS secret key
     const seed = Uint8Array.from([
-        0,  50, 6,  244, 24,  199, 1,  25,  52,  88,  192,
-        19, 18, 12, 89,  6,   220, 18, 102, 58,  209, 82,
-        12, 62, 89, 110, 182, 9,   44, 20,  254, 22
+        0, 50, 6, 244, 24, 199, 1, 25, 52, 88, 192,
+        19, 18, 12, 89, 6, 220, 18, 102, 58, 209, 82,
+        12, 62, 89, 110, 182, 9, 44, 20, 254, 22
     ]);
     const sk = BLS.AugSchemeMPL.key_gen(seed);
     const pkG1 = sk.get_g1();
     const pkG2 = sk.get_g2();
 
     const g1HashedMsgToSign = await registryContract.pubkeyRegistrationMessageHash(wallet.address);
-    console.log("check:",g1HashedMsgToSign)
 
-    const g1HashedMsgArray = Uint8Array.from(g1HashedMsgToSign.serialize());
+    const g1HashedMsgArray = new Uint8Array([
+        ...ethers.utils.arrayify(g1HashedMsgToSign[0]),
+        ...ethers.utils.arrayify(g1HashedMsgToSign[1])
+    ]);
     const signedMsg = BLS.AugSchemeMPL.sign(sk, g1HashedMsgArray).serialize();
     const pubkeyG1 = pkG1.serialize();
     const pubkeyG2 = pkG2.serialize();
 
+    console.log(signedMsg, pubkeyG1, pubkeyG2)
+
     const pubkeyRegParams = {
-        pubkeyRegistrationSignature: {
-            X: ethers.BigNumber.from(signedMsg.slice(0, 32)),
-            Y: ethers.BigNumber.from(signedMsg.slice(32, 64))
-        },
-        pubkeyG1: {
-            X: ethers.BigNumber.from(pubkeyG1.slice(0, 32)),
-            Y: ethers.BigNumber.from(pubkeyG1.slice(32, 64))
-        },
-        pubkeyG2: {
-            X: [
-                ethers.BigNumber.from(pubkeyG2.slice(0, 32)),
-                ethers.BigNumber.from(pubkeyG2.slice(32, 64))
-            ],
-            Y: [
-                ethers.BigNumber.from(pubkeyG2.slice(64, 96)),
-                ethers.BigNumber.from(pubkeyG2.slice(96, 128))
-            ]
-        }
+        pubkeyRegistrationSignature: signedMsg,
+        pubkeyG1: pubkeyG1,
+        pubkeyG2: pubkeyG2
     };
+
+    console.log("pubkeyRegParams:", pubkeyRegParams);
 
     // Generate operator signature with ECDSA key
     const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
@@ -104,7 +92,7 @@ const registerOperator = async () => {
         [wallet.address, registryCoordinatorAddress, salt, expiry]
     );
 
-    const operatorSignature = await wallet.signMessage(msgToSign);
+    const operatorSignature = await wallet.signMessage(ethers.utils.arrayify(msgToSign));
 
     const operatorSignatureWithSaltAndExpiry = {
         signature: ethers.utils.arrayify(operatorSignature),
@@ -117,10 +105,10 @@ const registerOperator = async () => {
         socket,
         pubkeyRegParams,
         operatorSignatureWithSaltAndExpiry
-    )
+    );
 
-    const tx2 = await registryContract.registerOperator(quorumNumbers, socket, pubkeyRegParams, operatorSignatureWithSaltAndExpiry);
-    console.log(tx2)
+    const tx2 = await registryContract.registerOperator(0x00, socket, pubkeyRegParams, operatorSignatureWithSaltAndExpiry);
+    console.log(tx2);
     await tx2.wait();
     console.log("Operator registered on AVS successfully");
 };
