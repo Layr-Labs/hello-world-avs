@@ -6,8 +6,9 @@
     "start": "tsc && node dist/index.js"
   },
   "dependencies": {
-    "ethers": "^5.4.6",
-    "dotenv": "^10.0.0"
+    "bls-signatures": "^2.0.3",
+    "dotenv": "^10.0.0",
+    "ethers": "^5.7.2"
   },
   "devDependencies": {
     "typescript": "^4.4.3"
