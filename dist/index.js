@@ -88,17 +88,50 @@ const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
     const pkG2 = sk.get_g2();
     const g1HashedMsgToSign = yield registryContract.pubkeyRegistrationMessageHash(wallet.address);
     const g1HashedMsgArray = new Uint8Array([
-        ...ethers_1.ethers.utils.arrayify(g1HashedMsgToSign[0]),
-        ...ethers_1.ethers.utils.arrayify(g1HashedMsgToSign[1])
+        ...ethers_1.ethers.utils.arrayify(g1HashedMsgToSign.X),
+        ...ethers_1.ethers.utils.arrayify(g1HashedMsgToSign.Y)
     ]);
     const signedMsg = BLS.AugSchemeMPL.sign(sk, g1HashedMsgArray).serialize();
     const pubkeyG1 = pkG1.serialize();
     const pubkeyG2 = pkG2.serialize();
-    console.log(signedMsg, pubkeyG1, pubkeyG2);
+    console.log("signedMsg:", signedMsg);
+    console.log("pubkeyG1:", pubkeyG1);
+    console.log("pubkeyG2:", pubkeyG2);
+    const signedMsgX = ethers_1.ethers.utils.hexlify(signedMsg.slice(0, 32));
+    const signedMsgY = ethers_1.ethers.utils.hexlify(signedMsg.slice(32, 64));
+    const pubkeyG1X = ethers_1.ethers.utils.hexlify(pubkeyG1.slice(0, 32));
+    const pubkeyG1Y = ethers_1.ethers.utils.hexlify(pubkeyG1.slice(32, 48));
+    const pubkeyG2X0 = ethers_1.ethers.utils.hexlify(pubkeyG2.slice(0, 32));
+    const pubkeyG2X1 = ethers_1.ethers.utils.hexlify(pubkeyG2.slice(32, 64));
+    const pubkeyG2Y0 = ethers_1.ethers.utils.hexlify(pubkeyG2.slice(64, 96));
+    // const pubkeyG2Y1 = ethers.utils.hexlify(pubkeyG2.slice(96, 128));
+    console.log("signedMsgX:", signedMsgX);
+    console.log("signedMsgY:", signedMsgY);
+    console.log("pubkeyG1X:", pubkeyG1X);
+    console.log("pubkeyG1Y:", pubkeyG1Y);
+    console.log("pubkeyG2X0:", pubkeyG2X0);
+    console.log("pubkeyG2X1:", pubkeyG2X1);
+    console.log("pubkeyG2Y0:", pubkeyG2Y0);
+    // console.log("pubkeyG2Y1:", pubkeyG2Y1);
     const pubkeyRegParams = {
-        pubkeyRegistrationSignature: signedMsg,
-        pubkeyG1: pubkeyG1,
-        pubkeyG2: pubkeyG2
+        pubkeyRegistrationSignature: {
+            X: ethers_1.ethers.BigNumber.from(signedMsgX),
+            Y: ethers_1.ethers.BigNumber.from(signedMsgY)
+        },
+        pubkeyG1: {
+            X: ethers_1.ethers.BigNumber.from(pubkeyG1X),
+            Y: ethers_1.ethers.BigNumber.from(pubkeyG1Y)
+        },
+        pubkeyG2: {
+            X: [
+                ethers_1.ethers.BigNumber.from(pubkeyG2X0),
+                ethers_1.ethers.BigNumber.from(pubkeyG2X1)
+            ],
+            Y: [
+                ethers_1.ethers.BigNumber.from(pubkeyG2Y0),
+                ethers_1.ethers.BigNumber.from(0)
+            ]
+        }
     };
     console.log("pubkeyRegParams:", pubkeyRegParams);
     // Generate operator signature with ECDSA key
@@ -111,8 +144,9 @@ const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
         salt: ethers_1.ethers.utils.arrayify(salt),
         expiry: expiry
     };
+    console.log("operatorSignatureWithSaltAndExpiry:", operatorSignatureWithSaltAndExpiry);
     console.log(quorumNumbers, socket, pubkeyRegParams, operatorSignatureWithSaltAndExpiry);
-    const tx2 = yield registryContract.registerOperator(0x00, socket, pubkeyRegParams, operatorSignatureWithSaltAndExpiry);
+    const tx2 = yield registryContract.registerOperator(0x00, socket, pubkeyRegParams, operatorSignatureWithSaltAndExpiry, { gasLimit: "30000000" });
     console.log(tx2);
     yield tx2.wait();
     console.log("Operator registered on AVS successfully");
