@@ -24,12 +24,17 @@ deploy-eigenlayer-contracts-to-anvil-and-save-state: ## Deploy eigenlayer
 	./utils/anvil/deploy-eigenlayer-save-anvil-state.sh
 
 deploy-hello-world-contracts-to-anvil-and-save-state: ## Deploy avs
-	./tests/anvil/deploy-avs-save-anvil-state.sh
+	./utils/anvil/deploy-avs-save-anvil-state.sh
 
-deploy-all-to-anvil-and-save-state: deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-hello-world-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts 
+deploy-contracts-to-anvil-and-save-state: deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-hello-world-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts 
 
 start-anvil-chain-with-el-and-avs-deployed: ## starts anvil from a saved state file (with el and avs contracts deployed)
-	./tests/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
+	./utils/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
+
+start-chain-and-deploy-hello-world-avs: build-contracts deploy-contracts-to-anvil-and-save-state start-anvil-chain-with-el-and-avs-deployed
+
+clean-deployments:
+	./utils/anvil/clean-deployments.sh
 
 ___DOCKER___: ## 
 docker-build-and-publish-images: ## builds and publishes operator and aggregator docker images using Ko
