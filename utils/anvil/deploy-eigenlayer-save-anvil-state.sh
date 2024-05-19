@@ -1,10 +1,5 @@
 #!/bin/bash
 
-root_path=$(
-    cd "$(dirname $(dirname $(dirname "${BASH_SOURCE[0]}")))"
-    pwd -P
-)
-
 # cd to the directory of this script so that this can be run from anywhere
 parent_path=$(
     cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -17,39 +12,18 @@ set -a
 source ./utils.sh
 set +a
 
-# Directories 
-TOP_LEVEL_DIR="$root_path"
-ANVIL_DIR="$root_path/utils/anvil"
-TOP_LEVEL_CONTRACTS_DIR="$root_path/contracts"
-EIGENLAYER_MIDDLEWARE_CONTRACTS_DIR="$TOP_LEVEL_CONTRACTS_DIR/lib/eigenlayer-middleware"
-EIGENLAYER_CORE_CONTRACTS_DIR="$EIGENLAYER_MIDDLEWARE_CONTRACTS_DIR/lib/eigenlayer-contracts"
-
-# State files
-DUMP_STATE_FILE="$ANVIL_DIR/eigenlayer-deployed-anvil-state.json"
-
-cleanup() {
-    echo "Executing cleanup function..."
-    set +e
-    docker rm -f anvil
-    exit_status=$?
-    if [ $exit_status -ne 0 ]; then
-        echo "Script exited due to set -e on line $1 with command '$2'. Exit status: $exit_status"
-    fi
-}
 trap 'cleanup $LINENO "$BASH_COMMAND"' EXIT
 
-echo "⚙️ Starting an anvil chain in the background and dumping its state to $DUMP_STATE_FILE upon exit..."
-if [ ! -e "$DUMP_STATE_FILE" ]; then
-    echo "Creating empty file $DUMP_STATE_FILE"
-    touch "$DUMP_STATE_FILE"
-fi
+# State files
 
-start_anvil_docker "" $DUMP_STATE_FILE
+# Start Anvil chain
+echo "⚙️ Starting an anvil chain in the background and dumping its state to $EIGENLAYER_CONTRACTS_DEPLOYMENT_STATE_FILE upon exit..."
+start_anvil_docker "" $EIGENLAYER_CONTRACTS_DEPLOYMENT_STATE_FILE
 if [ $? -ne 0 ]; then
     echo "❌ Failed to start an empty anvil chain in the background and dump its state to a json file upon exit"
     exit 1
 fi
-echo "✅ Anvil chain started and state dumped successfully to $DUMP_STATE_FILE"
+echo "✅ Anvil chain started and state dumped successfully to $EIGENLAYER_CONTRACTS_DEPLOYMENT_STATE_FILE"
 space
 
 
@@ -70,12 +44,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-LOCAL_DEPLOYMENT_OUTPUT_FILE=$TOP_LEVEL_CONTRACTS_DIR/script/output/31337/eigenlayer_deployment_output.json
+LOCAL_DEPLOYMENT_OUTPUT_FILE=$CONTRACTS_DIR/script/output/31337/eigenlayer_deployment_output.json
 mv script/output/devnet/M2_from_scratch_deployment_data.json $LOCAL_DEPLOYMENT_OUTPUT_FILE
 space
 echo "✅ Clean-state EigenLayer core contracts successfully deployed"
 echo "💾 Deployment addresses are saved to $LOCAL_DEPLOYMENT_OUTPUT_FILE"
-echo "💾 Anvil's latest state is saved to $DUMP_STATE_FILE"
+echo "💾 Anvil's latest state is saved to $EIGENLAYER_CONTRACTS_DEPLOYMENT_STATE_FILE"
 sleep 2
 mv script/output/devnet/M2_from_scratch_deployment_data.json.bak script/output/devnet/M2_from_scratch_deployment_data.json
 space

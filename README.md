@@ -36,13 +36,8 @@ Where additional sophistication with AVSs come into the picture:
 ### Steps
 
 1. Make sure Docker is running
-2. Run `make build-contracts` to build the contracts 
-3. To create the chain state for having the EigenLayer core contracts deployed, run `make deploy-eigenlayer-contracts-to-anvil-and-save-state`
-    
-    3.1 For now you can ignore the details of the "EigenLayer core contracts" part, you just need to make sure step 3 runs without issues. Refer to [this doc](...) if you want to learn more.
-
-4. To deploy the Hello World AVS contracts, run
-```make ...```
+2. Run `start-chain-and-deploy-hello-world-avs`
+    2.1 This will build the contracts, deploy them, and leaves an Anvil chain running in the current terminal
 
 ## Extensions
 
