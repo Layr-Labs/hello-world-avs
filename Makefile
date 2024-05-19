@@ -21,7 +21,7 @@ build-contracts: ## builds all contracts
 	cd contracts && forge build
 
 deploy-eigenlayer-contracts-to-anvil-and-save-state: ## Deploy eigenlayer
-	./tests/anvil/deploy-eigenlayer-save-anvil-state.sh
+	./utils/anvil/deploy-eigenlayer-save-anvil-state.sh
 
 deploy-hello-world-contracts-to-anvil-and-save-state: ## Deploy avs
 	./tests/anvil/deploy-avs-save-anvil-state.sh

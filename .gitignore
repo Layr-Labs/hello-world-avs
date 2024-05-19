@@ -15,3 +15,6 @@ dist/
 *.js
 *.js.map
 *.d.ts
+
+# Ignore local anvil state
+utils/anvil/*.json

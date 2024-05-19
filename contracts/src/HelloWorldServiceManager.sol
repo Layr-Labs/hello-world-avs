@@ -84,7 +84,7 @@ contract HelloWorldServiceManager is
         uint32 referenceTaskIndex,
         bytes calldata signature
     ) external onlyOperator {
-        // check that the task is valid, hasn't been responsed yet, and is being responsed in time
+        // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
             keccak256(abi.encode(task)) ==
                 allTaskHashes[referenceTaskIndex],
