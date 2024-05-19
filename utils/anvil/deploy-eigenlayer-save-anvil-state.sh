@@ -17,12 +17,15 @@ set -a
 source ./utils.sh
 set +a
 
+# Directories 
+TOP_LEVEL_DIR="$root_path"
+ANVIL_DIR="$root_path/utils/anvil"
 TOP_LEVEL_CONTRACTS_DIR="$root_path/contracts"
-echo $TOP_LEVEL_CONTRACTS_DIR
 EIGENLAYER_MIDDLEWARE_CONTRACTS_DIR="$TOP_LEVEL_CONTRACTS_DIR/lib/eigenlayer-middleware"
-echo $EIGENLAYER_MIDDLEWARE_CONTRACTS_DIR
 EIGENLAYER_CORE_CONTRACTS_DIR="$EIGENLAYER_MIDDLEWARE_CONTRACTS_DIR/lib/eigenlayer-contracts"
-echo $EIGENLAYER_CORE_CONTRACTS_DIR
+
+# State files
+DUMP_STATE_FILE="$ANVIL_DIR/eigenlayer-deployed-anvil-state.json"
 
 cleanup() {
     echo "Executing cleanup function..."
@@ -35,8 +38,12 @@ cleanup() {
 }
 trap 'cleanup $LINENO "$BASH_COMMAND"' EXIT
 
-DUMP_STATE_FILE="$parent_path/eigenlayer-deployed-anvil-state.json"
 echo "⚙️ Starting an anvil chain in the background and dumping its state to $DUMP_STATE_FILE upon exit..."
+if [ ! -e "$DUMP_STATE_FILE" ]; then
+    echo "Creating empty file $DUMP_STATE_FILE"
+    touch "$DUMP_STATE_FILE"
+fi
+
 start_anvil_docker "" $DUMP_STATE_FILE
 if [ $? -ne 0 ]; then
     echo "❌ Failed to start an empty anvil chain in the background and dump its state to a json file upon exit"
@@ -56,17 +63,19 @@ fi
 
 # M2_Deploy_From_Scratch.s.sol prepends "script/testing/" to the configFile passed as input (M2_deploy_from_scratch.anvil.config.json)
 space
-echo "🚀 Deploying M2 contracts from scratch..."
+echo "🚀 Deploying EigenLayer core contracts from scratch..."
 forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --legacy --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to deploy M2 contracts from scratch"
+    echo "❌ Failed to deploy EigenLayer core contracts from scratch"
     exit 1
 fi
 
 LOCAL_DEPLOYMENT_OUTPUT_FILE=$TOP_LEVEL_CONTRACTS_DIR/script/output/31337/eigenlayer_deployment_output.json
 mv script/output/devnet/M2_from_scratch_deployment_data.json $LOCAL_DEPLOYMENT_OUTPUT_FILE
+space
 echo "✅ Clean-state EigenLayer core contracts successfully deployed"
-echo "✅ Deployment output saved to $LOCAL_DEPLOYMENT_OUTPUT_FILE"
-cat $LOCAL_DEPLOYMENT_OUTPUT_FILE
+echo "💾 Deployment addresses are saved to $LOCAL_DEPLOYMENT_OUTPUT_FILE"
+echo "💾 Anvil's latest state is saved to $DUMP_STATE_FILE"
+sleep 2
 mv script/output/devnet/M2_from_scratch_deployment_data.json.bak script/output/devnet/M2_from_scratch_deployment_data.json
 space

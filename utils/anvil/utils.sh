@@ -48,5 +48,5 @@ start_anvil_docker() {
     docker run -d --rm --name anvil -p 8545:8545 $LOAD_STATE_DOCKER_VOLUME_ARG $DUMP_STATE_DOCKER_VOLUME_ARG \
         --entrypoint anvil \
         $FOUNDRY_IMAGE \
-        $LOAD_STATE_ANVIL_ARG $DUMP_STATE_ANVIL_ARG --host 0.0.0.0
+        $LOAD_STATE_ANVIL_ARG $DUMP_STATE_ANVIL_ARG --host 0.0.0.0 -s 1
 }
