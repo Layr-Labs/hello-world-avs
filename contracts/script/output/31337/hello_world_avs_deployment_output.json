@@ -1,11 +1,10 @@
 {
   "addresses": {
+    "ECDSAStakeRegistry": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042",
+    "ECDSAStakeRegistryImplementation": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
     "HelloWorldServiceManager": "0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB",
-    "HelloWorldServiceManagerImplementation": "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00",
+    "HelloWorldServiceManagerImplementation": "0xf5059a5D33d5853360D16C683c16e67980206f36",
     "erc20Mock": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
-    "erc20MockStrategy": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
-    "operatorStateRetriever": "0xf5059a5D33d5853360D16C683c16e67980206f36",
-    "registryCoordinator": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042",
-    "registryCoordinatorImplementation": "0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf"
+    "erc20MockStrategy": "0x09635F643e140090A9A8Dcd712eD6285858ceBef"
   }
 }
