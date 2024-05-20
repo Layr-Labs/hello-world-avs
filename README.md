@@ -10,11 +10,11 @@ It will give you a concrete understanding of the basic components.
 
 There are only 3 main steps to this AVS:
 - accepts a request to generate a "Hello World" message
-- any operator who is serving this AVS
+- any operator who is staked to serve this AVS
     - takes this request and generates this message
     - signs this message
     - submits this message with their signature back to the AVS
-- *if the operator is in fact registered to the AVS, the submission is accepted*
+- *if the operator is in fact registered to the AVS and has the minimum needed stake, the submission is accepted*
 
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
