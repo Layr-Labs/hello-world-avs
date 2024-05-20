@@ -54,15 +54,15 @@ const registerOperator = async () => {
     console.log(wallet.address)
     const digestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
         wallet.address, 
-        avsDirectoryAddress, 
+        contract.address, 
         salt, 
         expiry
     );
 
     console.log(`Digest Hash to sign: ${digestHash}`);
 
-    const registrationSig = await wallet.signMessage(ethers.utils.arrayify(digestHash));
-
+    const registrationSig = await wallet.signMessage(digestHash);
+    
     const operatorSignatureWithSaltAndExpiry = {
         signature: registrationSig,
         salt: salt,

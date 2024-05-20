@@ -60,19 +60,19 @@ const signAndRespondToTask = (taskIndex, taskCreatedBlock, taskName) => __awaite
     console.log(`Responded to task ${taskIndex} with signature ${signature}`);
 });
 const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
-    // const tx1 = await delegationManager.registerAsOperator({
-    //     earningsReceiver: await wallet.address,
-    //     delegationApprover: "0x0000000000000000000000000000000000000000",
-    //     stakerOptOutWindowBlocks: 0
-    // }, "");
-    // await tx1.wait();
-    // console.log("Operator registered on EL successfully");
+    const tx1 = yield delegationManager.registerAsOperator({
+        earningsReceiver: yield wallet.address,
+        delegationApprover: "0x0000000000000000000000000000000000000000",
+        stakerOptOutWindowBlocks: 0
+    }, "");
+    yield tx1.wait();
+    console.log("Operator registered on EL successfully");
     const salt = ethers_1.ethers.utils.hexlify(ethers_1.ethers.utils.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
     console.log(wallet.address);
-    const digestHash = yield avsDirectory.calculateOperatorAVSRegistrationDigestHash(wallet.address, avsDirectoryAddress, salt, expiry);
+    const digestHash = yield avsDirectory.calculateOperatorAVSRegistrationDigestHash(wallet.address, contract.address, salt, expiry);
     console.log(`Digest Hash to sign: ${digestHash}`);
-    const registrationSig = yield wallet.signMessage(ethers_1.ethers.utils.arrayify(digestHash));
+    const registrationSig = yield wallet.signMessage(digestHash);
     const operatorSignatureWithSaltAndExpiry = {
         signature: registrationSig,
         salt: salt,
