@@ -59,23 +59,6 @@ const signAndRespondToTask = (taskIndex, taskCreatedBlock, taskName) => __awaite
     yield tx.wait();
     console.log(`Responded to task ${taskIndex} with signature ${signature}`);
 });
-const verifySignature = (digestHash, signature, expectedSigner) => {
-    const recoveredAddress = ethers_1.ethers.utils.recoverAddress(digestHash, signature);
-    const isValidSignature = recoveredAddress.toLowerCase() === expectedSigner.toLowerCase();
-    console.log(`Digest Hash: ${digestHash}`);
-    console.log(`Signature: ${signature}`);
-    console.log(`Recovered Address: ${recoveredAddress}`);
-    console.log(`Expected Signer: ${expectedSigner}`);
-    console.log(`Is Valid Signature: ${isValidSignature}`);
-    return isValidSignature;
-};
-const calculateDigestHash = (operator, avs, salt, expiry) => __awaiter(void 0, void 0, void 0, function* () {
-    const OPERATOR_AVS_REGISTRATION_TYPEHASH = yield avsDirectory.OPERATOR_AVS_REGISTRATION_TYPEHASH();
-    const DOMAIN_SEPARATOR = yield avsDirectory.domainSeparator();
-    const structHash = ethers_1.ethers.utils.keccak256(ethers_1.ethers.utils.defaultAbiCoder.encode(["bytes32", "address", "address", "bytes32", "uint256"], [OPERATOR_AVS_REGISTRATION_TYPEHASH, operator, avs, salt, expiry]));
-    const digestHash = ethers_1.ethers.utils.keccak256(ethers_1.ethers.utils.solidityPack(["bytes2", "bytes32", "bytes32"], ["0x1901", DOMAIN_SEPARATOR, structHash]));
-    return digestHash;
-});
 const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
     // const tx1 = await delegationManager.registerAsOperator({
     //     earningsReceiver: await wallet.address,
@@ -86,20 +69,17 @@ const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
     // console.log("Operator registered on EL successfully");
     const salt = ethers_1.ethers.utils.hexlify(ethers_1.ethers.utils.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
-    const digestHash = yield calculateDigestHash(wallet.address, avsDirectoryAddress, salt, expiry);
+    console.log(wallet.address);
+    const digestHash = yield avsDirectory.calculateOperatorAVSRegistrationDigestHash(wallet.address, avsDirectoryAddress, salt, expiry);
     console.log(`Digest Hash to sign: ${digestHash}`);
-    const signature = yield wallet.signMessage(ethers_1.ethers.utils.arrayify(digestHash));
+    const registrationSig = yield wallet.signMessage(ethers_1.ethers.utils.arrayify(digestHash));
     const operatorSignatureWithSaltAndExpiry = {
-        signature: signature,
+        signature: registrationSig,
         salt: salt,
         expiry: expiry
     };
-    const isValid = verifySignature(digestHash, signature, wallet.address);
-    console.log(`Signature is valid: ${isValid}`);
     console.log("operatorSignatureWithSaltAndExpiry:", operatorSignatureWithSaltAndExpiry);
-    const tx2 = yield registryContract.registerOperatorWithSignature(wallet.address, operatorSignatureWithSaltAndExpiry, {
-        gasLimit: 30000000
-    });
+    const tx2 = yield registryContract.registerOperatorWithSignature(wallet.address, operatorSignatureWithSaltAndExpiry);
     yield tx2.wait();
     console.log("Operator registered on AVS successfully");
 });

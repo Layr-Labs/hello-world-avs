@@ -39,75 +39,41 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
     console.log(`Responded to task ${taskIndex} with signature ${signature}`);
 };
 
-const verifySignature = (digestHash: string, signature: string, expectedSigner: string) => {
-    const recoveredAddress = ethers.utils.recoverAddress(digestHash, signature);
-
-    const isValidSignature = recoveredAddress.toLowerCase() === expectedSigner.toLowerCase();
-
-    console.log(`Digest Hash: ${digestHash}`);
-    console.log(`Signature: ${signature}`);
-    console.log(`Recovered Address: ${recoveredAddress}`);
-    console.log(`Expected Signer: ${expectedSigner}`);
-    console.log(`Is Valid Signature: ${isValidSignature}`);
-
-    return isValidSignature;
-};
-
-const calculateDigestHash = async (operator: string, avs: string, salt: string, expiry: number) => {
-    const OPERATOR_AVS_REGISTRATION_TYPEHASH = await avsDirectory.OPERATOR_AVS_REGISTRATION_TYPEHASH();
-    const DOMAIN_SEPARATOR = await avsDirectory.domainSeparator();
-
-    const structHash = ethers.utils.keccak256(
-        ethers.utils.defaultAbiCoder.encode(
-            ["bytes32", "address", "address", "bytes32", "uint256"],
-            [OPERATOR_AVS_REGISTRATION_TYPEHASH, operator, avs, salt, expiry]
-        )
-    );
-
-    const digestHash = ethers.utils.keccak256(
-        ethers.utils.solidityPack(
-            ["bytes2", "bytes32", "bytes32"],
-            ["0x1901", DOMAIN_SEPARATOR, structHash]
-        )
-    );
-
-    return digestHash;
-};
-
 const registerOperator = async () => {
-    // const tx1 = await delegationManager.registerAsOperator({
-    //     earningsReceiver: await wallet.address,
-    //     delegationApprover: "0x0000000000000000000000000000000000000000",
-    //     stakerOptOutWindowBlocks: 0
-    // }, "");
-    // await tx1.wait();
-    // console.log("Operator registered on EL successfully");
+    const tx1 = await delegationManager.registerAsOperator({
+        earningsReceiver: await wallet.address,
+        delegationApprover: "0x0000000000000000000000000000000000000000",
+        stakerOptOutWindowBlocks: 0
+    }, "");
+    await tx1.wait();
+    console.log("Operator registered on EL successfully");
 
     const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
 
-    const digestHash = await calculateDigestHash(wallet.address, avsDirectoryAddress, salt, expiry);
+    console.log(wallet.address)
+    const digestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
+        wallet.address, 
+        avsDirectoryAddress, 
+        salt, 
+        expiry
+    );
 
     console.log(`Digest Hash to sign: ${digestHash}`);
 
-    const signature = await wallet.signMessage(ethers.utils.arrayify(digestHash));
+    const registrationSig = await wallet.signMessage(ethers.utils.arrayify(digestHash));
 
     const operatorSignatureWithSaltAndExpiry = {
-        signature: signature,
+        signature: registrationSig,
         salt: salt,
         expiry: expiry
     };
-
-    const isValid = verifySignature(digestHash, signature, wallet.address);
-    console.log(`Signature is valid: ${isValid}`);
 
     console.log("operatorSignatureWithSaltAndExpiry:", operatorSignatureWithSaltAndExpiry);
 
     const tx2 = await registryContract.registerOperatorWithSignature(
         wallet.address,
-        operatorSignatureWithSaltAndExpiry,{
-            gasLimit: 30000000
-        }
+        operatorSignatureWithSaltAndExpiry
     );
     await tx2.wait();
     console.log("Operator registered on AVS successfully");
