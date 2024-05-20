@@ -40,18 +40,17 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
 };
 
 const registerOperator = async () => {
-    const tx1 = await delegationManager.registerAsOperator({
-        earningsReceiver: await wallet.address,
-        delegationApprover: "0x0000000000000000000000000000000000000000",
-        stakerOptOutWindowBlocks: 0
-    }, "");
-    await tx1.wait();
-    console.log("Operator registered on EL successfully");
+    // const tx1 = await delegationManager.registerAsOperator({
+    //     earningsReceiver: await wallet.address,
+    //     delegationApprover: "0x0000000000000000000000000000000000000000",
+    //     stakerOptOutWindowBlocks: 0
+    // }, "");
+    // await tx1.wait();
+    // console.log("Operator registered on EL successfully");
 
     const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
 
-    console.log(wallet.address)
     const digestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
         wallet.address, 
         contract.address, 
@@ -59,12 +58,47 @@ const registerOperator = async () => {
         expiry
     );
 
-    console.log(`Digest Hash to sign: ${digestHash}`);
+    const message = digestHash
+    const signature = await wallet.signMessage(message)
+    const expectedAddress = await wallet.getAddress()
+    const expectedPublicKey = wallet.publicKey
 
-    const registrationSig = await wallet.signMessage(digestHash);
+    console.log("ISSUING SIGNATURE")
+    console.log("ADDR:    ", expectedAddress)
+    console.log("PUB K:   ", expectedPublicKey)
+    console.log("SIG      ", signature)
+    console.log()
+
+    // Approach 1
+    const actualAddress = ethers.utils.verifyMessage(message, signature)
+
+    console.log("APPROACH 1")
+    console.log("EXPECTED ADDR: ", expectedAddress)
+    console.log("ACTUAL ADDR:   ", actualAddress)
+    console.log()
+
+    // Approach 2
+    const msgHash = ethers.utils.hashMessage(message);
+    const msgHashBytes = ethers.utils.arrayify(msgHash);
+
+    // Now you have the digest,
+    const recoveredPubKey = ethers.utils.recoverPublicKey(msgHashBytes, signature);
+    const recoveredAddress = ethers.utils.recoverAddress(msgHashBytes, signature);
+
+    const matches = expectedPublicKey === recoveredPubKey
+
+    console.log("APPROACH 2")
+    console.log("EXPECTED ADDR:    ", expectedAddress)
+    console.log("RECOVERED ADDR:   ", recoveredAddress)
+
+    console.log("EXPECTED PUB K:   ", expectedPublicKey)
+    console.log("RECOVERED PUB K:  ", recoveredPubKey)
+
+    console.log("SIGNATURE VALID:  ", matches)
+    console.log()
     
     const operatorSignatureWithSaltAndExpiry = {
-        signature: registrationSig,
+        signature: signature,
         salt: salt,
         expiry: expiry
     };
