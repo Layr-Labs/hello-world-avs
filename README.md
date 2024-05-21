@@ -35,7 +35,7 @@ Where additional sophistication with AVSs come into the picture:
 ### Steps
 
 1. Make sure Docker is running
-2. Run `make start-chain-and-deploy-hello-world-avs`
+2. Run `make start-chain-with-contracts-deployed`
     
     2.1 This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
 
