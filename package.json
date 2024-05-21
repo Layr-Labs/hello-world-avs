@@ -6,11 +6,12 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@types/node": "^20.12.12",
     "bls-signatures": "^2.0.3",
     "dotenv": "^10.0.0",
     "ethers": "^5.7.2"
   },
   "devDependencies": {
-    "typescript": "^4.4.3"
+    "typescript": "^5.4.5"
   }
 }
