@@ -27,7 +27,7 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
     const signature = await wallet.signMessage(messageBytes);
 
     console.log(
-        `Signing and responding to task ${taskIndex} with message ${message} and signature ${signature}`
+        `Signing and responding to task ${taskIndex}`
     )
 
     const tx = await contract.respondToTask(
@@ -36,21 +36,29 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
         signature
     );
     await tx.wait();
-    console.log(`Responded to task ${taskIndex} with signature ${signature}`);
+    console.log(`Responded to task.`);
 };
 
 const registerOperator = async () => {
-    // const tx1 = await delegationManager.registerAsOperator({
-    //     earningsReceiver: await wallet.address,
-    //     delegationApprover: "0x0000000000000000000000000000000000000000",
-    //     stakerOptOutWindowBlocks: 0
-    // }, "");
-    // await tx1.wait();
-    // console.log("Operator registered on EL successfully");
+    const tx1 = await delegationManager.registerAsOperator({
+        earningsReceiver: await wallet.address,
+        delegationApprover: "0x0000000000000000000000000000000000000000",
+        stakerOptOutWindowBlocks: 0
+    }, "");
+    await tx1.wait();
+    console.log("Operator registered on EL successfully");
 
     const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
 
+    // Define the output structure
+    let operatorSignature = {
+        expiry: expiry,
+        salt: salt,
+        signature: ""
+    };
+
+    // Calculate the digest hash using the avsDirectory's method
     const digestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
         wallet.address, 
         contract.address, 
@@ -58,66 +66,26 @@ const registerOperator = async () => {
         expiry
     );
 
-    const message = digestHash
-    const signature = await wallet.signMessage(message)
-    const expectedAddress = await wallet.getAddress()
-    const expectedPublicKey = wallet.publicKey
-
-    console.log("ISSUING SIGNATURE")
-    console.log("ADDR:    ", expectedAddress)
-    console.log("PUB K:   ", expectedPublicKey)
-    console.log("SIG      ", signature)
-    console.log()
-
-    // Approach 1
-    const actualAddress = ethers.utils.verifyMessage(message, signature)
-
-    console.log("APPROACH 1")
-    console.log("EXPECTED ADDR: ", expectedAddress)
-    console.log("ACTUAL ADDR:   ", actualAddress)
-    console.log()
-
-    // Approach 2
-    const msgHash = ethers.utils.hashMessage(message);
-    const msgHashBytes = ethers.utils.arrayify(msgHash);
-
-    // Now you have the digest,
-    const recoveredPubKey = ethers.utils.recoverPublicKey(msgHashBytes, signature);
-    const recoveredAddress = ethers.utils.recoverAddress(msgHashBytes, signature);
-
-    const matches = expectedPublicKey === recoveredPubKey
-
-    console.log("APPROACH 2")
-    console.log("EXPECTED ADDR:    ", expectedAddress)
-    console.log("RECOVERED ADDR:   ", recoveredAddress)
-
-    console.log("EXPECTED PUB K:   ", expectedPublicKey)
-    console.log("RECOVERED PUB K:  ", recoveredPubKey)
-
-    console.log("SIGNATURE VALID:  ", matches)
-    console.log()
+    // Sign the digest hash with the operator's private key
+    const signingKey = new ethers.utils.SigningKey(process.env.PRIVATE_KEY!);
+    const signature = signingKey.signDigest(digestHash);
     
-    const operatorSignatureWithSaltAndExpiry = {
-        signature: signature,
-        salt: salt,
-        expiry: expiry
-    };
-
-    console.log("operatorSignatureWithSaltAndExpiry:", operatorSignatureWithSaltAndExpiry);
+    // Encode the signature in the required format
+    operatorSignature.signature = ethers.utils.joinSignature(signature);
 
     const tx2 = await registryContract.registerOperatorWithSignature(
         wallet.address,
-        operatorSignatureWithSaltAndExpiry
+        operatorSignature
     );
     await tx2.wait();
     console.log("Operator registered on AVS successfully");
 };
 
 const monitorNewTasks = async () => {
-    const newTask = await contract.createNewTask("EigenWorld");
-    console.log("Test Task Submitted: ",newTask);
+    await contract.createNewTask("EigenWorld");
+
     contract.on("NewTaskCreated", async (taskIndex: number, task: any) => {
-        console.log(`New task created: ${taskIndex}`, task);
+        console.log(`New task detected: Hello, ${task.name}`);
         await signAndRespondToTask(taskIndex, task.taskCreatedBlock, task.name);
     });
 

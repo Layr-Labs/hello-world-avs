@@ -54,66 +54,42 @@ const signAndRespondToTask = (taskIndex, taskCreatedBlock, taskName) => __awaite
     const messageHash = ethers_1.ethers.utils.solidityKeccak256(["string"], [message]);
     const messageBytes = ethers_1.ethers.utils.arrayify(messageHash);
     const signature = yield wallet.signMessage(messageBytes);
-    console.log(`Signing and responding to task ${taskIndex} with message ${message} and signature ${signature}`);
+    console.log(`Signing and responding to task ${taskIndex}`);
     const tx = yield contract.respondToTask({ name: taskName, taskCreatedBlock: taskCreatedBlock }, taskIndex, signature);
     yield tx.wait();
-    console.log(`Responded to task ${taskIndex} with signature ${signature}`);
+    console.log(`Responded to task.`);
 });
 const registerOperator = () => __awaiter(void 0, void 0, void 0, function* () {
-    // const tx1 = await delegationManager.registerAsOperator({
-    //     earningsReceiver: await wallet.address,
-    //     delegationApprover: "0x0000000000000000000000000000000000000000",
-    //     stakerOptOutWindowBlocks: 0
-    // }, "");
-    // await tx1.wait();
-    // console.log("Operator registered on EL successfully");
+    const tx1 = yield delegationManager.registerAsOperator({
+        earningsReceiver: yield wallet.address,
+        delegationApprover: "0x0000000000000000000000000000000000000000",
+        stakerOptOutWindowBlocks: 0
+    }, "");
+    yield tx1.wait();
+    console.log("Operator registered on EL successfully");
     const salt = ethers_1.ethers.utils.hexlify(ethers_1.ethers.utils.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
-    const digestHash = yield avsDirectory.calculateOperatorAVSRegistrationDigestHash(wallet.address, contract.address, salt, expiry);
-    const message = digestHash;
-    const signature = yield wallet.signMessage(message);
-    const expectedAddress = yield wallet.getAddress();
-    const expectedPublicKey = wallet.publicKey;
-    console.log("ISSUING SIGNATURE");
-    console.log("ADDR:    ", expectedAddress);
-    console.log("PUB K:   ", expectedPublicKey);
-    console.log("SIG      ", signature);
-    console.log();
-    // Approach 1
-    const actualAddress = ethers_1.ethers.utils.verifyMessage(message, signature);
-    console.log("APPROACH 1");
-    console.log("EXPECTED ADDR: ", expectedAddress);
-    console.log("ACTUAL ADDR:   ", actualAddress);
-    console.log();
-    // Approach 2
-    const msgHash = ethers_1.ethers.utils.hashMessage(message);
-    const msgHashBytes = ethers_1.ethers.utils.arrayify(msgHash);
-    // Now you have the digest,
-    const recoveredPubKey = ethers_1.ethers.utils.recoverPublicKey(msgHashBytes, signature);
-    const recoveredAddress = ethers_1.ethers.utils.recoverAddress(msgHashBytes, signature);
-    const matches = expectedPublicKey === recoveredPubKey;
-    console.log("APPROACH 2");
-    console.log("EXPECTED ADDR:    ", expectedAddress);
-    console.log("RECOVERED ADDR:   ", recoveredAddress);
-    console.log("EXPECTED PUB K:   ", expectedPublicKey);
-    console.log("RECOVERED PUB K:  ", recoveredPubKey);
-    console.log("SIGNATURE VALID:  ", matches);
-    console.log();
-    const operatorSignatureWithSaltAndExpiry = {
-        signature: signature,
+    // Define the output structure
+    let operatorSignature = {
+        expiry: expiry,
         salt: salt,
-        expiry: expiry
+        signature: ""
     };
-    console.log("operatorSignatureWithSaltAndExpiry:", operatorSignatureWithSaltAndExpiry);
-    const tx2 = yield registryContract.registerOperatorWithSignature(wallet.address, operatorSignatureWithSaltAndExpiry);
+    // Calculate the digest hash using the avsDirectory's method
+    const digestHash = yield avsDirectory.calculateOperatorAVSRegistrationDigestHash(wallet.address, contract.address, salt, expiry);
+    // Sign the digest hash with the operator's private key
+    const signingKey = new ethers_1.ethers.utils.SigningKey(process.env.PRIVATE_KEY);
+    const signature = signingKey.signDigest(digestHash);
+    // Encode the signature in the required format
+    operatorSignature.signature = ethers_1.ethers.utils.joinSignature(signature);
+    const tx2 = yield registryContract.registerOperatorWithSignature(wallet.address, operatorSignature);
     yield tx2.wait();
     console.log("Operator registered on AVS successfully");
 });
 const monitorNewTasks = () => __awaiter(void 0, void 0, void 0, function* () {
-    const newTask = yield contract.createNewTask("EigenWorld");
-    console.log("Test Task Submitted: ", newTask);
+    yield contract.createNewTask("EigenWorld");
     contract.on("NewTaskCreated", (taskIndex, task) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log(`New task created: ${taskIndex}`, task);
+        console.log(`New task detected: Hello, ${task.name}`);
         yield signAndRespondToTask(taskIndex, task.taskCreatedBlock, task.name);
     }));
     console.log("Monitoring for new tasks...");
