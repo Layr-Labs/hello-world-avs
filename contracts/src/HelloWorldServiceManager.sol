@@ -2,7 +2,8 @@
 pragma solidity ^0.8.9;
 
 import "@eigenlayer/contracts/libraries/BytesLib.sol";
-import "@eigenlayer-middleware/src/ServiceManagerBase.sol";
+import "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
+import "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 import "@eigenlayer/contracts/permissions/Pausable.sol";
 import {IRegistryCoordinator} from "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
@@ -13,7 +14,7 @@ import "./IHelloWorldServiceManager.sol";
  * @author Eigen Labs, Inc.
  */
 contract HelloWorldServiceManager is 
-    ServiceManagerBase,
+    ECDSAServiceManagerBase,
     IHelloWorldServiceManager,
     Pausable
 {
@@ -33,33 +34,29 @@ contract HelloWorldServiceManager is
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(address => mapping(uint32 => bytes)) public allTaskResponses;
 
-    IRegistryCoordinator public registryCoordinator;
-
     /* MODIFIERS */
     modifier onlyOperator() {
         require(
-            registryCoordinator.getOperatorStatus(msg.sender) 
+            ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender) 
             == 
-            IRegistryCoordinator.OperatorStatus.REGISTERED, 
+            true, 
             "Operator must be the caller"
         );
         _;
     }
 
     constructor(
-        IAVSDirectory _avsDirectory,
-        IRegistryCoordinator _registryCoordinator,
-        IStakeRegistry _stakeRegistry
+        address _avsDirectory,
+        address _stakeRegistry,
+        address _delegationManager
     )
-        ServiceManagerBase(
+        ECDSAServiceManagerBase(
             _avsDirectory,
-            IPaymentCoordinator(address(0)), // hello-world doesn't need to deal with payments
-            _registryCoordinator,
-            _stakeRegistry
+            _stakeRegistry,
+            address(0), // hello-world doesn't need to deal with payments
+            _delegationManager
         )
-    {
-        registryCoordinator = _registryCoordinator;
-    }
+    {}
 
 
     /* FUNCTIONS */

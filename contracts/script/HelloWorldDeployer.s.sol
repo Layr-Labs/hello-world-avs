@@ -11,11 +11,8 @@ import {ISlasher} from "@eigenlayer/contracts/interfaces/ISlasher.sol";
 import {StrategyBaseTVLLimits} from "@eigenlayer/contracts/strategies/StrategyBaseTVLLimits.sol";
 import "@eigenlayer/test/mocks/EmptyContract.sol";
 
-import "@eigenlayer-middleware/src/RegistryCoordinator.sol" as regcoord;
-import {IBLSApkRegistry, IIndexRegistry, IStakeRegistry} from "@eigenlayer-middleware/src/RegistryCoordinator.sol";
-import {BLSApkRegistry} from "@eigenlayer-middleware/src/BLSApkRegistry.sol";
-import {IndexRegistry} from "@eigenlayer-middleware/src/IndexRegistry.sol";
-import {StakeRegistry} from "@eigenlayer-middleware/src/StakeRegistry.sol";
+import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
+import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {HelloWorldServiceManager, IServiceManager} from "../src/HelloWorldServiceManager.sol";
@@ -39,20 +36,9 @@ contract HelloWorldDeployer is Script, Utils {
     // Hello World contracts
     ProxyAdmin public helloWorldProxyAdmin;
     PauserRegistry public helloWorldPauserReg;
-
-    regcoord.RegistryCoordinator public registryCoordinator;
-    regcoord.IRegistryCoordinator public registryCoordinatorImplementation;
-
-    IBLSApkRegistry public blsApkRegistry;
-    IBLSApkRegistry public blsApkRegistryImplementation;
-
-    IIndexRegistry public indexRegistry;
-    IIndexRegistry public indexRegistryImplementation;
-
-    IStakeRegistry public stakeRegistry;
-    IStakeRegistry public stakeRegistryImplementation;
-
-    OperatorStateRetriever public operatorStateRetriever;
+    
+    ECDSAStakeRegistry public stakeRegistry;
+    ECDSAStakeRegistry public stakeRegistryImplementation;
 
     HelloWorldServiceManager public helloWorldServiceManager;
     HelloWorldServiceManager public helloWorldServiceManagerImplementation;
@@ -196,7 +182,7 @@ contract HelloWorldDeployer is Script, Utils {
                 )
             )
         );
-        registryCoordinator = regcoord.RegistryCoordinator(
+        stakeRegistry = ECDSAStakeRegistry(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -205,40 +191,10 @@ contract HelloWorldDeployer is Script, Utils {
                 )
             )
         );
-        blsApkRegistry = IBLSApkRegistry(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(emptyContract),
-                    address(helloWorldProxyAdmin),
-                    ""
-                )
-            )
-        );
-        indexRegistry = IIndexRegistry(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(emptyContract),
-                    address(helloWorldProxyAdmin),
-                    ""
-                )
-            )
-        );
-        stakeRegistry = IStakeRegistry(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(emptyContract),
-                    address(helloWorldProxyAdmin),
-                    ""
-                )
-            )
-        );
-
-        operatorStateRetriever = new OperatorStateRetriever();
 
         // Second, deploy the *implementation* contracts, using the *proxy contracts* as inputs
         {
-            stakeRegistryImplementation = new StakeRegistry(
-                registryCoordinator,
+            stakeRegistryImplementation = new ECDSAStakeRegistry(
                 delegationManager
             );
 
@@ -246,97 +202,43 @@ contract HelloWorldDeployer is Script, Utils {
                 TransparentUpgradeableProxy(payable(address(stakeRegistry))),
                 address(stakeRegistryImplementation)
             );
-
-            blsApkRegistryImplementation = new BLSApkRegistry(
-                registryCoordinator
-            );
-
-            helloWorldProxyAdmin.upgrade(
-                TransparentUpgradeableProxy(payable(address(blsApkRegistry))),
-                address(blsApkRegistryImplementation)
-            );
-
-            indexRegistryImplementation = new IndexRegistry(
-                registryCoordinator
-            );
-
-            helloWorldProxyAdmin.upgrade(
-                TransparentUpgradeableProxy(payable(address(indexRegistry))),
-                address(indexRegistryImplementation)
-            );
         }
 
-        registryCoordinatorImplementation = new regcoord.RegistryCoordinator(
-            helloWorldServiceManager,
-            regcoord.IStakeRegistry(address(stakeRegistry)),
-            regcoord.IBLSApkRegistry(address(blsApkRegistry)),
-            regcoord.IIndexRegistry(address(indexRegistry))
-        );
-
-        {
-            uint numQuorums = 1;
-            // for each quorum to setup, we need to define
-            // QuorumOperatorSetParam, minimumStakeForQuorum, and strategyParams
-            regcoord.IRegistryCoordinator.OperatorSetParam[]
-                memory quorumsOperatorSetParams = new regcoord.IRegistryCoordinator.OperatorSetParam[](
-                    numQuorums
-                );
-            for (uint i = 0; i < numQuorums; i++) {
-                // hard code these for now
-                quorumsOperatorSetParams[i] = regcoord
-                    .IRegistryCoordinator
-                    .OperatorSetParam({
-                        maxOperatorCount: 10000,
-                        kickBIPsOfOperatorStake: 0,
-                        kickBIPsOfTotalStake: 0
+        {   
+            StrategyParams[]
+                memory quorumsStrategyParams = new StrategyParams[](
+                    numStrategies
+            );
+            
+            for (uint j = 0; j < numStrategies; j++) {
+                quorumsStrategyParams[j] = StrategyParams({
+                        strategy: deployedStrategyArray[j],
+                        multiplier: 10_000
                     });
             }
-            // set to 0 for every quorum
-            uint96[] memory quorumsMinimumStake = new uint96[](numQuorums);
-            IStakeRegistry.StrategyParams[][]
-                memory quorumsStrategyParams = new IStakeRegistry.StrategyParams[][](
-                    numQuorums
-                );
-            for (uint i = 0; i < numQuorums; i++) {
-                quorumsStrategyParams[i] = new IStakeRegistry.StrategyParams[](
-                    numStrategies
-                );
-                for (uint j = 0; j < numStrategies; j++) {
-                    quorumsStrategyParams[i][j] = IStakeRegistry
-                        .StrategyParams({
-                            strategy: deployedStrategyArray[j],
-                            // setting this to 1 ether since the divisor is also 1 ether
-                            // therefore this allows an operator to register with even just 1 token
-                            // see https://github.com/Layr-Labs/eigenlayer-middleware/blob/m2-mainnet/src/StakeRegistry.sol#L484
-                            //    weight += uint96(sharesAmount * strategyAndMultiplier.multiplier / WEIGHTING_DIVISOR);
-                            multiplier: 1 ether
-                        });
-                }
-            }
+        
+            Quorum memory quorum = Quorum(
+                quorumsStrategyParams
+            );
+
             helloWorldProxyAdmin.upgradeAndCall(
                 TransparentUpgradeableProxy(
-                    payable(address(registryCoordinator))
+                    payable(address(stakeRegistry))
                 ),
-                address(registryCoordinatorImplementation),
+                address(stakeRegistryImplementation),
                 abi.encodeWithSelector(
-                    regcoord.RegistryCoordinator.initialize.selector,
-                    // we set churnApprover and ejector to communityMultisig because we don't need them
-                    helloWorldCommunityMultisig,
-                    helloWorldCommunityMultisig,
-                    helloWorldCommunityMultisig,
-                    helloWorldPauserReg,
-                    0, // 0 initialPausedStatus means everything unpaused
-                    quorumsOperatorSetParams,
-                    quorumsMinimumStake,
-                    quorumsStrategyParams
+                    ECDSAStakeRegistry.initialize.selector,
+                    address(helloWorldServiceManager),
+                    1,
+                    quorum
                 )
             );
         }
 
         helloWorldServiceManagerImplementation = new HelloWorldServiceManager(
-            avsDirectory,
-            registryCoordinator,
-            stakeRegistry
+            address(avsDirectory),
+            address(stakeRegistry),
+            address(delegationManager)
         );
         // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
         helloWorldProxyAdmin.upgrade(
@@ -372,18 +274,14 @@ contract HelloWorldDeployer is Script, Utils {
         );
         vm.serializeAddress(
             deployed_addresses,
-            "registryCoordinator",
-            address(registryCoordinator)
+            "ECDSAStakeRegistry",
+            address(stakeRegistry)
         );
-        vm.serializeAddress(
-            deployed_addresses,
-            "registryCoordinatorImplementation",
-            address(registryCoordinatorImplementation)
-        );
+        
         string memory deployed_addresses_output = vm.serializeAddress(
             deployed_addresses,
-            "operatorStateRetriever",
-            address(operatorStateRetriever)
+            "ECDSAStakeRegistryImplementation",
+            address(stakeRegistryImplementation)
         );
 
         // serialize all the data
