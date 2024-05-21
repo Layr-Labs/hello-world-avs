@@ -17,4 +17,6 @@ dist/
 *.d.ts
 
 # Ignore local anvil state
-utils/anvil/*.json
+# utils/anvil/*.json
+
+oldUtils

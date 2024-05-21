@@ -28,23 +28,15 @@ deploy-hello-world-contracts-to-anvil-and-save-state: ## Deploy avs
 
 deploy-contracts-to-anvil-and-save-state: deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-hello-world-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts 
 
-start-anvil-chain-with-el-and-avs-deployed: ## starts anvil from a saved state file (with el and avs contracts deployed)
+start-chain-with-contracts-deployed: ## starts anvil from a saved state file (with el and avs contracts deployed)
 	./utils/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
 
-start-chain-and-deploy-hello-world-avs: build-contracts deploy-contracts-to-anvil-and-save-state start-anvil-chain-with-el-and-avs-deployed
+# start-chain-and-deploy-hello-world-avs: build-contracts deploy-contracts-to-anvil-and-save-state start-anvil-chain-with-el-and-avs-deployed
 
 clean-deployments:
 	./utils/anvil/clean-deployments.sh
 
 __CLI__: ## 
-
-cli-setup-operator: send-fund cli-register-operator-with-eigenlayer cli-deposit-into-mocktoken-strategy cli-register-operator-with-avs ## registers operator with eigenlayer and avs
-
-cli-register-operator-with-eigenlayer: ## registers operator with delegationManager
-	go run cli/main.go --config config-files/operator.anvil.yaml register-operator-with-eigenlayer
-
-cli-deposit-into-mocktoken-strategy: ## 
-	./scripts/deposit-into-mocktoken-strategy.sh
 
 send-fund: ## sends fund to the operator saved in tests/keys/test.ecdsa.key.json
 	cast send 0x860B6912C2d0337ef05bbC89b0C2CB6CbAEAB4A5 --value 10ether --private-key 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
@@ -55,6 +47,9 @@ send-fund: ## sends fund to the operator saved in tests/keys/test.ecdsa.key.json
 ____OFFCHAIN_SOFTWARE___: ## 
 start-operator: 
 	node dist/index.js
+
+spam-tasks:
+	node dist/createNewTasks.js
 
 -----------------------------: ## 
 _____HELPER_____: ## 
