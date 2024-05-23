@@ -37,10 +37,10 @@ contract HelloWorldDeployer is Script, Utils {
     ProxyAdmin public helloWorldProxyAdmin;
     PauserRegistry public helloWorldPauserReg;
     
-    ECDSAStakeRegistry public stakeRegistry;
+    ECDSAStakeRegistry public stakeRegistryProxy;
     ECDSAStakeRegistry public stakeRegistryImplementation;
 
-    HelloWorldServiceManager public helloWorldServiceManager;
+    HelloWorldServiceManager public helloWorldServiceManagerProxy;
     HelloWorldServiceManager public helloWorldServiceManagerImplementation;
 
     function run() external {
@@ -173,7 +173,7 @@ contract HelloWorldDeployer is Script, Utils {
          * First, deploy upgradeable proxy contracts that **will point** to the implementations. Since the implementation contracts are
          * not yet deployed, we give these proxies an empty contract as the initial implementation, to act as if they have no code.
          */
-        helloWorldServiceManager = HelloWorldServiceManager(
+        helloWorldServiceManagerProxy = HelloWorldServiceManager(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -182,7 +182,7 @@ contract HelloWorldDeployer is Script, Utils {
                 )
             )
         );
-        stakeRegistry = ECDSAStakeRegistry(
+        stakeRegistryProxy = ECDSAStakeRegistry(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -199,7 +199,7 @@ contract HelloWorldDeployer is Script, Utils {
             );
 
             helloWorldProxyAdmin.upgrade(
-                TransparentUpgradeableProxy(payable(address(stakeRegistry))),
+                TransparentUpgradeableProxy(payable(address(stakeRegistryProxy))),
                 address(stakeRegistryImplementation)
             );
         }
@@ -223,12 +223,12 @@ contract HelloWorldDeployer is Script, Utils {
 
             helloWorldProxyAdmin.upgradeAndCall(
                 TransparentUpgradeableProxy(
-                    payable(address(stakeRegistry))
+                    payable(address(stakeRegistryProxy))
                 ),
                 address(stakeRegistryImplementation),
                 abi.encodeWithSelector(
                     ECDSAStakeRegistry.initialize.selector,
-                    address(helloWorldServiceManager),
+                    address(helloWorldServiceManagerImplementation),
                     1,
                     quorum
                 )
@@ -237,13 +237,13 @@ contract HelloWorldDeployer is Script, Utils {
 
         helloWorldServiceManagerImplementation = new HelloWorldServiceManager(
             address(avsDirectory),
-            address(stakeRegistry),
+            address(stakeRegistryProxy),
             address(delegationManager)
         );
         // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
         helloWorldProxyAdmin.upgrade(
             TransparentUpgradeableProxy(
-                payable(address(helloWorldServiceManager))
+                payable(address(helloWorldServiceManagerProxy))
             ),
             address(helloWorldServiceManagerImplementation)
         );
@@ -264,8 +264,8 @@ contract HelloWorldDeployer is Script, Utils {
         );
         vm.serializeAddress(
             deployed_addresses,
-            "HelloWorldServiceManager",
-            address(helloWorldServiceManager)
+            "HelloWorldServiceManagerProxy",
+            address(helloWorldServiceManagerProxy)
         );
         vm.serializeAddress(
             deployed_addresses,
@@ -275,7 +275,7 @@ contract HelloWorldDeployer is Script, Utils {
         vm.serializeAddress(
             deployed_addresses,
             "ECDSAStakeRegistry",
-            address(stakeRegistry)
+            address(stakeRegistryProxy)
         );
         
         string memory deployed_addresses_output = vm.serializeAddress(
