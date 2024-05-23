@@ -64,15 +64,10 @@ contract HelloWorldServiceManager is
     function createNewTask(
         string memory name
     ) external {
-        // create a new task struct
-        Task memory newTask;
-        newTask.name = name;
-        newTask.taskCreatedBlock = uint32(block.number);
+        // TODO: create a new task struct
 
-        // store hash of task onchain, emit event, and increase taskNum
-        allTaskHashes[latestTaskNum] = keccak256(abi.encode(newTask));
-        emit NewTaskCreated(latestTaskNum, newTask);
-        latestTaskNum = latestTaskNum + 1;
+        // TODO: store hash of task onchain, emit event, and increase taskNum
+
     }
 
     // NOTE: this function responds to existing tasks.
@@ -82,30 +77,18 @@ contract HelloWorldServiceManager is
         bytes calldata signature
     ) external onlyOperator {
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
-        require(
-            keccak256(abi.encode(task)) ==
-                allTaskHashes[referenceTaskIndex],
-            "supplied task does not match the one recorded in the contract"
-        );
-        // some logical checks
-        require(
-            allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
-            "Operator has already responded to the task"
-        );
+        
+
+        // check if operator is registered
+        
 
         // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
-        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
 
-        // Recover the signer address from the signature
-        address signer = ethSignedMessageHash.recover(signature);
+        // Recover the signer address from the signature and verify it 
 
-        require(signer == msg.sender, "Message signer is not operator");
 
         // updating the storage with task responsea
-        allTaskResponses[msg.sender][referenceTaskIndex] = signature;
 
         // emitting event
-        emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }
 }
