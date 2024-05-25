@@ -228,7 +228,7 @@ contract HelloWorldDeployer is Script, Utils {
                 address(stakeRegistryImplementation),
                 abi.encodeWithSelector(
                     ECDSAStakeRegistry.initialize.selector,
-                    address(helloWorldServiceManagerImplementation),
+                    address(helloWorldServiceManagerProxy),
                     1,
                     quorum
                 )
