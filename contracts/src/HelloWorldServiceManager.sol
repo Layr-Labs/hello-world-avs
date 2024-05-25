@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "@eigenlayer/contracts/libraries/BytesLib.sol";
+import "@eigenlayer/contracts/core/DelegationManager.sol";
 import "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
@@ -81,6 +82,10 @@ contract HelloWorldServiceManager is
         uint32 referenceTaskIndex,
         bytes calldata signature
     ) external onlyOperator {
+        require(
+            operatorHasMinimumWeight(msg.sender),
+            "Operator does not have match the weight requirements"
+        );
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
             keccak256(abi.encode(task)) ==
@@ -107,5 +112,11 @@ contract HelloWorldServiceManager is
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
+    }
+
+    // HELPER
+
+    function operatorHasMinimumWeight(address operator) public view returns (bool) {
+        return ECDSAStakeRegistry(stakeRegistry).getOperatorWeight(operator) >= ECDSAStakeRegistry(stakeRegistry).minimumWeight();
     }
 }
