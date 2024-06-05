@@ -39,11 +39,12 @@ Following NodeJS packages:
 ### Steps
 
 1. Make sure Docker is running
-2. Run `make start-chain-with-contracts-deployed`
+2. Run `yarn install`
+3. Run `make start-chain-with-contracts-deployed`
     * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
-3. Open new terminal tab and run `make start-operator`
+4. Open new terminal tab and run `make start-operator`
     * This will compile the AVS software and start monitering new tasks
-4. Open new terminal tab and run `make spam-tasks` (Optional)
+5. Open new terminal tab and run `make spam-tasks` (Optional)
     * This will spam the AVS with random names every 15 seconds
 
 ## Extensions
