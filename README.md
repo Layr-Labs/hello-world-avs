@@ -26,24 +26,25 @@ Where additional sophistication with AVSs come into the picture:
 
 ## Quick Start
 
-### Dependencies 
+### Dependencies
 
 1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
 
+Following NodeJS packages:
+1. tcs
+1. ethers
+
 ### Steps
 
 1. Make sure Docker is running
 2. Run `make start-chain-with-contracts-deployed`
-
-    2.1 This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+    * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
 3. Open new terminal tab and run `make start-operator`
-
-    3.1 This will compile the AVS software and start monitering new tasks
-4. Open new terminal tab and run `make spam-tasks` (Optional) 
-
-    4.1 This will spam the AVS with random names every 15 seconds
+    * This will compile the AVS software and start monitering new tasks
+4. Open new terminal tab and run `make spam-tasks` (Optional)
+    * This will spam the AVS with random names every 15 seconds
 
 ## Extensions
 
