@@ -127,6 +127,8 @@ contract HelloWorldServiceManager is
     // set response window
     function setResponseWindow(uint256 newWindow) public onlyOwner {
         responseWindow = newWindow;
+
+        emit ResponseWindowChanged(newWindow);
     }
 
     // HELPER

@@ -7,6 +7,8 @@ interface IHelloWorldServiceManager {
 
     event TaskResponded(uint32 indexed taskIndex, Task task, address operator);
 
+    event ResponseWindowChanged(uint256 newResponseWindow);
+
     // STRUCTS
     struct Task {
         string name;
