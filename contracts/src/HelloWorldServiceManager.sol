@@ -26,6 +26,9 @@ contract HelloWorldServiceManager is
     // The latest task index
     uint32 public latestTaskNum;
 
+    // Operator should respond within X blocks
+    uint256 public responseWindow = 100;
+
     // mapping of task indices to all tasks hashes
     // when a task is created, task hash is stored here,
     // and responses need to pass the actual task,
@@ -97,6 +100,13 @@ contract HelloWorldServiceManager is
             allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
             "Operator has already responded to the task"
         );
+        // respond within x blocks check
+        require(
+            task.taskCreatedBlock + responseWindow
+            > 
+            block.timestamp,
+            "the window for submitting response is closed"
+        );
 
         // The message that was signed
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
@@ -112,6 +122,11 @@ contract HelloWorldServiceManager is
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
+    }
+
+    // set response window
+    function setResponseWindow(uint256 newWindow) public onlyOwner {
+        responseWindow = newWindow;
     }
 
     // HELPER
