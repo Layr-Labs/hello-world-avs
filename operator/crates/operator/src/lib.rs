@@ -1,3 +1,7 @@
-pub mod start_operator;
+// Start creating tasks and respond appropriately
 
-pub mod newtask;
+/// Create createNewTask at regular intervals with random task names
+pub mod spam_tasks;
+
+/// Register Operator and monitor for NewTaskCreated event
+pub mod start_operator;
