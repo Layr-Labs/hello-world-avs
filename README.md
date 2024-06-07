@@ -32,7 +32,7 @@ Where additional sophistication with AVSs come into the picture:
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
 
-### Steps
+### Go lang Steps
 
 1. Make sure Docker is running
 2. Run `make start-chain-with-contracts-deployed`
@@ -44,6 +44,28 @@ Where additional sophistication with AVSs come into the picture:
 4. Open new terminal tab and run `make spam-tasks` (Optional) 
 
     4.1 This will spam the AVS with random names every 15 seconds
+
+## Rust lang Steps
+
+## Anvil 
+
+To use the Rust Lang on local anvil chain , copy the env paramters without the `rust`
+namespace  to the ones with the `rust` namespace.
+
+1. Run `make start-chain-with-contracts-deployed`
+   2.1 This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+
+2. Run `cargo run --bin start_operator`
+
+3. Run `cargo run --bin spam_tasks`
+
+
+## Holesky Testnet
+
+1. Run `cargo run --bin start_operator`
+
+2. Run `cargo run --bin spam_tasks `
+
 
 ## Extensions
 
