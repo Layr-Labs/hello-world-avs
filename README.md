@@ -56,7 +56,7 @@ To use the Rust Lang on local anvil chain , copy the env parameters without the 
 namespace  to the ones with the `rust` namespace.
 
 1. Run `make start-chain-with-contracts-deployed`
-   2.1 This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+    * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
 
 2. Run `cargo run --bin start_operator`
 
