@@ -52,7 +52,7 @@ Following NodeJS packages:
 
 ## Anvil 
 
-To use the Rust Lang on local anvil chain , copy the env paramters without the `rust`
+To use the Rust Lang on local anvil chain , copy the env parameters without the `rust`
 namespace  to the ones with the `rust` namespace.
 
 1. Run `make start-chain-with-contracts-deployed`
