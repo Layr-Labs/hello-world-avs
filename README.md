@@ -48,7 +48,7 @@ Following NodeJS packages:
 5. Open new terminal tab and run `make spam-tasks` (Optional)
     * This will spam the AVS with random names every 15 seconds
 
-## Rust lang Steps
+### Rust lang Steps
 
 ## Anvil 
 
