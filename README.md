@@ -65,6 +65,12 @@ namespace  to the ones with the `rust` namespace.
 
 ## Holesky Testnet
 
+| Contract Name               | Holesky Address                                   |
+| -------------               | -------------                                     |
+| Hello World Service Manager | [0x3361953F4a9628672dCBcDb29e91735fb1985390](https://holesky.etherscan.io/address/0x3361953F4a9628672dCBcDb29e91735fb1985390)    |
+| Delegation Manager          | [0xA44151489861Fe9e3055d95adC98FbD462B948e7](https://holesky.etherscan.io/address/0xA44151489861Fe9e3055d95adC98FbD462B948e7)                                           |
+| Avs Directory               | [0x055733000064333CaDDbC92763c58BF0192fFeBf](https://holesky.etherscan.io/address/0x055733000064333CaDDbC92763c58BF0192fFeBf)      |
+
 1. Run `cargo run --bin start_operator`
 
 2. Run `cargo run --bin spam_tasks `
