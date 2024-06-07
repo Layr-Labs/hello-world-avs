@@ -1,5 +1,5 @@
 [workspace]
-members = ["operator/crates/operator/"
+members = ["operator/rust/crates/operator/"
 ]
 
 resolver = "2"

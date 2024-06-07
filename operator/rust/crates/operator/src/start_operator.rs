@@ -143,7 +143,6 @@ async fn monitor_new_tasks() -> Result<()> {
 
     loop {
         println!("Monitoring for new tasks...");
-        let current_block = provider.get_block_number().await?;
 
         let filter = Filter::new()
             .address(hello_world_contract_address)
@@ -168,8 +167,9 @@ async fn monitor_new_tasks() -> Result<()> {
             }
         }
 
-        latest_processed_block = current_block;
         tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        let current_block = provider.get_block_number().await?;
+        latest_processed_block = current_block;
     }
 }
 
