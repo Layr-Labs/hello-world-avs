@@ -71,6 +71,8 @@ namespace  to the ones with the `rust` namespace.
 | Delegation Manager          | [0xA44151489861Fe9e3055d95adC98FbD462B948e7](https://holesky.etherscan.io/address/0xA44151489861Fe9e3055d95adC98FbD462B948e7)                                           |
 | Avs Directory               | [0x055733000064333CaDDbC92763c58BF0192fFeBf](https://holesky.etherscan.io/address/0x055733000064333CaDDbC92763c58BF0192fFeBf)      |
 
+No scripts are to be run for holesky
+
 1. Run `cargo run --bin start_operator`
 
 2. Run `cargo run --bin spam_tasks `
