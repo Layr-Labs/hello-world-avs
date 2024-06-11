@@ -107,7 +107,7 @@ contract HelloWorldServiceManager is
 
         require(signer == msg.sender, "Message signer is not operator");
 
-        // updating the storage with task responsea
+        // updating the storage with task responses
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
 
         // emitting event
