@@ -43,7 +43,7 @@ Where additional sophistication with AVSs come into the picture:
     3.1 This will compile the AVS software and start monitering new tasks
 4. Open new terminal tab and run `make spam-tasks` (Optional) 
 
-    4.1 This will spam the AVS with random names every 15 seconds
+    4.1 This will spam the AVS with random names every 5 seconds
 
 ## Extensions
 
