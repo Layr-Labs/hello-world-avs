@@ -21,7 +21,6 @@ pub static RPC_URL: Lazy<String> =
 pub static HELLO_WORLD_CONTRACT_ADDRESS: Lazy<String> = Lazy::new(|| {
     env::var("RUST_CONTRACT_ADDRESS").expect("failed to get hello world contract address from env")
 });
-
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("RUST_PRIVATE_KEY").expect("failed to retrieve private key"));
 sol!(

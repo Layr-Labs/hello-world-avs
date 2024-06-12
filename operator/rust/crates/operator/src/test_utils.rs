@@ -1,14 +1,18 @@
 #![allow(missing_docs)]
-use alloy_network::EthereumSigner;
-use alloy_provider::{Provider, ProviderBuilder};
+use alloy_network::{Ethereum, EthereumSigner};
+use alloy_provider::fillers::{
+    ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, SignerFiller,
+};
+use alloy_provider::{Provider, ProviderBuilder, RootProvider};
 use alloy_rpc_types::{BlockNumberOrTag, Filter};
 use alloy_sol_types::{sol, SolEvent};
+use alloy_transport_http::Client;
 use chrono::Utc;
 use once_cell::sync::Lazy;
+use rand::Rng;
 use rand::RngCore;
-
-use dotenv::dotenv;
 use reqwest::Url;
+use tokio::time::{self, Duration};
 use HelloWorldServiceManager::Task;
 
 use alloy_primitives::{eip191_hash_message, Address, FixedBytes, U256};
@@ -260,10 +264,84 @@ pub async fn register_operator() -> Result<()> {
     Ok(())
 }
 
+/// Generate random task names from the given adjectives and nouns
+fn generate_random_name() -> String {
+    let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
+    let nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear"];
+
+    let mut rng = rand::thread_rng();
+
+    let adjective = adjectives[rng.gen_range(0..adjectives.len())];
+    let noun = nouns[rng.gen_range(0..nouns.len())];
+    let number: u16 = rng.gen_range(0..1000);
+
+    format!("{}{}{}", adjective, noun, number)
+}
+
+/// Calls CreateNewTask function of the Hello world service manager contract
+async fn create_new_task(task_name: &str) -> Result<()> {
+    let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
+        .expect("wrong hello world contract address");
+
+    let provider = get_provider_with_wallet(KEY.clone());
+    let hello_world_contract =
+        HelloWorldServiceManager::new(hello_world_contract_address, provider);
+
+    let tx = hello_world_contract
+        .createNewTask(task_name.to_string())
+        .send()
+        .await?
+        .get_receipt()
+        .await?;
+
+    println!(
+        "Transaction successfull with tx : {:?}",
+        tx.transaction_hash
+    );
+
+    Ok(())
+}
+
+/// Start creating tasks at every 15 seconds
+async fn start_creating_tasks() {
+    let mut interval = time::interval(Duration::from_secs(15));
+
+    loop {
+        interval.tick().await;
+        let random_name = generate_random_name();
+        let _ = create_new_task(&random_name).await;
+    }
+}
+
+pub fn get_provider_with_wallet(
+    key: String,
+) -> FillProvider<
+    JoinFill<
+        JoinFill<
+            JoinFill<JoinFill<alloy_provider::Identity, GasFiller>, NonceFiller>,
+            ChainIdFiller,
+        >,
+        SignerFiller<EthereumSigner>,
+    >,
+    RootProvider<alloy_transport_http::Http<Client>>,
+    alloy_transport_http::Http<Client>,
+    Ethereum,
+> {
+    let wallet = LocalWallet::from_str(&key.to_string()).expect("failed to generate wallet ");
+    let url = Url::parse(&RPC_URL.clone()).expect("Wrong rpc url");
+    let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .signer(EthereumSigner::from(wallet.clone()))
+        .on_http(url);
+
+    return provider;
+}
+
 #[cfg(test)]
 mod tests {
-
+    use dotenv::dotenv;
     use DelegationManager::isOperatorReturn;
+    use HelloWorldServiceManager::latestTaskNumReturn;
 
     use super::*;
     #[tokio::test]
@@ -296,5 +374,28 @@ mod tests {
         } = is_operator;
 
         assert!(isoperator_bool);
+    }
+
+    #[tokio::test]
+    async fn test_spam_tasks() {
+        dotenv().ok();
+        let provider = get_provider_with_wallet(KEY.clone());
+        let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
+            .expect("wrong hello world contract address");
+        let hello_world_contract =
+            HelloWorldServiceManager::new(hello_world_contract_address, &provider);
+
+        let latest_task_num = hello_world_contract.latestTaskNum().call().await.unwrap();
+
+        let latestTaskNumReturn { _0: task_num } = latest_task_num;
+        let _ = create_new_task("HelloEigen").await;
+
+        let latest_task_num_after_creating_task =
+            hello_world_contract.latestTaskNum().call().await.unwrap();
+        let latestTaskNumReturn {
+            _0: task_num_after_task,
+        } = latest_task_num_after_creating_task;
+
+        assert_eq!(task_num + 1, task_num_after_task);
     }
 }
