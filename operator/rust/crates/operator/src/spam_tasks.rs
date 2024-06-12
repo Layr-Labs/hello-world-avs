@@ -16,13 +16,14 @@ use reqwest::Url;
 use std::{env, str::FromStr};
 use tokio::time::{self, Duration};
 pub static RPC_URL: Lazy<String> =
-    Lazy::new(|| env::var("RUST_RPC_URL").expect("failed to get rpc url from env"));
+    Lazy::new(|| env::var("RPC_URL").expect("failed to get rpc url from env"));
 
 pub static HELLO_WORLD_CONTRACT_ADDRESS: Lazy<String> = Lazy::new(|| {
-    env::var("RUST_CONTRACT_ADDRESS").expect("failed to get hello world contract address from env")
+    env::var("CONTRACT_ADDRESS").expect("failed to get hello world contract address from env")
 });
+#[allow(unused)]
 static KEY: Lazy<String> =
-    Lazy::new(|| env::var("RUST_PRIVATE_KEY").expect("failed to retrieve private key"));
+    Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 sol!(
     #[allow(missing_docs)]
     #[sol(rpc)]
@@ -30,6 +31,7 @@ sol!(
     "json_abi/HelloWorldServiceManager.json"
 );
 
+#[allow(unused)]
 /// Generate random task names from the given adjectives and nouns
 fn generate_random_name() -> String {
     let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
@@ -44,6 +46,7 @@ fn generate_random_name() -> String {
     format!("{}{}{}", adjective, noun, number)
 }
 
+#[allow(unused)]
 /// Calls CreateNewTask function of the Hello world service manager contract
 async fn create_new_task(task_name: &str) -> Result<()> {
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
@@ -68,6 +71,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(unused)]
 /// Start creating tasks at every 15 seconds
 async fn start_creating_tasks() {
     let mut interval = time::interval(Duration::from_secs(15));
@@ -103,6 +107,7 @@ pub fn get_provider_with_wallet(
     return provider;
 }
 
+#[allow(dead_code)]
 #[tokio::main]
 async fn main() {
     dotenv().ok();

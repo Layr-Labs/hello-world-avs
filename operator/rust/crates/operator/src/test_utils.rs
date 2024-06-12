@@ -215,7 +215,7 @@ pub async fn register_operator() -> Result<()> {
         None,
     );
 
-    let tx_hash = elcontracts_writer_instance
+    let _tx_hash = elcontracts_writer_instance
         .register_as_operator(operator)
         .await;
     println!("Operator registered on EL successfully");
@@ -264,6 +264,7 @@ pub async fn register_operator() -> Result<()> {
     Ok(())
 }
 
+#[allow(unused)]
 /// Generate random task names from the given adjectives and nouns
 fn generate_random_name() -> String {
     let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
@@ -278,6 +279,7 @@ fn generate_random_name() -> String {
     format!("{}{}{}", adjective, noun, number)
 }
 
+#[allow(unused)]
 /// Calls CreateNewTask function of the Hello world service manager contract
 async fn create_new_task(task_name: &str) -> Result<()> {
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
@@ -302,6 +304,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(unused)]
 /// Start creating tasks at every 15 seconds
 async fn start_creating_tasks() {
     let mut interval = time::interval(Duration::from_secs(15));
