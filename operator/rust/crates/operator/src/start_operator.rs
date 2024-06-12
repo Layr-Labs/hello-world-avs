@@ -236,21 +236,27 @@ async fn register_operator() -> Result<()> {
 
     let signature = wallet.sign_hash(&digest_hash).await?;
 
-    let _operator_signature = SignatureWithSaltAndExpiry {
+    let operator_signature = SignatureWithSaltAndExpiry {
         signature: signature.as_bytes().into(),
         salt,
         expiry: expiry,
     };
 
-    let _contract_ecdsa_stake_registry =
+    let contract_ecdsa_stake_registry =
         ECDSAStakeRegistry::new(stake_registry_contract_address, provider);
     println!("initialize new ecdsa ");
-    // For Holesky , we currently don't have any deployed version of ecdsa stake registry contract.
-    // If you wish to ude it , you can deploy it and uncomment below to register operator
 
-    // let registeroperator_details = contract_ecdsa_stake_registry
-    //     .registerOperatorWithSignature(wallet.clone().address(), operator_signature);
-    // let tx  = registeroperator_details.gas(300000).gas_price(20000000000).send().await?.get_receipt().await?;
+    // If you wish to run on holesky, please deploy the stake registry contract(it's not deployed right now)
+    // and uncomment the gas and gas_price
+    let registeroperator_details = contract_ecdsa_stake_registry
+        .registerOperatorWithSignature(wallet.clone().address(), operator_signature);
+    let tx = registeroperator_details
+        // .gas(300000)
+        // .gas_price(20000000000)
+        .send()
+        .await?
+        .get_receipt()
+        .await?;
     println!(
         "Operator registered on AVS successfully :{:?}",
         wallet.address()
