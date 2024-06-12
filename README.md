@@ -52,15 +52,13 @@ Following NodeJS packages:
 
 ## Anvil 
 
-To use the Rust Lang on local anvil chain , copy the env parameters without the `rust`
-namespace  to the ones with the `rust` namespace.
 
 1. Run `make start-chain-with-contracts-deployed`
     * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
 
-2. Run `cargo run --bin start_operator`
+2. Run `make start-rust-operator`
 
-3. Run `cargo run --bin spam_tasks`
+3. Run `make spam-rust-tasks`
 
 
 ## Holesky Testnet
@@ -71,11 +69,13 @@ namespace  to the ones with the `rust` namespace.
 | Delegation Manager          | [0xA44151489861Fe9e3055d95adC98FbD462B948e7](https://holesky.etherscan.io/address/0xA44151489861Fe9e3055d95adC98FbD462B948e7)                                           |
 | Avs Directory               | [0x055733000064333CaDDbC92763c58BF0192fFeBf](https://holesky.etherscan.io/address/0x055733000064333CaDDbC92763c58BF0192fFeBf)      |
 
-No scripts are to be run for holesky
+You don't need to run any script for holesky testnet.
 
-1. Run `cargo run --bin start_operator`
+1. Use the HOLESKY_ namespace env parameters in the code , instead of normal parameters.
 
-2. Run `cargo run --bin spam_tasks `
+2. Run `make start-rust-operator`
+
+3. Run `make spam-rust-tasks `
 
 
 ## Extensions
