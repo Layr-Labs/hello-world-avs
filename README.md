@@ -37,7 +37,7 @@ Following NodeJS packages:
 1. tcs
 1. ethers
 
-### Go lang Steps
+### Typescript Steps
 
 1. Make sure Docker is running
 2. Run `yarn install`
