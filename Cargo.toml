@@ -30,8 +30,10 @@ tokio = {version = "1.37.0" , features = ["test-util", "full","sync","rt-multi-t
 hello-world-avs-operator = {path = "operator/crates/operator"}
 
 #eigen-rs
-eigen-client-elcontracts = {git = "https://github.com/supernovahs/eigensdk-rs", rev = "3325b1f"}
-eigen-types = {git = "https://github.com/supernovahs/eigensdk-rs", rev = "3325b1f"}
+eigen-client-elcontracts = {git = "https://github.com/supernovahs/eigensdk-rs", rev = "e700fa2"}
+eigen-types = {git = "https://github.com/supernovahs/eigensdk-rs", rev = "e700fa2"}
+eigen-utils = {git = "https://github.com/supernovahs/eigensdk-rs", rev = "e700fa2"}
+
 #alloy
 alloy-chains = "0.1.15"
 alloy-primitives = "0.7.2"

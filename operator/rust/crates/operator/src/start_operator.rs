@@ -34,26 +34,7 @@ sol!(
     "json_abi/HelloWorldServiceManager.json"
 );
 
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    ECDSAStakeRegistry,
-    "json_abi/ECDSAStakeRegistry.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    DelegationManager,
-    "json_abi/DelegationManager.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    IAVSDirectory,
-    "json_abi/IAVSDirectory.json"
-);
+use eigen_utils::binding::ECDSAStakeRegistry;
 
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
@@ -193,7 +174,6 @@ async fn register_operator() -> Result<()> {
     let elcontracts_reader_instance = ELChainReader::new(
         default_slasher,
         delegation_manager_contract_address,
-        default_strategy,
         avs_directory_contract_address,
         RPC_URL.clone(),
     );
@@ -202,7 +182,7 @@ async fn register_operator() -> Result<()> {
         default_strategy,
         elcontracts_reader_instance.clone(),
         RPC_URL.clone(),
-        wallet.clone(),
+        KEY.clone(),
     );
 
     let operator = Operator::new(
@@ -250,7 +230,7 @@ async fn register_operator() -> Result<()> {
     // and uncomment the gas and gas_price
     let registeroperator_details = contract_ecdsa_stake_registry
         .registerOperatorWithSignature(wallet.clone().address(), operator_signature);
-    let tx = registeroperator_details
+    let _tx = registeroperator_details
         // .gas(300000)
         // .gas_price(20000000000)
         .send()

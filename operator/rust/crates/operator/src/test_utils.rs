@@ -34,26 +34,7 @@ sol!(
     "json_abi/HelloWorldServiceManager.json"
 );
 
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    ECDSAStakeRegistry,
-    "json_abi/ECDSAStakeRegistry.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    DelegationManager,
-    "json_abi/DelegationManager.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    IAVSDirectory,
-    "json_abi/IAVSDirectory.json"
-);
+use eigen_utils::binding::ECDSAStakeRegistry;
 
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
@@ -195,7 +176,6 @@ pub async fn register_operator() -> Result<()> {
     let elcontracts_reader_instance = ELChainReader::new(
         default_slasher,
         delegation_manager_contract_address,
-        default_strategy,
         avs_directory_contract_address,
         RPC_URL.clone(),
     );
@@ -204,7 +184,7 @@ pub async fn register_operator() -> Result<()> {
         default_strategy,
         elcontracts_reader_instance.clone(),
         RPC_URL.clone(),
-        wallet.clone(),
+        KEY.clone(),
     );
 
     let operator = Operator::new(
@@ -342,11 +322,10 @@ pub fn get_provider_with_wallet(
 
 #[cfg(test)]
 mod tests {
-    use dotenv::dotenv;
-    use DelegationManager::isOperatorReturn;
-    use HelloWorldServiceManager::latestTaskNumReturn;
-
     use super::*;
+    use dotenv::dotenv;
+    use eigen_utils::binding::DelegationManager::{self, isOperatorReturn};
+    use HelloWorldServiceManager::latestTaskNumReturn;
     #[tokio::test]
     async fn test_register_operator() {
         dotenv().ok();

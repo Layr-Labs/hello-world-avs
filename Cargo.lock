@@ -1366,7 +1366,7 @@ dependencies = [
 [[package]]
 name = "eigen-client-elcontracts"
 version = "0.0.1-alpha"
-source = "git+https://github.com/supernovahs/eigensdk-rs?rev=3325b1f#3325b1fa11b5e142d81c875226ed1db14e163d0d"
+source = "git+https://github.com/supernovahs/eigensdk-rs?rev=e700fa2#e700fa223635d0aa132e5af283d16f2741a87081"
 dependencies = [
  "alloy-contract",
  "alloy-network",
@@ -1378,6 +1378,7 @@ dependencies = [
  "ark-bn254",
  "ark-ff 0.4.2",
  "eigen-types",
+ "eigen-utils",
  "reqwest 0.12.4",
  "thiserror",
  "tracing",
@@ -1386,7 +1387,7 @@ dependencies = [
 [[package]]
 name = "eigen-contract-bindings"
 version = "0.0.1-alpha"
-source = "git+https://github.com/supernovahs/eigensdk-rs?rev=3325b1f#3325b1fa11b5e142d81c875226ed1db14e163d0d"
+source = "git+https://github.com/supernovahs/eigensdk-rs?rev=e700fa2#e700fa223635d0aa132e5af283d16f2741a87081"
 dependencies = [
  "ethers",
 ]
@@ -1394,7 +1395,7 @@ dependencies = [
 [[package]]
 name = "eigen-crypto-bls"
 version = "0.0.1-alpha"
-source = "git+https://github.com/supernovahs/eigensdk-rs?rev=3325b1f#3325b1fa11b5e142d81c875226ed1db14e163d0d"
+source = "git+https://github.com/supernovahs/eigensdk-rs?rev=e700fa2#e700fa223635d0aa132e5af283d16f2741a87081"
 dependencies = [
  "alloy-primitives",
  "ark-bn254",
@@ -1408,7 +1409,7 @@ dependencies = [
 [[package]]
 name = "eigen-crypto-bn254"
 version = "0.0.1-alpha"
-source = "git+https://github.com/supernovahs/eigensdk-rs?rev=3325b1f#3325b1fa11b5e142d81c875226ed1db14e163d0d"
+source = "git+https://github.com/supernovahs/eigensdk-rs?rev=e700fa2#e700fa223635d0aa132e5af283d16f2741a87081"
 dependencies = [
  "alloy-primitives",
  "ark-bn254",
@@ -1420,7 +1421,7 @@ dependencies = [
 [[package]]
 name = "eigen-types"
 version = "0.0.1-alpha"
-source = "git+https://github.com/supernovahs/eigensdk-rs?rev=3325b1f#3325b1fa11b5e142d81c875226ed1db14e163d0d"
+source = "git+https://github.com/supernovahs/eigensdk-rs?rev=e700fa2#e700fa223635d0aa132e5af283d16f2741a87081"
 dependencies = [
  "alloy-contract",
  "alloy-primitives",
@@ -1429,6 +1430,20 @@ dependencies = [
  "eigen-crypto-bls",
  "ethers",
  "num-bigint",
+]
+
+[[package]]
+name = "eigen-utils"
+version = "0.0.1-alpha"
+source = "git+https://github.com/supernovahs/eigensdk-rs?rev=e700fa2#e700fa223635d0aa132e5af283d16f2741a87081"
+dependencies = [
+ "alloy-contract",
+ "alloy-network",
+ "alloy-provider",
+ "alloy-signer-wallet",
+ "alloy-sol-types",
+ "alloy-transport-http",
+ "reqwest 0.12.4",
 ]
 
 [[package]]
@@ -2210,6 +2225,7 @@ dependencies = [
  "dotenv",
  "eigen-client-elcontracts",
  "eigen-types",
+ "eigen-utils",
  "eyre",
  "futures",
  "futures-util",

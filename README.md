@@ -52,6 +52,7 @@ Following NodeJS packages:
 
 #### Rust lang
 
+
 ##### Anvil 
 
 
@@ -61,6 +62,12 @@ Following NodeJS packages:
 2. Run `make start-rust-operator`
 
 3. Run `make spam-rust-tasks`
+
+Tests are supported in anvil only . Make sure to run the 1st command before running the  tests:
+
+```
+cargo test --workspace
+```
 
 
 ##### Holesky Testnet

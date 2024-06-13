@@ -31,6 +31,7 @@ alloy-signer.workspace = true
 #eigen
 eigen-client-elcontracts.workspace = true
 eigen-types.workspace = true
+eigen-utils.workspace = true
 
 #misc 
 dotenv = "0.15.0"
