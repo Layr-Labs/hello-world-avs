@@ -37,7 +37,9 @@ Following NodeJS packages:
 1. tcs
 1. ethers
 
-### Typescript Steps
+### Steps
+
+#### Typescript
 
 1. Make sure Docker is running
 2. Run `yarn install`
@@ -48,9 +50,9 @@ Following NodeJS packages:
 5. Open new terminal tab and run `make spam-tasks` (Optional)
     * This will spam the AVS with random names every 15 seconds
 
-### Rust lang Steps
+#### Rust lang
 
-## Anvil 
+##### Anvil 
 
 
 1. Run `make start-chain-with-contracts-deployed`
@@ -61,7 +63,7 @@ Following NodeJS packages:
 3. Run `make spam-rust-tasks`
 
 
-## Holesky Testnet
+##### Holesky Testnet
 
 | Contract Name               | Holesky Address                                   |
 | -------------               | -------------                                     |
