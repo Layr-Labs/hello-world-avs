@@ -18,7 +18,7 @@ There are 5 steps to this AVS:
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
 Where additional sophistication with AVSs come into the picture:
-- the nature of the request is more sophisicated than generating a constant string
+- the nature of the request is more sophisticated than generating a constant string
 - the operators might need to coordinate with each other
 - the type of signature is different based on the constraints of the service
 - the type and amount of security used to secure the AVS
@@ -36,7 +36,7 @@ Where additional sophistication with AVSs come into the picture:
 
 Following NodeJS packages:
 1. tcs
-1. ethers
+2. ethers
 
 ### Steps
 
@@ -91,3 +91,18 @@ You don't need to run any script for holesky testnet.
 - Operator needs a minimum stake amount to make submissions
 - Add another strategy to the AVS
 - Operator must respond within a certain number of blocks
+
+## Deployment on Holesky
+
+To deploy the Hello World AVS contracts to the Holesky network, follow these steps:
+
+1. Ensure you have the necessary RPC URL and private key for the Holesky network.
+2. Run the deployment script using Foundry:
+    ```bash
+    forge script script/HoleskyDeployer.s.sol:HoleskyDeployer --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast -vvvv
+    ```
+    Replace `$RPC_URL` with your Holesky RPC URL and `$PRIVATE_KEY` with your private key.
+
+## Adding a New Strategy
+
+To add a new strategy to the Hello World AVS, follow the guide provided in [`AddNewStrategy.md`](https://github.com/Layr-Labs/hello-world-avs/blob/master/AddNewStrategy.md). This guide walks you through the necessary steps to add and whitelist a new strategy for the AVS.
