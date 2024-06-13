@@ -31,6 +31,7 @@ Where additional sophistication with AVSs come into the picture:
 1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
+    3.1 Make sure Docker is running
 
 
 Following NodeJS packages:
@@ -41,20 +42,18 @@ Following NodeJS packages:
 
 #### Typescript
 
-1. Make sure Docker is running
-2. Run `yarn install`
-3. Run `make start-chain-with-contracts-deployed`
+1. Run `yarn install`
+2. Run `make start-chain-with-contracts-deployed`
     * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
-4. Open new terminal tab and run `make start-operator`
+3. Open new terminal tab and run `make start-operator`
     * This will compile the AVS software and start monitering new tasks
-5. Open new terminal tab and run `make spam-tasks` (Optional)
+4. Open new terminal tab and run `make spam-tasks` (Optional)
     * This will spam the AVS with random names every 15 seconds
 
 #### Rust lang
 
 
 ##### Anvil 
-
 
 1. Run `make start-chain-with-contracts-deployed`
     * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
