@@ -31,6 +31,8 @@ Where additional sophistication with AVSs come into the picture:
 1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
+    3.1 Make sure Docker is running
+
 
 Following NodeJS packages:
 1. tcs
@@ -38,14 +40,51 @@ Following NodeJS packages:
 
 ### Steps
 
-1. Make sure Docker is running
-2. Run `yarn install`
-3. Run `make start-chain-with-contracts-deployed`
+#### Typescript
+
+1. Run `yarn install`
+2. Run `make start-chain-with-contracts-deployed`
     * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
-4. Open new terminal tab and run `make start-operator`
-    * This will compile the AVS software and start monitoring new tasks
-5. Open new terminal tab and run `make spam-tasks` (Optional)
+3. Open new terminal tab and run `make start-operator`
+    * This will compile the AVS software and start monitering new tasks
+4. Open new terminal tab and run `make spam-tasks` (Optional)
     * This will spam the AVS with random names every 15 seconds
+
+#### Rust lang
+
+
+##### Anvil 
+
+1. Run `make start-chain-with-contracts-deployed`
+    * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+
+2. Run `make start-rust-operator`
+
+3. Run `make spam-rust-tasks`
+
+Tests are supported in anvil only . Make sure to run the 1st command before running the  tests:
+
+```
+cargo test --workspace
+```
+
+
+##### Holesky Testnet
+
+| Contract Name               | Holesky Address                                   |
+| -------------               | -------------                                     |
+| Hello World Service Manager | [0x3361953F4a9628672dCBcDb29e91735fb1985390](https://holesky.etherscan.io/address/0x3361953F4a9628672dCBcDb29e91735fb1985390)    |
+| Delegation Manager          | [0xA44151489861Fe9e3055d95adC98FbD462B948e7](https://holesky.etherscan.io/address/0xA44151489861Fe9e3055d95adC98FbD462B948e7)                                           |
+| Avs Directory               | [0x055733000064333CaDDbC92763c58BF0192fFeBf](https://holesky.etherscan.io/address/0x055733000064333CaDDbC92763c58BF0192fFeBf)      |
+
+You don't need to run any script for holesky testnet.
+
+1. Use the HOLESKY_ namespace env parameters in the code , instead of normal parameters.
+
+2. Run `make start-rust-operator`
+
+3. Run `make spam-rust-tasks `
+
 
 ## Extensions
 

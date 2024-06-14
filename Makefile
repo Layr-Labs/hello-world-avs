@@ -56,3 +56,8 @@ _____HELPER_____: ##
 tests-contract: ## runs all forge tests
 	cd contracts && forge test
 
+___RUST_OFFCHAIN_SOFTWARE___:
+start-rust-operator: ## start operator (part of quickstart) 
+	cargo run --bin start_operator
+spam-rust-tasks:  ## start tasks spamming (part of quickstart)
+	cargo run --bin spam_tasks

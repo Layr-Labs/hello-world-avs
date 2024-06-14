@@ -20,3 +20,6 @@ dist/
 # utils/anvil/*.json
 
 oldUtils
+
+target/
+debug/
