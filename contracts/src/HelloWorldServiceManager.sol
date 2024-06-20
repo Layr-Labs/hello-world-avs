@@ -63,11 +63,17 @@ contract HelloWorldServiceManager is
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(
-        string memory name
+        bytes calldata _commitment,
+        uint32 _blockNumber,
+        bytes32 _rollupID,
+        bytes32 _clusterID
     ) external {
         // create a new task struct
         Task memory newTask;
-        newTask.name = name;
+        newTask.commitment = _commitment;
+        newTask.blockNumber = _blockNumber;
+        newTask.rollupID = _rollupID;
+        newTask.clusterID = _clusterID;
         newTask.taskCreatedBlock = uint32(block.number);
 
         // store hash of task onchain, emit event, and increase taskNum
@@ -99,7 +105,7 @@ contract HelloWorldServiceManager is
         );
 
         // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+        bytes32 messageHash = keccak256(abi.encodePacked(task.commitment));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
 
         // Recover the signer address from the signature

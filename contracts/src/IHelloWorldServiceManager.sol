@@ -9,14 +9,20 @@ interface IHelloWorldServiceManager {
 
     // STRUCTS
     struct Task {
-        string name;
+        bytes commitment;
+        uint32 blockNumber;
+        bytes32 rollupID;
+        bytes32 clusterID;
         uint32 taskCreatedBlock;
     }
 
     // FUNCTIONS
     // NOTE: this function creates new task.
     function createNewTask(
-        string memory name
+        bytes calldata _commitment,
+        uint32 _blockNumber,
+        bytes32 _rollupID,
+        bytes32 _clusterID
     ) external;
 
     // NOTE: this function is called by operators to respond to a task.

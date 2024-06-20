@@ -17,6 +17,7 @@ import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {HelloWorldServiceManager, IServiceManager} from "../src/HelloWorldServiceManager.sol";
 import "../src/ERC20Mock.sol";
+import {Ssal} from "../src/Ssal.sol";
 
 import {Utils} from "./utils/Utils.sol";
 
@@ -42,6 +43,8 @@ contract HelloWorldDeployer is Script, Utils {
 
     HelloWorldServiceManager public helloWorldServiceManagerProxy;
     HelloWorldServiceManager public helloWorldServiceManagerImplementation;
+
+    Ssal public ssal;
 
     function run() external {
         // Eigenlayer contracts
@@ -95,6 +98,7 @@ contract HelloWorldDeployer is Script, Utils {
             baseStrategyImplementation,
             strategyManager
         );
+        ssal = new Ssal();
         _deployHelloWorldContracts(
             delegationManager,
             avsDirectory,
@@ -276,6 +280,11 @@ contract HelloWorldDeployer is Script, Utils {
             deployed_addresses,
             "ECDSAStakeRegistry",
             address(stakeRegistryProxy)
+        );
+        vm.serializeAddress(
+            deployed_addresses,
+            "Ssal",
+            address(ssal)
         );
         
         string memory deployed_addresses_output = vm.serializeAddress(
