@@ -31,7 +31,7 @@ Where additional sophistication with AVSs come into the picture:
 1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
-    3.1 Make sure Docker is running
+   * Make sure Docker is running
 
 
 Following NodeJS packages:
