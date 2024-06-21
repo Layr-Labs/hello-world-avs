@@ -3,15 +3,15 @@ pragma solidity ^0.8.9;
 
 interface IHelloWorldServiceManager {
     // EVENTS
-    event NewTaskCreated(uint32 indexed taskIndex, bytes commitment, uint32 blockNumber, bytes32 rollupID, bytes32 clusterID, uint32 taskCreatedBlock);
+    event NewTaskCreated(uint32 indexed taskIndex, bytes commitment, uint64 blockNumber, uint32 rollupID, bytes32 clusterID, uint32 taskCreatedBlock);
 
-    event TaskResponded(uint32 indexed taskIndex, bytes commitment, uint32 blockNumber, bytes32 rollupID, bytes32 clusterID, uint32 taskCreatedBlock, address operator);
+    event TaskResponded(uint32 indexed taskIndex, bytes commitment, uint64 blockNumber, uint32 rollupID, bytes32 clusterID, uint32 taskCreatedBlock, address operator);
 
     // STRUCTS
     struct Task {
         bytes commitment;
-        uint32 blockNumber;
-        bytes32 rollupID;
+        uint64 blockNumber;
+        uint32 rollupID;
         bytes32 clusterID;
         uint32 taskCreatedBlock;
     }
@@ -20,8 +20,8 @@ interface IHelloWorldServiceManager {
     // NOTE: this function creates new task.
     function createNewTask(
         bytes calldata _commitment,
-        uint32 _blockNumber,
-        bytes32 _rollupID,
+        uint64 _blockNumber,
+        uint32 _rollupID,
         bytes32 _clusterID
     ) external;
 

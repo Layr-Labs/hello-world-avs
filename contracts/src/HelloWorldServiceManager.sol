@@ -64,8 +64,8 @@ contract HelloWorldServiceManager is
     // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(
         bytes calldata _commitment,
-        uint32 _blockNumber,
-        bytes32 _rollupID,
+        uint64 _blockNumber,
+        uint32 _rollupID,
         bytes32 _clusterID
     ) external {
         // create a new task struct
