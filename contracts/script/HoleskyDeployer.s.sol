@@ -12,6 +12,7 @@ import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECD
 import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
 import "@eigenlayer/test/mocks/EmptyContract.sol";
 import "../src/ERC20Mock.sol";
+import {Ssal} from "../src/Ssal.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 import "forge-std/console.sol";
@@ -33,6 +34,8 @@ contract HoleskyDeployer is Script, Utils {
     HelloWorldServiceManager public helloWorldServiceManagerProxy;
     HelloWorldServiceManager public helloWorldServiceManagerImplementation;
 
+    Ssal public ssal;
+
     function run() external {
         // Manually pasted addresses of Eigenlayer contracts
         address strategyManagerAddr = 0xdfB5f6CE42aAA7830E94ECFCcAd411beF4d4D5b6;
@@ -53,6 +56,7 @@ contract HoleskyDeployer is Script, Utils {
         address helloWorldPauser = msg.sender;
 
         vm.startBroadcast();
+        ssal = new Ssal();
         _deployHelloWorldContracts(
             delegationManager,
             avsDirectory,
@@ -180,6 +184,11 @@ contract HoleskyDeployer is Script, Utils {
             deployed_addresses,
             "ECDSAStakeRegistry",
             address(stakeRegistryProxy)
+        );
+        vm.serializeAddress(
+            deployed_addresses,
+            "Ssal",
+            address(ssal)
         );
         
         string memory deployed_addresses_output = vm.serializeAddress(
