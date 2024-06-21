@@ -78,7 +78,7 @@ contract HelloWorldServiceManager is
 
         // store hash of task onchain, emit event, and increase taskNum
         allTaskHashes[latestTaskNum] = keccak256(abi.encode(newTask));
-        emit NewTaskCreated(latestTaskNum, newTask);
+        emit NewTaskCreated(latestTaskNum, newTask.commitment, newTask.blockNumber, newTask.rollupID, newTask.clusterID, newTask.taskCreatedBlock);
         latestTaskNum = latestTaskNum + 1;
     }
 
@@ -117,7 +117,7 @@ contract HelloWorldServiceManager is
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
 
         // emitting event
-        emit TaskResponded(referenceTaskIndex, task, msg.sender);
+        emit TaskResponded(referenceTaskIndex, task.commitment, task.blockNumber, task.rollupID, task.clusterID, task.taskCreatedBlock, msg.sender);
     }
 
     // HELPER

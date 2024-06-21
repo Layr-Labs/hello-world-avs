@@ -3,9 +3,9 @@ pragma solidity ^0.8.9;
 
 interface IHelloWorldServiceManager {
     // EVENTS
-    event NewTaskCreated(uint32 indexed taskIndex, Task task);
+    event NewTaskCreated(uint32 indexed taskIndex, bytes commitment, uint32 blockNumber, bytes32 rollupID, bytes32 clusterID, uint32 taskCreatedBlock);
 
-    event TaskResponded(uint32 indexed taskIndex, Task task, address operator);
+    event TaskResponded(uint32 indexed taskIndex, bytes commitment, uint32 blockNumber, bytes32 rollupID, bytes32 clusterID, uint32 taskCreatedBlock, address operator);
 
     // STRUCTS
     struct Task {
