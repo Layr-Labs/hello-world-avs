@@ -108,7 +108,7 @@ async fn monitor_new_tasks() -> Result<()> {
     );
     let hello_world_contract =
         HelloWorldServiceManager::new(hello_world_contract_address, &provider);
-    println!("heelo contract :{:?}", hello_world_contract);
+    println!("hello contract :{:?}", hello_world_contract);
     let word: &str = "EigenWorld";
 
     // If you want to send this tx to holesky , please uncomment the gas price and gas limit
