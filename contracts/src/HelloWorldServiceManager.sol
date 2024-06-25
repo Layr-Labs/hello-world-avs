@@ -105,7 +105,7 @@ contract HelloWorldServiceManager is
         );
 
         // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked(bytesArrayToString(task.commitment)));
+        bytes32 messageHash = keccak256(task.commitment);
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
 
         // Recover the signer address from the signature
