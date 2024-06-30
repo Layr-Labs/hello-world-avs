@@ -39,6 +39,7 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
 };
 
 const registerOperator = async () => {
+    console.log("check")
     const tx1 = await delegationManager.registerAsOperator({
         earningsReceiver: await wallet.address,
         delegationApprover: "0x0000000000000000000000000000000000000000",
