@@ -8,6 +8,7 @@ import "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 import "@eigenlayer/contracts/permissions/Pausable.sol";
 import {IRegistryCoordinator} from "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
+import {IAVSDirectory} from "@eigenlayer-middleware/lib/eigenlayer-contracts/src/contracts/interfaces/IAVSDirectory.sol";
 import "./IHelloWorldServiceManager.sol";
 
 /**
@@ -120,12 +121,14 @@ contract HelloWorldServiceManager is
         emit TaskResponded(referenceTaskIndex, task.commitment, task.blockNumber, task.rollupID, task.clusterID, task.taskCreatedBlock, msg.sender);
     }
 
-    // HELPER
+    function updateAVSMetadata(
+        string memory _metadataURI
+    ) external {
+        IAVSDirectory(avsDirectory).updateAVSMetadataURI(_metadataURI);
+    }
 
+    // HELPER
     function operatorHasMinimumWeight(address operator) public view returns (bool) {
         return ECDSAStakeRegistry(stakeRegistry).getOperatorWeight(operator) >= ECDSAStakeRegistry(stakeRegistry).minimumWeight();
     }
-    function bytesArrayToString(bytes memory _bytes) public pure returns (string memory) {
-        return string(_bytes);
-    } 
 }

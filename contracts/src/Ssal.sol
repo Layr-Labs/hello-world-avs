@@ -21,11 +21,10 @@ contract Ssal {
         return clusters[clusterID].sequencers;
     }
 
-    function initializeCluster(address _sequencer, address _rollup) public {
+    function initializeCluster(address _rollup) public {
         bytes32 clusterID = keccak256(abi.encodePacked(_rollup, blockhash(block.number)));
         clusters[clusterID].owner = msg.sender;
         clusters[clusterID].rollup = _rollup;
-        clusters[clusterID].sequencers[0] = _sequencer;
         
         emit InitializeClusterEvent(clusterID);
     }
@@ -49,8 +48,4 @@ contract Ssal {
                 clusters[clusterID].sequencers[i] = address(0);
         }
     }
-    // function registerBlockCommitment(string memory rollupId, uint64 blockHeight, string memory commitment) public {
-        
-    //     emit BlockCommitmentEvent(rollupId, blockHeight, commitment);
-    // }
 }

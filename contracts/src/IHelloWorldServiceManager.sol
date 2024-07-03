@@ -31,4 +31,8 @@ interface IHelloWorldServiceManager {
         uint32 referenceTaskIndex,
         bytes calldata signature
     ) external;
+
+    function updateAVSMetadata(
+        string memory _metadataURI
+    ) external;
 }
