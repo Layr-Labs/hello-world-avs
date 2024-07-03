@@ -21,10 +21,10 @@ contract Ssal {
         return clusters[clusterID].sequencers;
     }
 
-    function initializeCluster(address _rollup) public {
-        bytes32 clusterID = keccak256(abi.encodePacked(_rollup, blockhash(block.number)));
+    function initializeCluster() public {
+        bytes32 clusterID = keccak256(abi.encodePacked(msg.sender, blockhash(block.number)));
         clusters[clusterID].owner = msg.sender;
-        clusters[clusterID].rollup = _rollup;
+        clusters[clusterID].rollup = msg.sender;
         
         emit InitializeClusterEvent(clusterID);
     }
