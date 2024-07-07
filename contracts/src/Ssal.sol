@@ -22,7 +22,7 @@ contract Ssal {
     }
 
     function initializeCluster() public {
-        bytes32 clusterID = keccak256(abi.encodePacked(msg.sender, blockhash(block.number)));
+        bytes32 clusterID = keccak256(abi.encodePacked(msg.sender, blockhash(block.number-1)));
         clusters[clusterID].owner = msg.sender;
         clusters[clusterID].rollup = msg.sender;
         
