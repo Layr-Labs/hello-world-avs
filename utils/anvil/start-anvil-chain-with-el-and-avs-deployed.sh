@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RPC_URL=http://localhost:8545
+RPC_URL=http://0.0.0.0:8545
 
 # cd to the directory of this script so that this can be run from anywhere
 parent_path=$(
@@ -36,7 +36,7 @@ cd ../../contracts
 # so calling getOperatorListAtBlockNumber reverts because it thinks there are no quorums registered at block 0
 # advancing chain manually like this is a current hack until https://github.com/foundry-rs/foundry/issues/6679 is merged
 # cast rpc anvil_mine 100 --rpc-url $RPC_URL
-cast rpc evm_setIntervalMining 5 --rpc-url $RPC_URL
+cast rpc evm_setIntervalMining 2 --rpc-url $RPC_URL
 echo "advancing chain... current block-number:" $(cast block-number)
 
 # Bring Anvil back to the foreground
