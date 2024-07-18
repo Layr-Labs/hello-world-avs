@@ -17,6 +17,10 @@ contract Ssal {
         bytes32 clusterID
     );
 
+    event registerSequencerEvent(
+        string ip
+    );
+
     function getSequencers(bytes32 clusterID) public view returns (address[30] memory){        
         return clusters[clusterID].sequencers;
     }
@@ -29,7 +33,7 @@ contract Ssal {
         emit InitializeClusterEvent(clusterID);
     }
 
-    function registerSequencer(bytes32 clusterID, address _sequencer) public {
+    function registerSequencer(bytes32 clusterID, address _sequencer, string memory ip) public {
         uint index = 30;
         for (uint i = 0; i < 30; i++) {
             if(clusters[clusterID].sequencers[i] == _sequencer) revert();
@@ -40,6 +44,8 @@ contract Ssal {
         }
         if (index == 30) revert();
         else clusters[clusterID].sequencers[index] = _sequencer;
+
+        emit registerSequencerEvent(ip);
     }
 
     function deregisterSequencer(bytes32 clusterID, address _sequencer) public {
