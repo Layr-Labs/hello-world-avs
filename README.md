@@ -31,7 +31,7 @@ Where additional sophistication with AVSs come into the picture:
 1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
-   * Make sure Docker is running
+   * Make sure the Docker daemon is running
 4. (tcs)[https://www.npmjs.com/package/tcs#installation]
 5. (ethers)[https://www.npmjs.com/package/ethers]
 
@@ -85,34 +85,6 @@ You don't need to run any script for holesky testnet.
 3. Run `make spam-rust-tasks `
 
 
-## Step by Step Deployment
-
-...
-
-
-
-### Dependencies
-
-1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-2. [Foundry](https://getfoundry.sh/)
-3. (tcs)[https://www.npmjs.com/package/tcs#installation]
-4. (ethers)[https://www.npmjs.com/package/ethers]
-
-### Steps
-
-#### Typescript
-
-1. Run `yarn install`
-2. Run `cp .env.local .env`
-3. Run `todo`
-    * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
-4. Open new terminal tab and run `todo`
-    * This will compile the AVS software and start monitering new tasks
-5. Open new terminal tab and run `todo` (Optional)
-    * This will spam the AVS with random names every 15 seconds
-
-
-
 
 ## Extensions
 
@@ -134,3 +106,51 @@ To deploy the Hello World AVS contracts to the Holesky network, follow these ste
 ## Adding a New Strategy
 
 To add a new strategy to the Hello World AVS, follow the guide provided in [`AddNewStrategy.md`](https://github.com/Layr-Labs/hello-world-avs/blob/master/AddNewStrategy.md). This guide walks you through the necessary steps to add and whitelist a new strategy for the AVS.
+
+
+
+## Step by Step Deployment
+
+The following instructions walk through deploying the EigenLayer contracts in detail (step by step). This is intended to be a template and learning exercise for users who wish to fork (modify) this repo and build their own AVS implementation.
+
+### Dependencies
+
+1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+2. [foundry](https://getfoundry.sh/)
+3. [tcs - tiny static content server](https://www.npmjs.com/package/tcs#installation)
+4. [ethers](https://www.npmjs.com/package/ethers)
+5. [Docker](https://www.docker.com/get-started/)
+   * Make sure the Docker daemon is running
+
+### Steps to Deploy
+
+
+1. Run `yarn install` to install dependencies from package.json.
+
+2. Build the contracts and start a local Anvil chain.
+```
+cd utils/deployFromScratch
+./start-anvil.sh
+## todo: modify this code to simply run "anvil" locally
+```
+
+You may run either `tail -f anvil.log` or `cat anvil.log` at any time to observe logs from the running anvil chain.
+
+3. Deploy the EigenLayer contracts to the local anvil chain:
+`./deploy-eigenlayer-contracts.sh`
+
+4. Run otterscan as an etherscan-style view of your local anvil chain:
+`docker run --rm -d -p 5100:80 --name otterscan -d otterscan/otterscan:latest`
+Open otterscan in your browser to begin browsing the transactions that deployed EigenLayer contracts ([example here](http://localhost:5100/block/12)).
+
+5. Deploy the Hello World AVS contracts to the local anvil chain:
+`./deploy-hello-world-avs-contracts.sh`
+
+
+
+4. Open new terminal tab and run `todo`
+    * This will compile the AVS software and start monitering new tasks
+5. Open new terminal tab and run `todo` (Optional)
+    * This will spam the AVS with random names every 15 seconds
+
+
