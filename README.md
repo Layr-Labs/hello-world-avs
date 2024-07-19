@@ -32,11 +32,9 @@ Where additional sophistication with AVSs come into the picture:
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
    * Make sure Docker is running
+4. (tcs)[https://www.npmjs.com/package/tcs#installation]
+5. (ethers)[https://www.npmjs.com/package/ethers]
 
-
-Following NodeJS packages:
-1. tcs
-2. ethers
 
 ### Steps
 
@@ -85,6 +83,35 @@ You don't need to run any script for holesky testnet.
 2. Run `make start-rust-operator`
 
 3. Run `make spam-rust-tasks `
+
+
+## Step by Step Deployment
+
+...
+
+
+
+### Dependencies
+
+1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+2. [Foundry](https://getfoundry.sh/)
+3. (tcs)[https://www.npmjs.com/package/tcs#installation]
+4. (ethers)[https://www.npmjs.com/package/ethers]
+
+### Steps
+
+#### Typescript
+
+1. Run `yarn install`
+2. Run `cp .env.local .env`
+3. Run `todo`
+    * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+4. Open new terminal tab and run `todo`
+    * This will compile the AVS software and start monitering new tasks
+5. Open new terminal tab and run `todo` (Optional)
+    * This will spam the AVS with random names every 15 seconds
+
+
 
 
 ## Extensions
