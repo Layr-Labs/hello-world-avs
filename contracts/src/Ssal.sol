@@ -76,9 +76,7 @@ contract Ssal {
         emit DeregisterSequencer(proposerSetId, msg.sender);
     }
 
-    function getSequencerList(bytes32 proposerSetId) public view returns(address[] memory) {
-        ProposerSet storage proposerSet = proposerSets[proposerSetId];
-      
-        return proposerSet.sequencerAddresses;
+    function getSequencerList(bytes32 proposerSetId) public view returns(address[MAX_SEQUENCER_COUNT] memory) {      
+        return proposerSets[proposerSetId].sequencerAddresses;
     }
 }
