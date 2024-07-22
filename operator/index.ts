@@ -78,8 +78,7 @@ const registerOperator = async () => {
         salt, 
         expiry
     );
-    console.log("operatorDigestHash", operatorDigestHash);
-
+    
     // Sign the digest hash with the operator's private key
     console.log("Signing digest hash with operator's private key");
     const operatorSigningKey = new ethers.SigningKey(process.env.PRIVATE_KEY!);
@@ -88,11 +87,9 @@ const registerOperator = async () => {
     // Encode the signature in the required format
     operatorSignatureWithSaltAndExpiry.signature = ethers.Signature.from(operatorSignedDigestHash).serialized;
 
-    console.log("operatorSignatureWithSaltAndExpiry", operatorSignatureWithSaltAndExpiry);
-
     const tx2 = await registryContract.registerOperatorWithSignature(
-        operatorSignatureWithSaltAndExpiry,
-        wallet.address
+        wallet.address,
+        operatorSignatureWithSaltAndExpiry
     );
     await tx2.wait();
     console.log("Operator registered on AVS successfully");
