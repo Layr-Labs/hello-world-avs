@@ -126,18 +126,19 @@ The following instructions walk through deploying the EigenLayer contracts in de
 
 #### In terminal window #1
 1. Run `yarn install` to install dependencies from package.json.
-
-2. Start a local Anvil chain.
+2. Run `cp .env.local .env`
+3. Start a local Anvil chain instance.
 ```bash
 anvil
 ```
 
 #### In terminal window #2
 
-1. Build and deploy the EigenLayer contracts to the local anvil chain
+1. Build and deploy the EigenLayer contracts, then AVS contracts to the local anvil chain
 
 ```bash
-source .env.local
+source .env
+export PROJECT_ROOT_DIR=$(pwd)
 
 # Change of directory is required in order for the forge script to work properly
 cd contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts
@@ -145,16 +146,11 @@ cd contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts
 forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
 
 # Note the file M2_from_scratch_deployment_data.json contains the deployment data (addresses) of the deployed EigenLayer contracts
-```
 
-
-2. Build and deploy the Hello World AVS contracts to the local anvil chain
-
-```bash
-source .env.local
-cd contracts
-# Deploy AVS contracts. Note: the deployment process will require some time for compilation on the first run.
-forge script script/HelloWorldDeployer.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast -v
+# Move back to the AVS contracts directory
+cd $PROJECT_ROOT_DIR/contracts
+# Deploy AVS contracts. Note: the deployment process will require some time for compilation on the first run
+forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast -v
 
 # Note the file hello_world_avs_deployment_output.json contains the deployment data (addresses) of the deployed AVS contracts
 
@@ -162,7 +158,12 @@ forge script script/HelloWorldDeployer.s.sol --rpc-url $RPC_URL --private-key $P
 # Send 10 ETH to the operator address to enable them to register with the eigenlayer contracts in future steps
 cast send 0x860B6912C2d0337ef05bbC89b0C2CB6CbAEAB4A5 --value 10ether --private-key 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
 
+# Start the Operator service
+# Move back to the AVS contracts directory
+cd $PROJECT_ROOT_DIR
+tsc && node dist/index.js
 ```
+
 
 (Optional) Run otterscan for an etherscan-style view of your local anvil chain:
 ```bash
@@ -170,10 +171,6 @@ docker run --rm -d -p 5100:80 --name otterscan -d otterscan/otterscan:latest
 ```
 Open otterscan in your browser to begin browsing the transactions that deployed EigenLayer contracts ([example here](http://localhost:5100/block/1)).
 
-3. Start the Operator service
-```
-(cd ../../ tsc && node dist/index.js)
-```
 
 #### In terminal window #3
 Start the process to spam new tasks every 15 seconds
