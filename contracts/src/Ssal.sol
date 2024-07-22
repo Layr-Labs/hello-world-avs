@@ -13,69 +13,72 @@ contract Ssal {
     struct ProposerSet {
         address owner; // Owner is rollup contract address
         
-        mapping(address => bool) isRegisteredProposer;
-        address[MAX_SEQUENCER_COUNT] proposerAddresses;
-        uint256 currentProposerCount;        
+        mapping(address => bool) isRegisteredSequencer;
+        address[MAX_SEQUENCER_COUNT] sequencerAddresses;
+        uint256 currentSequencerCount;        
     }
 
     event InitializeProposerSet(bytes32 proposerSetId, address owner);
-    event RegisterProposer(bytes32 proposerSetId, address proposerAddress);
-    event DeregisterProposer(bytes32 proposerSetId, address proposerAddress);
+    event RegisterSequencer(bytes32 proposerSetId, address sequencerAddress);
+    event DeregisterSequencer(bytes32 proposerSetId, address sequencerAddress);
 
     function initializeProposerSet() public {
         bytes32 proposerSetId = keccak256(abi.encodePacked(msg.sender, blockhash(block.number - 1)));
         
         ProposerSet storage proposerSet = proposerSets[proposerSetId];
+        
+        require(proposerSet.owner == address(0), "Already initialized proposer set");
+
         proposerSet.owner = msg.sender;
-        proposerSet.currentProposerCount = 0;
+        proposerSet.currentSequencerCount = 0;
         
         emit InitializeProposerSet(proposerSetId, msg.sender);
     }
 
-    function registerProposer(bytes32 proposerSetId) public {
+    function registerSequencer(bytes32 proposerSetId) public {
         ProposerSet storage proposerSet = proposerSets[proposerSetId];
 
-        require(!proposerSet.isRegisteredProposer[msg.sender], "Already registered proposer");
-        require(proposerSet.currentProposerCount < MAX_SEQUENCER_COUNT, "Max proposer count exceeded");
+        require(!proposerSet.isRegisteredSequencer[msg.sender], "Already registered sequencer");
+        require(proposerSet.currentSequencerCount < MAX_SEQUENCER_COUNT, "Max sequencer count exceeded");
 
-        proposerSet.isRegisteredProposer[msg.sender] = true;
+        proposerSet.isRegisteredSequencer[msg.sender] = true;
 
-        // Remove proposer from the array
-        for (uint256 i = 0; i < proposerSet.currentProposerCount; i++) {
-            if (proposerSet.proposerAddresses[i] == address(0)) {
-                proposerSet.proposerAddresses[i] = msg.sender;
+        // Remove sequencer from the array
+        for (uint256 i = 0; i < proposerSet.currentSequencerCount; i++) {
+            if (proposerSet.sequencerAddresses[i] == address(0)) {
+                proposerSet.sequencerAddresses[i] = msg.sender;
                 break;
             }
         }
 
-        proposerSet.currentProposerCount++;
+        proposerSet.currentSequencerCount++;
 
-        emit RegisterProposer(proposerSetId, msg.sender);
+        emit RegisterSequencer(proposerSetId, msg.sender);
     }
 
-    function deregisterProposer(bytes32 proposerSetId) public {
+    function deregisterSequencer(bytes32 proposerSetId) public {
         ProposerSet storage proposerSet = proposerSets[proposerSetId];
 
-        require(proposerSet.isRegisteredProposer[msg.sender], "Not registered proposer");
+        require(proposerSet.isRegisteredSequencer[msg.sender], "Not registered sequencer");
 
-        proposerSet.isRegisteredProposer[msg.sender] = false;
+        proposerSet.isRegisteredSequencer[msg.sender] = false;
 
-        // Remove proposer from the array
-        for (uint256 i = 0; i < proposerSet.currentProposerCount; i++) {
-            if (proposerSet.proposerAddresses[i] == msg.sender) {
-                proposerSet.proposerAddresses[i] = address(0);
+        // Remove sequencer from the array
+        for (uint256 i = 0; i < proposerSet.currentSequencerCount; i++) {
+            if (proposerSet.sequencerAddresses[i] == msg.sender) {
+                proposerSet.sequencerAddresses[i] = address(0);
                 break;
             }
         }
 
-        proposerSet.currentProposerCount--;
+        proposerSet.currentSequencerCount--;
 
-        emit DeregisterProposer(proposerSetId, msg.sender);
+        emit DeregisterSequencer(proposerSetId, msg.sender);
     }
 
-    function getProposerList(bytes32 proposerSetId) public view returns(address[] memory) {
+    function getSequencerList(bytes32 proposerSetId) public view returns(address[] memory) {
         ProposerSet storage proposerSet = proposerSets[proposerSetId];
       
-        return proposerSet.proposerAddresses;
+        return proposerSet.sequencerAddresses;
     }
 }
