@@ -142,15 +142,15 @@ export PROJECT_ROOT_DIR=$(pwd)
 
 # Change of directory is required in order for the forge script to work properly
 cd contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts
-# Deploy EigenLayer contracts. Note: the deployment process will require some time for compilation on the first run.
-forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
+# Deploy EigenLayer Contracts. Note: the deployment process will require some time for compilation on the first run.
+forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json --revert-strings debug
 
 # Note the file M2_from_scratch_deployment_data.json contains the deployment data (addresses) of the deployed EigenLayer contracts
 
 # Move back to the AVS contracts directory
 cd $PROJECT_ROOT_DIR/contracts
-# Deploy AVS contracts. Note: the deployment process will require some time for compilation on the first run
-forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast -v
+# Deploy EigenLayer Middleware and AVS contracts. Note: the deployment process will require some time for compilation on the first run
+forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --revert-strings debug
 
 # Note the file hello_world_avs_deployment_output.json contains the deployment data (addresses) of the deployed AVS contracts
 

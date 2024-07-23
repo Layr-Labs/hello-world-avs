@@ -47,8 +47,7 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
 const registerOperator = async () => {
     console.log("check")
     
-    // Todo add catch for the following error: Error in main function: Error: execution reverted: "DelegationManager.registerAsOperator: caller is already actively delegated"
-    
+    // Registers as an Operator in EigenLayer.
     try {
         const tx1 = await delegationManager.registerAsOperator({
             earningsReceiver: await wallet.address,
