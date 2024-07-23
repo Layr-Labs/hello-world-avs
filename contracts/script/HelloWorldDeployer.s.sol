@@ -15,7 +15,7 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
-import {HelloWorldServiceManager, IServiceManager} from "../src/HelloWorldServiceManager.sol";
+import {RadiusServiceManager, IServiceManager} from "../src/RadiusServiceManager.sol";
 import "../src/ERC20Mock.sol";
 import {Ssal} from "../src/Ssal.sol";
 
@@ -41,8 +41,8 @@ contract HelloWorldDeployer is Script, Utils {
     ECDSAStakeRegistry public stakeRegistryProxy;
     ECDSAStakeRegistry public stakeRegistryImplementation;
 
-    HelloWorldServiceManager public helloWorldServiceManagerProxy;
-    HelloWorldServiceManager public helloWorldServiceManagerImplementation;
+    RadiusServiceManager public helloWorldServiceManagerProxy;
+    RadiusServiceManager public helloWorldServiceManagerImplementation;
 
     Ssal public ssal;
 
@@ -177,7 +177,7 @@ contract HelloWorldDeployer is Script, Utils {
          * First, deploy upgradeable proxy contracts that **will point** to the implementations. Since the implementation contracts are
          * not yet deployed, we give these proxies an empty contract as the initial implementation, to act as if they have no code.
          */
-        helloWorldServiceManagerProxy = HelloWorldServiceManager(
+        helloWorldServiceManagerProxy = RadiusServiceManager(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -239,7 +239,7 @@ contract HelloWorldDeployer is Script, Utils {
             );
         }
 
-        helloWorldServiceManagerImplementation = new HelloWorldServiceManager(
+        helloWorldServiceManagerImplementation = new RadiusServiceManager(
             address(avsDirectory),
             address(stakeRegistryProxy),
             address(delegationManager)
@@ -268,12 +268,12 @@ contract HelloWorldDeployer is Script, Utils {
         );
         vm.serializeAddress(
             deployed_addresses,
-            "HelloWorldServiceManagerProxy",
+            "RadiusServiceManagerProxy",
             address(helloWorldServiceManagerProxy)
         );
         vm.serializeAddress(
             deployed_addresses,
-            "HelloWorldServiceManagerImplementation",
+            "RadiusServiceManagerImplementation",
             address(helloWorldServiceManagerImplementation)
         );
         vm.serializeAddress(

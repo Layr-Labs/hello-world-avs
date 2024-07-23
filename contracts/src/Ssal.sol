@@ -15,7 +15,7 @@ contract Ssal {
         
         mapping(address => bool) isRegisteredSequencer;
         address[MAX_SEQUENCER_COUNT] sequencerAddresses;
-        uint256 currentSequencerCount;        
+        uint256 currentSequencerCount;
     }
 
     event InitializeProposerSet(bytes32 proposerSetId, address owner);

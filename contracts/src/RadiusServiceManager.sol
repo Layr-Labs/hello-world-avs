@@ -9,15 +9,14 @@ import "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol
 import "@eigenlayer/contracts/permissions/Pausable.sol";
 import {IRegistryCoordinator} from "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
 import {IAVSDirectory} from "@eigenlayer-middleware/lib/eigenlayer-contracts/src/contracts/interfaces/IAVSDirectory.sol";
-import "./IHelloWorldServiceManager.sol";
+import "./IRadiusServiceManager.sol";
 
 /**
- * @title Primary entrypoint for procuring services from HelloWorld.
- * @author Eigen Labs, Inc.
+ * @title Primary entrypoint for procuring services from Radius.
  */
-contract HelloWorldServiceManager is 
+contract RadiusServiceManager is 
     ECDSAServiceManagerBase,
-    IHelloWorldServiceManager,
+    IRadiusServiceManager,
     Pausable
 {
     using BytesLib for bytes;
@@ -25,7 +24,7 @@ contract HelloWorldServiceManager is
 
     /* STORAGE */
     // The latest task index
-    uint32 public latestTaskNum;
+    uint32 public latestTaskIndex;
 
     // mapping of task indices to all tasks hashes
     // when a task is created, task hash is stored here,
@@ -52,73 +51,73 @@ contract HelloWorldServiceManager is
         address _stakeRegistry,
         address _delegationManager
     )
+        // address(0): Address of the payment coordinator contract, which handles payment distributions. (Todo: Implement this)
         ECDSAServiceManagerBase(
             _avsDirectory,
             _stakeRegistry,
-            address(0), // hello-world doesn't need to deal with payments
+            address(0), 
             _delegationManager
         )
     {}
 
-
     /* FUNCTIONS */
-    // NOTE: this function creates new task, assigns it a taskId
-    function createNewTask(
+    // NOTE: This function creates new task, assigns it a taskId
+    function createTask(
         bytes calldata _commitment,
         uint64 _blockNumber,
-        uint32 _rollupID,
-        bytes32 _clusterID
+        bytes32 _proposerSetId,
+        uint32 _fullNodeId
     ) external {
         // create a new task struct
         Task memory newTask;
         newTask.commitment = _commitment;
         newTask.blockNumber = _blockNumber;
-        newTask.rollupID = _rollupID;
-        newTask.clusterID = _clusterID;
+        newTask.proposerSetId = _proposerSetId;
+        newTask.fullNodeId = _fullNodeId;
+        
         newTask.taskCreatedBlock = uint32(block.number);
 
-        // store hash of task onchain, emit event, and increase taskNum
-        allTaskHashes[latestTaskNum] = keccak256(abi.encode(newTask));
-        emit NewTaskCreated(latestTaskNum, newTask, newTask.commitment, newTask.blockNumber, newTask.rollupID, newTask.clusterID, newTask.taskCreatedBlock);
-        latestTaskNum = latestTaskNum + 1;
+        // Store hash of task onchain, emit event, and increase taskNumber
+        allTaskHashes[latestTaskIndex] = keccak256(abi.encode(newTask));
+
+        emit TaskCreated(latestTaskIndex, newTask);
+
+        latestTaskIndex = latestTaskIndex + 1;
     }
 
-    // NOTE: this function responds to existing tasks.
+    // NOTE: This function responds to existing tasks.
     function respondToTask(
         Task calldata task,
-        uint32 referenceTaskIndex,
+        uint32 taskIndex,
         bytes calldata signature
     ) external onlyOperator {
         require(
             operatorHasMinimumWeight(msg.sender),
             "Operator does not have match the weight requirements"
         );
-        // check that the task is valid, hasn't been responsed yet, and is being responded in time
+
+        // Check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
             keccak256(abi.encode(task)) ==
-                allTaskHashes[referenceTaskIndex],
+                allTaskHashes[taskIndex],
             "supplied task does not match the one recorded in the contract"
         );
-        // some logical checks
+
         require(
-            allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
+            allTaskResponses[msg.sender][taskIndex].length == 0,
             "Operator has already responded to the task"
         );
 
-        // The message that was signed
+        // Validate the signature
         bytes32 messageHash = keccak256(task.commitment);
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-
-        // Recover the signer address from the signature
         address signer = ethSignedMessageHash.recover(signature);
+        require(signer == msg.sender, "Invalid signature");
 
-        require(signer == msg.sender, "Message signer is not operator");
+        // Update the storage with task responses
+        allTaskResponses[msg.sender][taskIndex] = signature;
 
-        // updating the storage with task responses
-        allTaskResponses[msg.sender][referenceTaskIndex] = signature;
-
-        // emitting event
-        emit TaskResponded(referenceTaskIndex, task.commitment, task.blockNumber, task.rollupID, task.clusterID, task.taskCreatedBlock, msg.sender);
+        emit TaskResponded(taskIndex, msg.sender);
     }
 
     function updateAVSMetadata(
