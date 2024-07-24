@@ -31,12 +31,10 @@ Where additional sophistication with AVSs come into the picture:
 1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
-   * Make sure Docker is running
+   * Make sure the Docker daemon is running
+4. (tcs)[https://www.npmjs.com/package/tcs#installation]
+5. (ethers)[https://www.npmjs.com/package/ethers]
 
-
-Following NodeJS packages:
-1. tcs
-2. ethers
 
 ### Steps
 
@@ -87,6 +85,7 @@ You don't need to run any script for holesky testnet.
 3. Run `make spam-rust-tasks `
 
 
+
 ## Extensions
 
 - Operator needs a minimum stake amount to make submissions
@@ -107,3 +106,79 @@ To deploy the Hello World AVS contracts to the Holesky network, follow these ste
 ## Adding a New Strategy
 
 To add a new strategy to the Hello World AVS, follow the guide provided in [`AddNewStrategy.md`](https://github.com/Layr-Labs/hello-world-avs/blob/master/AddNewStrategy.md). This guide walks you through the necessary steps to add and whitelist a new strategy for the AVS.
+
+
+
+## Step by Step Deployment
+
+The following instructions walk through deploying the EigenLayer contracts in detail (step by step). This is intended to be a template and learning exercise for users who wish to fork (modify) this repo and build their own AVS implementation.
+
+### Dependencies
+
+1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+2. [foundry](https://getfoundry.sh/)
+3. [tcs - tiny static content server](https://www.npmjs.com/package/tcs#installation)
+4. [ethers](https://www.npmjs.com/package/ethers)
+5. [Docker](https://www.docker.com/get-started/)
+   * Make sure the Docker daemon is running
+
+### Steps to Deploy
+
+#### In terminal window #1
+```bash
+# Install dependencies from package.json
+yarn install
+
+# Start a local Anvil chain instance.
+anvil
+```
+
+#### In terminal window #2
+
+
+```bash
+# Setup local environment
+cp .env.local .env
+source .env
+export PROJECT_ROOT_DIR=$(pwd)
+
+# Build EigenLayer contracts
+# Change of directory is required in order for the forge script to work properly
+cd contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts
+# Deploy EigenLayer Contracts. Note: the deployment process will require some time for compilation on the first run.
+forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json --revert-strings debug
+
+# Note the file M2_from_scratch_deployment_data.json contains the deployment data (addresses) of the deployed EigenLayer contracts
+
+# Move back to the AVS contracts directory
+cd $PROJECT_ROOT_DIR/contracts
+# Deploy EigenLayer Middleware and AVS contracts. Note: the deployment process will require some time for compilation on the first run
+forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --revert-strings debug
+
+# Note the file hello_world_avs_deployment_output.json contains the deployment data (addresses) of the deployed AVS contracts
+
+
+# Send 10 ETH to the operator address to enable them to register with the eigenlayer contracts in future steps
+cast send 0x860B6912C2d0337ef05bbC89b0C2CB6CbAEAB4A5 --value 10ether --private-key 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
+
+# Start the Operator service
+# Move back to the AVS contracts directory
+cd $PROJECT_ROOT_DIR
+tsc && node dist/index.js
+# Todo: fails at this step
+```
+
+
+(Optional) Run otterscan for an etherscan-style view of your local anvil chain:
+```bash
+docker run --rm -d -p 5100:80 --name otterscan -d otterscan/otterscan:latest
+```
+Open otterscan in your browser to begin browsing the transactions that deployed EigenLayer contracts ([example here](http://localhost:5100/block/1)).
+
+
+#### In terminal window #3
+Start the process to spam new tasks every 15 seconds
+
+```bash
+tsc && node dist/createNewTasks.js
+```
