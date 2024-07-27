@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^ 0.8.24;
+pragma solidity ^0.8.24;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -12,7 +12,6 @@ contract Ssal {
 
     struct ProposerSet {
         address owner; // Owner is rollup contract address
-        
         mapping(address => bool) isRegisteredSequencer;
         address[MAX_SEQUENCER_COUNT] sequencerAddresses;
         uint256 currentSequencerCount;
@@ -23,28 +22,39 @@ contract Ssal {
     event DeregisterSequencer(bytes32 proposerSetId, address sequencerAddress);
 
     function initializeProposerSet() public {
-        bytes32 proposerSetId = keccak256(abi.encodePacked(msg.sender, blockhash(block.number - 1)));
-        
+        bytes32 proposerSetId = keccak256(
+            abi.encodePacked(msg.sender, blockhash(block.number - 1))
+        );
+
         ProposerSet storage proposerSet = proposerSets[proposerSetId];
-        
-        require(proposerSet.owner == address(0), "Already initialized proposer set");
+
+        require(
+            proposerSet.owner == address(0),
+            "Already initialized proposer set"
+        );
 
         proposerSet.owner = msg.sender;
         proposerSet.currentSequencerCount = 0;
-        
+
         emit InitializeProposerSet(proposerSetId, msg.sender);
     }
 
     function registerSequencer(bytes32 proposerSetId) public {
         ProposerSet storage proposerSet = proposerSets[proposerSetId];
 
-        require(!proposerSet.isRegisteredSequencer[msg.sender], "Already registered sequencer");
-        require(proposerSet.currentSequencerCount < MAX_SEQUENCER_COUNT, "Max sequencer count exceeded");
+        require(
+            !proposerSet.isRegisteredSequencer[msg.sender],
+            "Already registered sequencer"
+        );
+        require(
+            proposerSet.currentSequencerCount < MAX_SEQUENCER_COUNT,
+            "Max sequencer count exceeded"
+        );
 
         proposerSet.isRegisteredSequencer[msg.sender] = true;
 
-        // Remove sequencer from the array
-        for (uint256 i = 0; i < proposerSet.currentSequencerCount; i++) {
+        // Add sequencer to the array
+        for (uint256 i = 0; i < MAX_SEQUENCER_COUNT; i++) {
             if (proposerSet.sequencerAddresses[i] == address(0)) {
                 proposerSet.sequencerAddresses[i] = msg.sender;
                 break;
@@ -59,7 +69,10 @@ contract Ssal {
     function deregisterSequencer(bytes32 proposerSetId) public {
         ProposerSet storage proposerSet = proposerSets[proposerSetId];
 
-        require(proposerSet.isRegisteredSequencer[msg.sender], "Not registered sequencer");
+        require(
+            proposerSet.isRegisteredSequencer[msg.sender],
+            "Not registered sequencer"
+        );
 
         proposerSet.isRegisteredSequencer[msg.sender] = false;
 
@@ -76,7 +89,9 @@ contract Ssal {
         emit DeregisterSequencer(proposerSetId, msg.sender);
     }
 
-    function getSequencerList(bytes32 proposerSetId) public view returns(address[MAX_SEQUENCER_COUNT] memory) {      
+    function getSequencerList(
+        bytes32 proposerSetId
+    ) public view returns (address[MAX_SEQUENCER_COUNT] memory) {
         return proposerSets[proposerSetId].sequencerAddresses;
     }
 }
