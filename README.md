@@ -42,7 +42,9 @@ Following NodeJS packages:
 
 #### Typescript
 
-1. Run `yarn install`
+### Automated deployment (uses existing state)
+
+1. Run `npm install`
 2. Run `cp .env.local .env`
 3. Run `make start-chain-with-contracts-deployed`
     * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
@@ -51,8 +53,58 @@ Following NodeJS packages:
 5. Open new terminal tab and run `make spam-tasks` (Optional)
     * This will spam the AVS with random names every 15 seconds
 
-#### Rust lang
+### Manual deployment
 
+This walks you through how to manually deploy using Foundry (Anvil, Forge, and Cast)
+
+1. Run `npm install` to install the TypeScript dependencies
+2. Compile the contracts.
+
+```sh
+cd contracts && forge build
+```
+
+3. Start Anvil by opening your terminal and running the following command:
+
+```sh
+anvil
+```
+
+4. In a separate terminal window, deploy the EigenLayer contracts.
+
+To do so, change into `hello-world-avs/contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts` and run the following commands:
+
+```sh
+mv script/output/devnet/M2_from_scratch_deployment_data.json script/output/devnet/M2_from_scratch_deployment_data.json.bak
+
+forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
+
+mv script/output/devnet/M2_from_scratch_deployment_data.json ../../../../script/output/31337/eigenlayer_deployment_output.json
+
+mv script/output/devnet/M2_from_scratch_deployment_data.json.bak script/output/devnet/M2_from_scratch_deployment_data.json
+```
+
+5. In a separate terminal window, deploy the AVS contracts.
+
+```sh
+cd contracts
+
+forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast -v
+```
+
+6. Start the operator
+
+```sh
+tsc && node dist/index.js
+```
+
+7. In a separate window, start creating tasks
+
+```sh
+tsc && node dist/createNewTasks.js
+```
+
+#### Rust lang
 
 ##### Anvil 
 
