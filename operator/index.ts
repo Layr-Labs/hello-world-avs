@@ -66,16 +66,16 @@ const registerOperator = async () => {
         expiry
     );
 
-    // Sign the digest hash with the operator's private key
+    // // Sign the digest hash with the operator's private key
     const signingKey = new ethers.utils.SigningKey(process.env.PRIVATE_KEY!);
     const signature = signingKey.signDigest(digestHash);
     
-    // Encode the signature in the required format
+    // // Encode the signature in the required format
     operatorSignature.signature = ethers.utils.joinSignature(signature);
 
     const tx2 = await registryContract.registerOperatorWithSignature(
-        wallet.address,
-        operatorSignature
+        operatorSignature,
+        wallet.address
     );
     await tx2.wait();
     console.log("Operator registered on AVS successfully");
