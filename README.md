@@ -31,18 +31,14 @@ Where additional sophistication with AVSs come into the picture:
 1. [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. [Foundry](https://getfoundry.sh/)
 3. [Docker](https://www.docker.com/get-started/)
-   * Make sure Docker is running
+   * Make sure Docker is running for automated deployment
 
+Following global NodeJS packages:
+1. [Typescript](https://github.com/microsoft/TypeScript)
 
-Following NodeJS packages:
-1. tcs
-2. ethers
+## Typescript instructions
 
-### Steps
-
-#### Typescript
-
-### Automated deployment (uses existing state)
+### Automated deployment (uses existing state file)
 
 1. Run `npm install`
 2. Run `cp .env.local .env`
@@ -58,21 +54,22 @@ Following NodeJS packages:
 This walks you through how to manually deploy using Foundry (Anvil, Forge, and Cast)
 
 1. Run `npm install` to install the TypeScript dependencies
-2. Compile the contracts.
+2. Run `cp .env.local .env`
+3. Compile the contracts.
 
 ```sh
 cd contracts && forge build
 ```
 
-3. Start Anvil by opening your terminal and running the following command:
+4. Start Anvil by opening your terminal and running the following command:
 
 ```sh
 anvil
 ```
 
-4. In a separate terminal window, deploy the EigenLayer contracts.
+5. In a separate terminal window, deploy the EigenLayer contracts.
 
-To do so, change into `hello-world-avs/contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts` and run the following commands:
+To do so, change into `contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts` and run the following commands:
 
 ```sh
 mv script/output/devnet/M2_from_scratch_deployment_data.json script/output/devnet/M2_from_scratch_deployment_data.json.bak
@@ -84,7 +81,7 @@ mv script/output/devnet/M2_from_scratch_deployment_data.json ../../../../script/
 mv script/output/devnet/M2_from_scratch_deployment_data.json.bak script/output/devnet/M2_from_scratch_deployment_data.json
 ```
 
-5. In a separate terminal window, deploy the AVS contracts.
+6. In a separate terminal window, deploy the AVS contracts.
 
 ```sh
 cd contracts
@@ -92,21 +89,21 @@ cd contracts
 forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast -v
 ```
 
-6. Start the operator
+7. Start the operator
 
 ```sh
 tsc && node dist/index.js
 ```
 
-7. In a separate window, start creating tasks
+8. In a separate window, start creating tasks
 
 ```sh
 tsc && node dist/createNewTasks.js
 ```
 
-#### Rust lang
+## Rust instructions
 
-##### Anvil 
+### Automated deployment (uses existing state file)
 
 1. Run `make start-chain-with-contracts-deployed`
     * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
