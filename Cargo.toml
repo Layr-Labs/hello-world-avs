@@ -30,35 +30,49 @@ tokio = {version = "1.37.0" , features = ["test-util", "full","sync","rt-multi-t
 hello-world-avs-operator = {path = "operator/crates/operator"}
 
 #eigen-rs
-eigen-client-elcontracts = {git = "https://github.com/supernovahs/eigensdk-rs", rev = "e700fa2"}
-eigen-types = {git = "https://github.com/supernovahs/eigensdk-rs", rev = "e700fa2"}
-eigen-utils = {git = "https://github.com/supernovahs/eigensdk-rs", rev = "e700fa2"}
+eigen-client-elcontracts = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "a84983e"}
+eigen-types = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "a84983e"}
+eigen-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "a84983e"}
+eigen-logging = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "a84983e"}
 
 #alloy
 alloy-chains = "0.1.15"
-alloy-primitives = "0.7.2"
+alloy-consensus = { version = "0.1", default-features = false }
+alloy-contract = { version = "0.1", default-features = false }
 alloy-dyn-abi = "0.7.2"
-alloy-sol-types = "0.7.2"
-alloy-rlp = "0.3.4"
-alloy-trie = "0.3.1"
-alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-rpc-types-anvil = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-rpc-types-trace = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-rpc-types-engine = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-genesis = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-node-bindings = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-provider = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93", default-features = false, features = [
+alloy-eips = { version = "0.1", default-features = false }
+alloy-genesis = { version = "0.1", default-features = false }
+alloy-json-rpc = { version = "0.1", default-features = false }
+alloy-network = { version = "0.1", default-features = false }
+alloy-node-bindings = { version = "0.1", default-features = false }
+alloy-primitives = "0.7.2"
+alloy-provider = { version = "0.1", default-features = false, features = [
     "reqwest","ws"
 ] }
-alloy-transport-http = {git = "https://github.com/alloy-rs/alloy", rev = "cc68b93"}
-alloy-eips = { git = "https://github.com/alloy-rs/alloy", default-features = false, rev = "cc68b93" }
-alloy-signer = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-signer-wallet = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-network = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-consensus = { git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-contract = {git = "https://github.com/alloy-rs/alloy", rev = "cc68b93" }
-alloy-transport =  {git = "https://github.com/alloy-rs/alloy", rev = "cc68b93"}
-alloy-transport-ws = {git = "https://github.com/alloy-rs/alloy", rev = "cc68b93"}
-alloy-rpc-client = {git = "https://github.com/alloy-rs/alloy", rev = "cc68b93"}
+alloy-pubsub = { version = "0.1", default-features = false }
+alloy-rlp = "0.3.4"
+alloy-rpc-client = "0.1"
+alloy-rpc-types = { version = "0.1", default-features = false, features = [
+    "eth",
+] }
+alloy-rpc-types-admin = { version = "0.1", default-features = false }
+alloy-rpc-types-anvil = { version = "0.1", default-features = false }
+alloy-rpc-types-beacon = { version = "0.1", default-features = false }
+alloy-rpc-types-engine = { version = "0.1", default-features = false }
+alloy-rpc-types-eth = { version = "0.1", default-features = false }
+alloy-rpc-types-trace = { version = "0.1", default-features = false }
+alloy-rpc-types-txpool = { version = "0.1", default-features = false }
+alloy-serde = { version = "0.1", default-features = false }
+alloy-signer = { version = "0.1", default-features = false }
+alloy-signer-aws = "0.1"
+alloy-signer-local = { version = "0.1", default-features = false }
+alloy-sol-types = "0.7.2"
+alloy-transport = { version = "0.1" }
+alloy-transport-http = { version = "0.1", features = [
+    "reqwest-rustls-tls",
+], default-features = false }
+alloy-transport-ipc = { version = "0.1", default-features = false }
+alloy-transport-ws = { version = "0.1", default-features = false }
+alloy-trie = "0.4"
 
 

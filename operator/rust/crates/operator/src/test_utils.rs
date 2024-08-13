@@ -1,28 +1,25 @@
 #![allow(missing_docs)]
-use alloy_network::{Ethereum, EthereumSigner};
-use alloy_provider::fillers::{
-    ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, SignerFiller,
-};
+use alloy_primitives::{eip191_hash_message, Address, FixedBytes, U256};
 use alloy_provider::{Provider, ProviderBuilder, RootProvider};
 use alloy_rpc_types::{BlockNumberOrTag, Filter};
+use alloy_signer::Signer;
+use alloy_signer_local::PrivateKeySigner;
 use alloy_sol_types::{sol, SolEvent};
 use alloy_transport_http::Client;
 use chrono::Utc;
+use eigen_client_elcontracts::{
+    reader::ELChainReader,
+    writer::{ELChainWriter, Operator},
+};
+use eigen_logging::get_test_logger;
+use eigen_utils::{get_provider, get_signer};
+use eyre::Result;
 use once_cell::sync::Lazy;
 use rand::Rng;
 use rand::RngCore;
 use reqwest::Url;
 use tokio::time::{self, Duration};
 use HelloWorldServiceManager::Task;
-
-use alloy_primitives::{eip191_hash_message, Address, FixedBytes, U256};
-use alloy_signer::Signer;
-use alloy_signer_wallet::LocalWallet;
-use eigen_client_elcontracts::{
-    reader::ELChainReader,
-    writer::{ELChainWriter, Operator},
-};
-use eyre::Result;
 
 use std::{env, str::FromStr};
 use ECDSAStakeRegistry::SignatureWithSaltAndExpiry;
@@ -65,7 +62,7 @@ async fn sign_and_response_to_task(
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
-    let wallet = LocalWallet::from_str(&KEY).expect("failed to generate wallet ");
+    let wallet = PrivateKeySigner::from_str(&KEY).expect("failed to generate wallet ");
 
     let message = format!("Hello, {}", name);
     let msg_hash = eip191_hash_message(message);
@@ -74,10 +71,7 @@ async fn sign_and_response_to_task(
 
     println!("Signing and responding to task : {:?}", task_index);
     let url = Url::parse(&RPC_URL.clone()).expect("Wrong rpc url");
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .signer(EthereumSigner::from(wallet.clone()))
-        .on_http(url);
+    let provider = get_provider(&RPC_URL);
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
     let hello_world_contract =
@@ -102,12 +96,9 @@ async fn sign_and_response_to_task(
 
 /// Monitor new tasks
 pub async fn monitor_new_tasks() -> Result<()> {
-    let wallet = LocalWallet::from_str(&KEY).expect("failed to generate wallet ");
+    let wallet = PrivateKeySigner::from_str(&KEY).expect("failed to generate wallet ");
     let url = Url::parse(&RPC_URL).expect("Wrong rpc url");
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .signer(EthereumSigner::from(wallet.clone()))
-        .on_http(url);
+    let provider = get_provider(&RPC_URL);
 
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
@@ -159,7 +150,7 @@ pub async fn monitor_new_tasks() -> Result<()> {
 }
 
 pub async fn register_operator() -> Result<()> {
-    let wallet = LocalWallet::from_str(&KEY).expect("failed to generate wallet ");
+    let wallet = PrivateKeySigner::from_str(&KEY).expect("failed to generate wallet ");
 
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
@@ -173,7 +164,9 @@ pub async fn register_operator() -> Result<()> {
 
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
+    let logger = get_test_logger();
     let elcontracts_reader_instance = ELChainReader::new(
+        logger.clone(),
         default_slasher,
         delegation_manager_contract_address,
         avs_directory_contract_address,
@@ -217,10 +210,7 @@ pub async fn register_operator() -> Result<()> {
     let signature = wallet.sign_hash(&digest_hash).await?;
     let url = Url::parse(&RPC_URL).expect("Wrong rpc url");
 
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .signer(EthereumSigner::from(wallet.clone()))
-        .on_http(url);
+    let provider = get_signer(KEY.clone(), &RPC_URL);
     let _operator_signature = SignatureWithSaltAndExpiry {
         signature: signature.as_bytes().into(),
         salt,
@@ -265,7 +255,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
 
-    let provider = get_provider_with_wallet(KEY.clone());
+    let provider = get_signer(KEY.clone(), &RPC_URL);
     let hello_world_contract =
         HelloWorldServiceManager::new(hello_world_contract_address, provider);
 
@@ -296,30 +286,6 @@ async fn start_creating_tasks() {
     }
 }
 
-pub fn get_provider_with_wallet(
-    key: String,
-) -> FillProvider<
-    JoinFill<
-        JoinFill<
-            JoinFill<JoinFill<alloy_provider::Identity, GasFiller>, NonceFiller>,
-            ChainIdFiller,
-        >,
-        SignerFiller<EthereumSigner>,
-    >,
-    RootProvider<alloy_transport_http::Http<Client>>,
-    alloy_transport_http::Http<Client>,
-    Ethereum,
-> {
-    let wallet = LocalWallet::from_str(&key.to_string()).expect("failed to generate wallet ");
-    let url = Url::parse(&RPC_URL.clone()).expect("Wrong rpc url");
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .signer(EthereumSigner::from(wallet.clone()))
-        .on_http(url);
-
-    return provider;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -331,12 +297,8 @@ mod tests {
         dotenv().ok();
         let _ = register_operator().await;
 
-        let wallet = LocalWallet::from_str(&KEY).expect("failed to generate wallet ");
-        let url = Url::parse(&RPC_URL).expect("Wrong rpc url");
-        let provider = ProviderBuilder::new()
-            .with_recommended_fillers()
-            .signer(EthereumSigner::from(wallet.clone()))
-            .on_http(url);
+        let wallet = PrivateKeySigner::from_str(&KEY).expect("failed to generate wallet ");
+        let provider = get_signer(KEY.clone(), &RPC_URL);
 
         let delegation_manager_contract_address =
             Address::from_str(&DELEGATION_MANAGER_CONTRACT_ADDRESS)
@@ -361,7 +323,7 @@ mod tests {
     #[tokio::test]
     async fn test_spam_tasks() {
         dotenv().ok();
-        let provider = get_provider_with_wallet(KEY.clone());
+        let provider = get_signer(KEY.clone(), &RPC_URL);
         let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
             .expect("wrong hello world contract address");
         let hello_world_contract =

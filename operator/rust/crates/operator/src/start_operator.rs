@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use alloy_network::{Ethereum, EthereumSigner};
+use alloy_network::Ethereum;
 use alloy_provider::RootProvider;
 use alloy_provider::{Provider, ProviderBuilder};
 use alloy_rpc_types::{BlockNumberOrTag, Filter};
@@ -7,6 +7,8 @@ use alloy_sol_types::{sol, SolEvent};
 use alloy_transport_http::Client;
 use chrono::Utc;
 use dotenv::dotenv;
+use eigen_logging::{get_logger, init_logger, log_level::LogLevel, logger::Logger};
+use eigen_utils::get_signer;
 use once_cell::sync::Lazy;
 use rand::RngCore;
 use reqwest::Url;
@@ -14,16 +16,13 @@ use HelloWorldServiceManager::Task;
 
 use alloy_primitives::{eip191_hash_message, Address, FixedBytes, U256};
 use alloy_signer::Signer;
-use alloy_signer_wallet::LocalWallet;
+use alloy_signer_local::PrivateKeySigner;
 use eigen_client_elcontracts::{
     reader::ELChainReader,
     writer::{ELChainWriter, Operator},
 };
 use eyre::Result;
 
-use alloy_provider::fillers::{
-    ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, SignerFiller,
-};
 use std::{env, str::FromStr};
 use ECDSAStakeRegistry::SignatureWithSaltAndExpiry;
 
@@ -65,11 +64,11 @@ async fn sign_and_response_to_task(
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
-    let provider = get_provider_with_wallet(KEY.clone());
+    let provider = get_signer(KEY.clone(), &RPC_URL);
 
     let message = format!("Hello, {}", name);
     let msg_hash = eip191_hash_message(message);
-    let wallet = LocalWallet::from_str(&KEY.clone()).expect("failed to generate wallet ");
+    let wallet = PrivateKeySigner::from_str(&KEY.clone()).expect("failed to generate wallet ");
 
     let signature = wallet.sign_hash(&msg_hash).await?;
 
@@ -98,7 +97,7 @@ async fn sign_and_response_to_task(
 
 /// Monitor new tasks
 async fn monitor_new_tasks() -> Result<()> {
-    let provider = get_provider_with_wallet(KEY.clone());
+    let provider = get_signer(KEY.clone(), &RPC_URL);
 
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
@@ -156,9 +155,9 @@ async fn monitor_new_tasks() -> Result<()> {
 }
 
 async fn register_operator() -> Result<()> {
-    let wallet = LocalWallet::from_str(&KEY).expect("failed to generate wallet ");
+    let wallet = PrivateKeySigner::from_str(&KEY).expect("failed to generate wallet ");
 
-    let provider = get_provider_with_wallet(KEY.clone());
+    let provider = get_signer(KEY.clone(), &RPC_URL);
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
     let delegation_manager_contract_address =
@@ -171,7 +170,11 @@ async fn register_operator() -> Result<()> {
 
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
+                                          // initialize logger at Debug tracing
+                                          // init_logger(LogLevel::Debug);
+    let logger = get_logger();
     let elcontracts_reader_instance = ELChainReader::new(
+        logger.clone(),
         default_slasher,
         delegation_manager_contract_address,
         avs_directory_contract_address,
@@ -264,28 +267,4 @@ pub async fn main() {
     loop {
         tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
     }
-}
-
-pub fn get_provider_with_wallet(
-    key: String,
-) -> FillProvider<
-    JoinFill<
-        JoinFill<
-            JoinFill<JoinFill<alloy_provider::Identity, GasFiller>, NonceFiller>,
-            ChainIdFiller,
-        >,
-        SignerFiller<EthereumSigner>,
-    >,
-    RootProvider<alloy_transport_http::Http<Client>>,
-    alloy_transport_http::Http<Client>,
-    Ethereum,
-> {
-    let wallet = LocalWallet::from_str(&key.to_string()).expect("failed to generate wallet ");
-    let url = Url::parse(&RPC_URL.clone()).expect("Wrong rpc url");
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .signer(EthereumSigner::from(wallet.clone()))
-        .on_http(url);
-
-    return provider;
 }
