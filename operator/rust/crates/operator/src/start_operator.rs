@@ -30,17 +30,18 @@ sol!(
 );
 
 static KEY: Lazy<String> =
-    Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+    Lazy::new(|| env::var("HOLESKY_PRIVATE_KEY").expect("failed to retrieve private key"));
 
 pub static RPC_URL: Lazy<String> =
-    Lazy::new(|| env::var("RPC_URL").expect("failed to get rpc url from env"));
+    Lazy::new(|| env::var("HOLESKY_RPC_URL").expect("failed to get rpc url from env"));
 
 pub static HELLO_WORLD_CONTRACT_ADDRESS: Lazy<String> = Lazy::new(|| {
-    env::var("CONTRACT_ADDRESS").expect("failed to get hello world contract address from env")
+    env::var("HOLESKY_CONTRACT_ADDRESS")
+        .expect("failed to get hello world contract address from env")
 });
 
 static DELEGATION_MANAGER_CONTRACT_ADDRESS: Lazy<String> = Lazy::new(|| {
-    env::var("DELEGATION_MANAGER_ADDRESS")
+    env::var("HOLESKY_DELEGATION_MANAGER_ADDRESS")
         .expect("failed to get delegation manager contract address from env")
 });
 
@@ -50,7 +51,7 @@ static STAKE_REGISTRY_CONTRACT_ADDRESS: Lazy<String> = Lazy::new(|| {
 });
 
 static AVS_DIRECTORY_CONTRACT_ADDRESS: Lazy<String> = Lazy::new(|| {
-    env::var("AVS_DIRECTORY_ADDRESS")
+    env::var("HOLESKY_AVS_DIRECTORY_ADDRESS")
         .expect("failed to get delegation manager contract address from env")
 });
 
@@ -149,10 +150,6 @@ async fn register_operator(logger: EigenLogger) -> Result<()> {
     let wallet = PrivateKeySigner::from_str(&KEY).expect("failed to generate wallet ");
 
     let provider = get_signer(KEY.clone(), &RPC_URL);
-    let chain_id = provider
-        .get_chain_id()
-        .await
-        .expect("failed to get chain id ");
 
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
@@ -195,15 +192,15 @@ async fn register_operator(logger: EigenLogger) -> Result<()> {
         None,
     );
 
-    let is_registered = elcontracts_reader_instance
-        .is_operator_registered(wallet.address())
-        .await
-        .unwrap();
-    logger
-        .tracing_logger
-        .as_ref()
-        .unwrap()
-        .info(&format!("is registered {}", is_registered), &[""]);
+    // let is_registered = elcontracts_reader_instance
+    //     .is_operator_registered(wallet.address())
+    //     .await
+    //     .unwrap();
+    // logger
+    //     .tracing_logger
+    //     .as_ref()
+    //     .unwrap()
+    //     .info(&format!("is registered {}", is_registered), &[""]);
     #[allow(unused_doc_comments)]
     ///In case you are running holesky. Comment the below register_as_operator call after the first
     /// call . Since we can register only once per operator.
