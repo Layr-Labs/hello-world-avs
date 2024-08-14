@@ -34,6 +34,7 @@ eigen-client-elcontracts = {git = "https://github.com/Layr-labs/eigensdk-rs", re
 eigen-types = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "a84983e"}
 eigen-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "a84983e"}
 eigen-logging = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "a84983e"}
+eigen-testing-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "a84983e"}
 
 #alloy
 alloy-chains = "0.1.15"

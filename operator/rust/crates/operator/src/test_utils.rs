@@ -1,11 +1,10 @@
 #![allow(missing_docs)]
 use alloy_primitives::{eip191_hash_message, Address, FixedBytes, U256};
-use alloy_provider::{Provider, ProviderBuilder, RootProvider};
+use alloy_provider::Provider;
 use alloy_rpc_types::{BlockNumberOrTag, Filter};
 use alloy_signer::Signer;
 use alloy_signer_local::PrivateKeySigner;
 use alloy_sol_types::{sol, SolEvent};
-use alloy_transport_http::Client;
 use chrono::Utc;
 use eigen_client_elcontracts::{
     reader::ELChainReader,
@@ -70,7 +69,6 @@ async fn sign_and_response_to_task(
     let signature = wallet.sign_hash(&msg_hash).await?;
 
     println!("Signing and responding to task : {:?}", task_index);
-    let url = Url::parse(&RPC_URL.clone()).expect("Wrong rpc url");
     let provider = get_provider(&RPC_URL);
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
@@ -96,8 +94,6 @@ async fn sign_and_response_to_task(
 
 /// Monitor new tasks
 pub async fn monitor_new_tasks() -> Result<()> {
-    let wallet = PrivateKeySigner::from_str(&KEY).expect("failed to generate wallet ");
-    let url = Url::parse(&RPC_URL).expect("Wrong rpc url");
     let provider = get_provider(&RPC_URL);
 
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
@@ -208,7 +204,6 @@ pub async fn register_operator() -> Result<()> {
         .expect("not able to calculate operator ");
 
     let signature = wallet.sign_hash(&digest_hash).await?;
-    let url = Url::parse(&RPC_URL).expect("Wrong rpc url");
 
     let provider = get_signer(KEY.clone(), &RPC_URL);
     let _operator_signature = SignatureWithSaltAndExpiry {

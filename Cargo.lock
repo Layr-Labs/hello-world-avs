@@ -1429,6 +1429,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "eigen-testing-utils"
+version = "0.0.1-alpha"
+source = "git+https://github.com/Layr-labs/eigensdk-rs?rev=a84983e#a84983ea26f403a5a47d155ee485f73038ebde0d"
+dependencies = [
+ "alloy-network",
+ "alloy-primitives",
+ "alloy-provider",
+ "alloy-transport-http",
+ "eigen-utils",
+ "once_cell",
+]
+
+[[package]]
 name = "eigen-types"
 version = "0.0.1-alpha"
 source = "git+https://github.com/Layr-labs/eigensdk-rs?rev=a84983e#a84983ea26f403a5a47d155ee485f73038ebde0d"
@@ -2236,6 +2249,7 @@ dependencies = [
  "dotenv",
  "eigen-client-elcontracts",
  "eigen-logging",
+ "eigen-testing-utils",
  "eigen-types",
  "eigen-utils",
  "eyre",

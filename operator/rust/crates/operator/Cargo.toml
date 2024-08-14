@@ -33,6 +33,7 @@ eigen-client-elcontracts.workspace = true
 eigen-types.workspace = true
 eigen-utils.workspace = true
 eigen-logging.workspace = true
+eigen-testing-utils.workspace = true
 
 #misc 
 dotenv = "0.15.0"
@@ -43,7 +44,6 @@ futures-util = "0.3"
 eyre = "0.6.12"
 #tokio
 tokio = {workspace = true, features =["full"]}
-
 [lints]
 workspace = true
 
