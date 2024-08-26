@@ -69,9 +69,10 @@ anvil
 
 5. In a separate terminal window, deploy the EigenLayer contracts.
 
-To do so, change into `contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts` and run the following commands:
-
 ```sh
+
+cd contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts
+
 forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url http://localhost:8545 \
 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast \
 --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
@@ -152,3 +153,61 @@ To deploy the Hello World AVS contracts to the Holesky network, follow these ste
 ## Adding a New Strategy
 
 To add a new strategy to the Hello World AVS, follow the guide provided in [`AddNewStrategy.md`](https://github.com/Layr-Labs/hello-world-avs/blob/master/AddNewStrategy.md). This guide walks you through the necessary steps to add and whitelist a new strategy for the AVS.
+
+
+## Tenderly Deployment
+
+1) Follow the [Tenderly Virtual Testnet setup instructions](https://docs.tenderly.co/virtual-testnets/quickstart).
+
+[Install the Tenderly CLI](https://github.com/Tenderly/tenderly-cli?tab=readme-ov-file#installation)
+
+2) Configure Tenderly instance
+
+```sh
+# Login to your Tenderly account:
+tenderly login
+
+# Set env vars
+TENDERLY_TESTNET_RPC_PUBLIC=https://virtual.holesky.rpc.tenderly.co/a58a7dde-1b39-47f6-8206-29f969f7e284
+TENDERLY_TESTNET_RPC_ADMIN=https://virtual.holesky.rpc.tenderly.co/3f74d2f5-a603-43b1-9068-78d471de8b6c
+PUBLIC_KEY=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+# Fund account using the tenderly rpc
+curl $TENDERLY_TESTNET_RPC_ADMIN \
+-X POST \
+-H "Content-Type: application/json" \
+-d '{
+    "jsonrpc": "2.0",
+    "method": "tenderly_setBalance",
+    "params": [
+      [
+        "${PUBLIC_KEY}"
+        ],
+      "0xDE0B6B3A7640000"
+      ],
+    "id": "1234"
+}'
+
+```
+
+
+
+3) Deploy contracts using Foundry
+
+```sh
+
+TENDERLY_TESTNET_RPC_ADMIN=https://virtual.holesky.rpc.tenderly.co/a58a7dde-1b39-47f6-8206-29f969f7e284
+
+forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url $TENDERLY_TESTNET_RPC_ADMIN \
+--private-key $PRIVATE_KEY --broadcast -vvvv \
+--sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
+```
+
+
+
+7) Verify contracts?
+
+forge verify-contract --verifier-url $TENDERLY_TESTNET_RPC_ADMIN 
+
+Note: Ensure you have sufficient testnet ETH in your Tenderly account for deployments and transactions.
