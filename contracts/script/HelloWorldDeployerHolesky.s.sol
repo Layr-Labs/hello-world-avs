@@ -18,7 +18,7 @@ import "forge-std/StdJson.sol";
 import "forge-std/console.sol";
 import {Utils} from "./utils/Utils.sol";
 
-contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
+contract HelloWorldDeployerHolesky is Script, Utils {
     // ERC20 and Strategy: we need to deploy this erc20, create a strategy for it, and whitelist this strategy in the strategy manager
 
     ERC20Mock public erc20Mock;
@@ -36,23 +36,19 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
 
     function run() external {
         // Manually pasted addresses of Eigenlayer contracts from https://github.com/Layr-Labs/eigenlayer-contracts/?tab=readme-ov-file#current-testnet-deployment
-        address strategyManagerAddr = 0xdfB5f6CE42aAA7830E94ECFCcAd411beF4d4D5b6;
-        address delegationManagerAddr = 0xA44151489861Fe9e3055d95adC98FbD462B948e7;
-        address avsDirectoryAddr = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
-        address baseStrategyImplementationAddr = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
+        address delegationManagerProxyAddr = 0xA44151489861Fe9e3055d95adC98FbD462B948e7;
+        address avsDirectoryProxyAddr = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
+        address wethStrategyProxyAddr = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
 
-        IStrategyManager strategyManager = IStrategyManager(strategyManagerAddr);
-        IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
-        IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryAddr);
-        StrategyBase baseStrategyImplementation = StrategyBase(baseStrategyImplementationAddr);
-
-        
+        IDelegationManager delegationManager = IDelegationManager(delegationManagerProxyAddr);
+        IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryProxyAddr);
+        StrategyBase wethStrategy = StrategyBase(wethStrategyProxyAddr);
 
         vm.startBroadcast();
         _deployHelloWorldContracts(
             delegationManager,
             avsDirectory,
-            baseStrategyImplementation
+            wethStrategy
         );
         vm.stopBroadcast();
     }
@@ -60,12 +56,10 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
     function _deployHelloWorldContracts(
         IDelegationManager delegationManager,
         IAVSDirectory avsDirectory,
-        IStrategy baseStrategyImplementation
+        IStrategy wethStrategy
     ) internal {
         // Deploy proxy admin for ability to upgrade proxy contracts
         helloWorldProxyAdmin = new ProxyAdmin();
-
-      
 
         EmptyContract emptyContract = new EmptyContract();
 
@@ -79,7 +73,7 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
                 )
             )
         );
-        /**
+
         stakeRegistryProxy = ECDSAStakeRegistry(
             address(
                 new TransparentUpgradeableProxy(
@@ -89,7 +83,7 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
                 )
             )
         );
-
+  
         // Second, deploy the implementation contracts, using the proxy contracts as inputs
         {
             stakeRegistryImplementation = new ECDSAStakeRegistry(
@@ -105,7 +99,7 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
         {   
             // Create an array with one StrategyParams element
             StrategyParams memory strategyParams = StrategyParams({
-                strategy: baseStrategyImplementation,
+                strategy: wethStrategy,
                 multiplier: 10_000
             });
 
@@ -115,7 +109,7 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
             Quorum memory quorum = Quorum(
                 quorumsStrategyParams
             );
-
+/**      
             // Sort the array (though it has only one element, it's trivially sorted)
             // If the array had more elements, you would need to ensure it is sorted by strategy address
 
