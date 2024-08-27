@@ -85,48 +85,42 @@ contract HelloWorldDeployerHolesky is Script, Utils {
         );
   
         // Second, deploy the implementation contracts, using the proxy contracts as inputs
-        {
-            stakeRegistryImplementation = new ECDSAStakeRegistry(
-                delegationManager
-            );
+        
+        stakeRegistryImplementation = new ECDSAStakeRegistry(
+            delegationManager
+        );
 
-            helloWorldProxyAdmin.upgrade(
-                TransparentUpgradeableProxy(payable(address(stakeRegistryProxy))),
-                address(stakeRegistryImplementation)
-            );
-        }
+        helloWorldProxyAdmin.upgrade(
+            TransparentUpgradeableProxy(payable(address(stakeRegistryProxy))),
+            address(stakeRegistryImplementation)
+        );
+        
+        StrategyParams memory strategyParams = StrategyParams({
+            strategy: wethStrategy,
+            multiplier: 10_000
+        });
 
-        {   
-            // Create an array with one StrategyParams element
-            StrategyParams memory strategyParams = StrategyParams({
-                strategy: wethStrategy,
-                multiplier: 10_000
-            });
+        StrategyParams[] memory quorumsStrategyParams = new StrategyParams[](1);
+        quorumsStrategyParams[0] = strategyParams;
+        Quorum memory quorum = Quorum(
+            quorumsStrategyParams
+        );
 
-            StrategyParams[] memory quorumsStrategyParams = new StrategyParams[](1);
-            quorumsStrategyParams[0] = strategyParams;
-
-            Quorum memory quorum = Quorum(
-                quorumsStrategyParams
-            );
-/**      
-            // Sort the array (though it has only one element, it's trivially sorted)
-            // If the array had more elements, you would need to ensure it is sorted by strategy address
-
-            helloWorldProxyAdmin.upgradeAndCall(
-                TransparentUpgradeableProxy(
-                    payable(address(stakeRegistryProxy))
-                ),
-                address(stakeRegistryImplementation),
-                abi.encodeWithSelector(
-                    ECDSAStakeRegistry.initialize.selector,
-                    address(helloWorldServiceManagerProxy),
-                    1,
-                    quorum
-                )
-            );
-        }
-
+        // Upgrade HelloWorldServiceManager contract
+        helloWorldProxyAdmin.upgradeAndCall(
+            TransparentUpgradeableProxy(
+                payable(address(stakeRegistryProxy))
+            ),
+            address(stakeRegistryImplementation),
+            abi.encodeWithSelector(
+                ECDSAStakeRegistry.initialize.selector,
+                address(helloWorldServiceManagerProxy),
+                1,
+                quorum
+            )
+        );
+        
+        
         helloWorldServiceManagerImplementation = new HelloWorldServiceManager(
             address(avsDirectory),
             address(stakeRegistryProxy),
@@ -140,41 +134,5 @@ contract HelloWorldDeployerHolesky is Script, Utils {
             address(helloWorldServiceManagerImplementation)
         );
 
-        // WRITE JSON DATA
-        string memory parent_object = "parent object";
-
-        string memory deployed_addresses = "addresses";
-        vm.serializeAddress(
-            deployed_addresses,
-            "HelloWorldServiceManagerProxy",
-            address(helloWorldServiceManagerProxy)
-        );
-        vm.serializeAddress(
-            deployed_addresses,
-            "HelloWorldServiceManagerImplementation",
-            address(helloWorldServiceManagerImplementation)
-        );
-        vm.serializeAddress(
-            deployed_addresses,
-            "ECDSAStakeRegistryProxy",
-            address(stakeRegistryProxy)
-        );
-        
-        string memory deployed_addresses_output = vm.serializeAddress(
-            deployed_addresses,
-            "ECDSAStakeRegistryImplementation",
-            address(stakeRegistryImplementation)
-        );
-
-        // Serialize all the data
-        string memory finalJson = vm.serializeString(
-            parent_object,
-            deployed_addresses,
-            deployed_addresses_output
-        );
-
-        string memory filePath = "hello_world_avs_holesky_deployment_output.json";
-        vm.writeFile(filePath, finalJson);
-         */
     }
 }
