@@ -40,7 +40,7 @@ contract HoleskyDeployer is Script, Utils {
         address avsDirectoryAddr = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
         address eigenLayerProxyAdminAddr = 0xDB023566064246399b4AE851197a97729C93A6cf;
         address eigenLayerPauserRegAddr = 0x85Ef7299F8311B25642679edBF02B62FA2212F06;
-        address baseStrategyImplementationAddr = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
+        address baseStrategyImplementationAddr = 0xFb83e1D133D0157775eC4F19Ff81478Df1103305;
 
         IStrategyManager strategyManager = IStrategyManager(strategyManagerAddr);
         IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
