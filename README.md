@@ -2,18 +2,16 @@
 
 Welcome to the Hello World AVS.
 
-This project shows you the simplest functionality you can expect from an AVS.
-
-It will give you a concrete understanding of the basic components.
+This project shows you the simplest functionality you can expect from an AVS. It will give you a concrete understanding of the basic components.
 
 ![hello-world-png](./assets/hello-world-diagram.png)
 
-There are 5 steps to this AVS:
-- AVS consumer requests a "Hello World" message to be generated and signed
-- AVS takes on the request by emitting an event for operators to pick up the request
-- any operator who is staked to serve this AVS takes this request, generates this message and signs it
-- the operator submits this message with their signature back to the AVS
-- *if the operator is in fact registered to the AVS and has the minimum needed stake, the submission is accepted*
+User
+- AVS consumer requests a "Hello World" message to be generated and signed.
+- AVS contract takes on the request and emits an event for the request.
+- Any operator who is staked to serve this AVS takes this request, generates this message and signs it.
+- The operator submits this message with their signature back to the AVS.
+- *If the operator is in fact registered to the AVS and has the minimum needed stake*, the submission is accepted.
 
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
@@ -36,7 +34,7 @@ Where additional sophistication with AVSs come into the picture:
 Following global NodeJS packages:
 1. [Typescript](https://github.com/microsoft/TypeScript)
 
-## Typescript instructions
+## Typescript Operator instructions
 
 ### Automated deployment (uses existing state file)
 
@@ -98,7 +96,7 @@ tsc && node dist/index.js
 tsc && node dist/createNewTasks.js
 ```
 
-## Rust instructions
+## Rust Operator instructions
 
 ### Automated deployment (uses existing state file)
 
@@ -116,15 +114,15 @@ cargo test --workspace
 ```
 
 
-##### Holesky Testnet
+### Holesky Testnet Deployment
 
 | Contract Name               | Holesky Address                                   |
 | -------------               | -------------                                     |
 | Hello World Service Manager | [0x3361953F4a9628672dCBcDb29e91735fb1985390](https://holesky.etherscan.io/address/0x3361953F4a9628672dCBcDb29e91735fb1985390)    |
-| Delegation Manager          | [0xA44151489861Fe9e3055d95adC98FbD462B948e7](https://holesky.etherscan.io/address/0xA44151489861Fe9e3055d95adC98FbD462B948e7)                                           |
-| Avs Directory               | [0x055733000064333CaDDbC92763c58BF0192fFeBf](https://holesky.etherscan.io/address/0x055733000064333CaDDbC92763c58BF0192fFeBf)      |
 
-You don't need to run any script for holesky testnet.
+Please see [Current Testnet Deployment](https://github.com/Layr-Labs/eigenlayer-contracts?tab=readme-ov-file#current-testnet-deployment) for additional deployed addresses.
+
+You don't need to run a deployment script for holesky testnet, the contracts are already deployed.
 
 1. Use the HOLESKY_ namespace env parameters in the code , instead of normal parameters.
 
@@ -133,11 +131,6 @@ You don't need to run any script for holesky testnet.
 3. Run `make spam-rust-tasks `
 
 
-## Extensions
-
-- Operator needs a minimum stake amount to make submissions
-- Add another strategy to the AVS
-- Operator must respond within a certain number of blocks
 
 ## Deployment on Holesky
 
@@ -159,9 +152,7 @@ To add a new strategy to the Hello World AVS, follow the guide provided in [`Add
 
 Follow the [Tenderly Virtual Testnet Setup Instructions](https://docs.tenderly.co/virtual-testnets/quickstart) to create a new virtual testnet.
 
-
-
-
+Run the following commands:
 
 ```sh
 
@@ -188,18 +179,23 @@ curl $TENDERLY_TESTNET_RPC_ADMIN \
 }'
 
 
-# Deploy contracts using Foundry
+# Deploy AVS contracts to Holesky using Foundry
 
-TENDERLY_TESTNET_RPC_ADMIN=https://virtual.holesky.rpc.tenderly.co/a58a7dde-1b39-47f6-8206-29f969f7e284
+forge script script/HelloWorldDeployerHoleskyTenderly.s.sol:HelloWorldDeployerHoleskyTenderly \
+    --rpc-url $TENDERLY_TESTNET_RPC_ADMIN --private-key $PRIVATE_KEY --broadcast -vvv debug
 
-forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url $TENDERLY_TESTNET_RPC_ADMIN \
---private-key $PRIVATE_KEY --broadcast -vvvv \
---sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
 
-// todo build a new Holesky Hello-World-AVS deployer
+#todo: consider installing solhint
 
 
 ```
 
 7) Verify contracts?
 forge verify-contract --verifier-url $TENDERLY_TESTNET_RPC_ADMIN 
+
+
+
+## Potential Future Extensions for Learning Exercises
+
+- Operator needs a minimum stake amount to make submissions
+- Operator must respond within a certain number of blocks
