@@ -155,17 +155,15 @@ To deploy the Hello World AVS contracts to the Holesky network, follow these ste
 To add a new strategy to the Hello World AVS, follow the guide provided in [`AddNewStrategy.md`](https://github.com/Layr-Labs/hello-world-avs/blob/master/AddNewStrategy.md). This guide walks you through the necessary steps to add and whitelist a new strategy for the AVS.
 
 
-## Tenderly Deployment
+## Tenderly Virtual Testnet Deployment
 
-1) Follow the [Tenderly Virtual Testnet setup instructions](https://docs.tenderly.co/virtual-testnets/quickstart).
+Follow the [Tenderly Virtual Testnet Setup Instructions](https://docs.tenderly.co/virtual-testnets/quickstart) to create a new virtual testnet.
 
-[Install the Tenderly CLI](https://github.com/Tenderly/tenderly-cli?tab=readme-ov-file#installation)
 
-2) Configure Tenderly instance
+
+
 
 ```sh
-# Login to your Tenderly account:
-tenderly login
 
 # Set env vars
 TENDERLY_TESTNET_RPC_PUBLIC=https://virtual.holesky.rpc.tenderly.co/a58a7dde-1b39-47f6-8206-29f969f7e284
@@ -189,25 +187,19 @@ curl $TENDERLY_TESTNET_RPC_ADMIN \
     "id": "1234"
 }'
 
-```
 
-
-
-3) Deploy contracts using Foundry
-
-```sh
+# Deploy contracts using Foundry
 
 TENDERLY_TESTNET_RPC_ADMIN=https://virtual.holesky.rpc.tenderly.co/a58a7dde-1b39-47f6-8206-29f969f7e284
 
 forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url $TENDERLY_TESTNET_RPC_ADMIN \
 --private-key $PRIVATE_KEY --broadcast -vvvv \
 --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
+
+// todo build a new Holesky Hello-World-AVS deployer
+
+
 ```
 
-
-
 7) Verify contracts?
-
 forge verify-contract --verifier-url $TENDERLY_TESTNET_RPC_ADMIN 
-
-Note: Ensure you have sufficient testnet ETH in your Tenderly account for deployments and transactions.
