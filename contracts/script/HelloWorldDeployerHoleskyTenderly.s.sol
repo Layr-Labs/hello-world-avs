@@ -39,25 +39,20 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
         address strategyManagerAddr = 0xdfB5f6CE42aAA7830E94ECFCcAd411beF4d4D5b6;
         address delegationManagerAddr = 0xA44151489861Fe9e3055d95adC98FbD462B948e7;
         address avsDirectoryAddr = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
-        address eigenLayerPauserRegAddr = 0x85Ef7299F8311B25642679edBF02B62FA2212F06;
         address baseStrategyImplementationAddr = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
 
         IStrategyManager strategyManager = IStrategyManager(strategyManagerAddr);
         IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
         IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryAddr);
-        PauserRegistry eigenLayerPauserReg = PauserRegistry(eigenLayerPauserRegAddr);
         StrategyBase baseStrategyImplementation = StrategyBase(baseStrategyImplementationAddr);
 
-        address helloWorldCommunityMultisig = msg.sender;
-        address helloWorldPauser = msg.sender;
+        
 
         vm.startBroadcast();
         _deployHelloWorldContracts(
             delegationManager,
             avsDirectory,
-            baseStrategyImplementation,
-            helloWorldCommunityMultisig,
-            helloWorldPauser
+            baseStrategyImplementation
         );
         vm.stopBroadcast();
     }
@@ -65,23 +60,12 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
     function _deployHelloWorldContracts(
         IDelegationManager delegationManager,
         IAVSDirectory avsDirectory,
-        IStrategy baseStrategyImplementation,
-        address helloWorldCommunityMultisig,
-        address helloWorldPauser
+        IStrategy baseStrategyImplementation
     ) internal {
         // Deploy proxy admin for ability to upgrade proxy contracts
         helloWorldProxyAdmin = new ProxyAdmin();
 
-        // Deploy pauser registry
-        {
-            address[] memory pausers = new address[](2);
-            pausers[0] = helloWorldPauser;
-            pausers[1] = helloWorldCommunityMultisig;
-            helloWorldPauserReg = new PauserRegistry(
-                pausers,
-                helloWorldCommunityMultisig
-            );
-        }
+      
 
         EmptyContract emptyContract = new EmptyContract();
 
@@ -177,7 +161,7 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
         );
         vm.serializeAddress(
             deployed_addresses,
-            "ECDSAStakeRegistry",
+            "ECDSAStakeRegistryProxy",
             address(stakeRegistryProxy)
         );
         
@@ -194,6 +178,7 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
             deployed_addresses_output
         );
 
-        writeOutput(finalJson, "hello_world_avs_holesky_deployment_output");
+        string memory filePath = "hello_world_avs_holesky_deployment_output.json";
+        vm.writeFile(filePath, finalJson);
     }
 }

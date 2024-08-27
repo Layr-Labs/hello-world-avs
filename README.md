@@ -157,11 +157,9 @@ Run the following commands:
 ```sh
 
 # Set env vars
-TENDERLY_TESTNET_RPC_PUBLIC=https://virtual.holesky.rpc.tenderly.co/a58a7dde-1b39-47f6-8206-29f969f7e284
-TENDERLY_TESTNET_RPC_ADMIN=https://virtual.holesky.rpc.tenderly.co/3f74d2f5-a603-43b1-9068-78d471de8b6c
+TENDERLY_TESTNET_RPC_ADMIN=https://virtual.holesky.rpc.tenderly.co/b2c5863e-713c-4658-b033-fae41aad508d
 PUBLIC_KEY=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-
 # Fund account using the tenderly rpc
 curl $TENDERLY_TESTNET_RPC_ADMIN \
 -X POST \
@@ -171,7 +169,7 @@ curl $TENDERLY_TESTNET_RPC_ADMIN \
     "method": "tenderly_setBalance",
     "params": [
       [
-        "${PUBLIC_KEY}"
+        "'"${PUBLIC_KEY}"'"
         ],
       "0xDE0B6B3A7640000"
       ],
@@ -180,22 +178,27 @@ curl $TENDERLY_TESTNET_RPC_ADMIN \
 
 
 # Deploy AVS contracts to Holesky using Foundry
-
 forge script script/HelloWorldDeployerHoleskyTenderly.s.sol:HelloWorldDeployerHoleskyTenderly \
     --rpc-url $TENDERLY_TESTNET_RPC_ADMIN --private-key $PRIVATE_KEY --broadcast -vvv debug
 
+# Holesky test deployment
+HOLESKY_RPC=https://1rpc.io/holesky
+HOLESKY_TEST_PK=
+forge script script/HelloWorldDeployerHoleskyTenderly.s.sol:HelloWorldDeployerHoleskyTenderly \
+    --rpc-url $HOLESKY_RPC --private-key $HOLESKY_TEST_PK --broadcast -vvv debug
 
-#todo: consider installing solhint
+# Verify contracts?
+forge verify-contract --verifier-url $TENDERLY_TESTNET_RPC_ADMIN 
 
 
 ```
 
-7) Verify contracts?
-forge verify-contract --verifier-url $TENDERLY_TESTNET_RPC_ADMIN 
+
 
 
 
 ## Potential Future Extensions for Learning Exercises
-
-- Operator needs a minimum stake amount to make submissions
-- Operator must respond within a certain number of blocks
+- Add a script that updates the git submodule and overwrites the ABIs folder
+- Add solhint
+- Modify Operators to require a minimum stake amount to make submissions.
+- Modify Operator to respond within a certain number of blocks.
