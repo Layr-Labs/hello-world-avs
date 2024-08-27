@@ -79,6 +79,7 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
                 )
             )
         );
+        /**
         stakeRegistryProxy = ECDSAStakeRegistry(
             address(
                 new TransparentUpgradeableProxy(
@@ -180,5 +181,6 @@ contract HelloWorldDeployerHoleskyTenderly is Script, Utils {
 
         string memory filePath = "hello_world_avs_holesky_deployment_output.json";
         vm.writeFile(filePath, finalJson);
+         */
     }
 }

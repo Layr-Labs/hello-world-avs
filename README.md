@@ -157,9 +157,12 @@ Run the following commands:
 ```sh
 
 # Set env vars
-TENDERLY_TESTNET_RPC_ADMIN=https://virtual.holesky.rpc.tenderly.co/b2c5863e-713c-4658-b033-fae41aad508d
-PUBLIC_KEY=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+cd contracts
+source ../.env
+
+# todo: instructions to setup wallet for testnet account
+
 # Fund account using the tenderly rpc
 curl $TENDERLY_TESTNET_RPC_ADMIN \
 -X POST \
@@ -179,13 +182,18 @@ curl $TENDERLY_TESTNET_RPC_ADMIN \
 
 # Deploy AVS contracts to Holesky using Foundry
 forge script script/HelloWorldDeployerHoleskyTenderly.s.sol:HelloWorldDeployerHoleskyTenderly \
-    --rpc-url $TENDERLY_TESTNET_RPC_ADMIN --private-key $PRIVATE_KEY --broadcast -vvv debug
+    --rpc-url $TENDERLY_TESTNET_RPC_ADMIN --private-key $HOLESKY_PRIVATE_KEY --broadcast -vvv debug
+
+#todo next steps
+#2) Break down the deployment script to test each part by itself, then add steps until breakage
+#1) Test this on Holesky
+
+
 
 # Holesky test deployment
 HOLESKY_RPC=https://1rpc.io/holesky
-HOLESKY_TEST_PK=
 forge script script/HelloWorldDeployerHoleskyTenderly.s.sol:HelloWorldDeployerHoleskyTenderly \
-    --rpc-url $HOLESKY_RPC --private-key $HOLESKY_TEST_PK --broadcast -vvv debug
+    --rpc-url $HOLESKY_RPC --private-key $HOLESKY_PRIVATE_KEY --broadcast -vvv debug
 
 # Verify contracts?
 forge verify-contract --verifier-url $TENDERLY_TESTNET_RPC_ADMIN 
