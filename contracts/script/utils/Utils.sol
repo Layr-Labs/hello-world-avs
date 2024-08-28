@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 import "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
 import "@eigenlayer/contracts/strategies/StrategyBase.sol";
-import "../../src/ERC20Mock.sol";
+import "../../test/ERC20Mock.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";

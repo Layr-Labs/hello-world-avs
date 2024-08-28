@@ -15,7 +15,7 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import {HelloWorldServiceManager, IServiceManager} from "../src/HelloWorldServiceManager.sol";
-import "../src/ERC20Mock.sol";
+import "../test/ERC20Mock.sol";
 import {Utils} from "./utils/Utils.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
