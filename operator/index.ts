@@ -96,9 +96,9 @@ const registerOperator = async () => {
     //Debugging
     console.log('operatorSignatureWithSaltAndExpiry before processing:', operatorSignatureWithSaltAndExpiry);
     console.log('wallet.address before processing:', wallet.address);
-    console.log('registerOperatorWithSignature details: '+ ecdsaRegistryContract.interface.getFunction('registerOperatorWithSignature'))
     
-    
+    // Register Operator to AVS
+    // Per release here: https://github.com/Layr-Labs/eigenlayer-middleware/blob/v0.2.1-mainnet-rewards/src/unaudited/ECDSAStakeRegistry.sol#L49
     const tx2 = await ecdsaRegistryContract.registerOperatorWithSignature(
         operatorSignatureWithSaltAndExpiry,
         wallet.address

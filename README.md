@@ -41,15 +41,38 @@ Open a separate terminal window #2, execute the following commands
 forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast -vvv --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json && \
 rm -rf script/output/devnet/M2_from_scratch_deployment_data.json)
 
+# Write the contract addresses to .env
+DELEGATION_MANAGER_ADDRESS=$(jq '.transactions[] | select(.contractName == "DelegationManager") | .contractAddress' contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/broadcast/M2_Deploy_From_Scratch.s.sol/31337/run-latest.json)
+echo DELEGATION_MANAGER_ADDRESS=$DELEGATION_MANAGER_ADDRESS | sed 's/"//g' >> .env
+
+AVS_DIRECTORY_ADDRESS=$(jq '.transactions[] | select(.contractName == "AVSDirectory") | .contractAddress' contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/broadcast/M2_Deploy_From_Scratch.s.sol/31337/run-latest.json)
+echo AVS_DIRECTORY_ADDRESS=$AVS_DIRECTORY_ADDRESS | sed 's/"//g' >> .env
+
+
+
 # Deploy Hello World AVS specific contracts
 (cd contracts &&\
 forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast debug)
+
+
+ECDSA_STAKE_REGISTRY_ADDRESS=$(jq '.transactions[] | select(.contractName == "ECDSAStakeRegistry") | .contractAddress' contracts/broadcast/HelloWorldDeployer.s.sol/31337/run-latest.json)
+echo ECDSA_STAKE_REGISTRY_ADDRESS=$ECDSA_STAKE_REGISTRY_ADDRESS | sed 's/"//g' >> .env
+
+HELLO_WORLD_SERVICE_MANAGER_ADDRESS=$(jq '.transactions[] | select(.contractName == "HelloWorldServiceManager") | .contractAddress' contracts/broadcast/HelloWorldDeployer.s.sol/31337/run-latest.json)
+echo HELLO_WORLD_SERVICE_MANAGER_ADDRESS=$HELLO_WORLD_SERVICE_MANAGER_ADDRESS | sed 's/"//g' >> .env
+
 
 # Parse and save newly built ABIs for Operator
 jq .abi contracts/out/DelegationManager.sol/DelegationManager.json > abis/DelegationManager.abi
 jq .abi contracts/out/HelloWorldServiceManager.sol/HelloWorldServiceManager.json > abis/HelloWorldServiceManager.abi
 jq .abi contracts/out/ECDSAStakeRegistry.sol/ECDSAStakeRegistry.json > abis/ECDSAStakeRegistry.abi
 jq .abi contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/out/AVSDirectory.sol/AVSDirectory.json > abis/AVSDirectory.abi
+
+# Todo add code to automatically update contract addresses in .env
+HELLO_WORLD_SERVICE_MANAGER_ADDRESS=0x9e545e3c0baab3e08cdfd552c960a1050f373042
+DELEGATION_MANAGER_ADDRESS=
+STAKE_REGISTRY_ADDRESS=0xe6e340d132b5f46d1e472debcd681b2abc16e57e
+AVS_DIRECTORY_ADDRESS=
 
 # Install Operator package dependencies
 npm install
@@ -59,6 +82,15 @@ cp .env.local .env
 
 # Start the Operator application
 tsc && node dist/index.js
+
+
+
+
+DATA=0x3d5611f60000000000000000000000000000000000000000000000000000000000000040000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb922660000000000000000000000000000000000000000000000000000000000000060bf68a1ee4cb28b950f7d9f839689439ac650ae275309f75a82901ad63c2025770000000000000000000000000000000000000000000000000000000066cf34560000000000000000000000000000000000000000000000000000000000000041aab8ad201b3b118cf92197e030f8054138966715bbf21478467b370b5c89a2a918b843536b9b062fa69eacb34f72f91719fb74fd9a105635e7971d557e7596591b00000000000000000000000000000000000000000000000000000000000000'
+cast send --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 0x9E545E3C0baAB3E08CdfD552C960A1050f373042 $DATA 
+
+
+
 ```
 
 Open a separate terminal window #3, execute the following commands
