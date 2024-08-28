@@ -47,20 +47,9 @@ contract HelloWorldDeployer is Script, Utils {
         StrategyBase wethStrategy = StrategyBase(wethStrategyProxyAddr);
 
         vm.startBroadcast();
-        _deployHelloWorldContracts(
-            delegationManager,
-            avsDirectory,
-            wethStrategy
-        );
-        vm.stopBroadcast();
-    }
-
-    function _deployHelloWorldContracts(
-        IDelegationManager delegationManager,
-        IAVSDirectory avsDirectory,
-        IStrategy wethStrategy
-    ) internal {
-        // Deploy proxy admin for ability to upgrade proxy contracts
+        
+        
+ // Deploy proxy admin for ability to upgrade proxy contracts
         helloWorldProxyAdmin = new ProxyAdmin();
 
         EmptyContract emptyContract = new EmptyContract();
@@ -135,6 +124,7 @@ contract HelloWorldDeployer is Script, Utils {
             ),
             address(helloWorldServiceManagerImplementation)
         );
-
+        vm.stopBroadcast();
     }
+       
 }
