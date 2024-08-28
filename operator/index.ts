@@ -1,9 +1,7 @@
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
-import { delegationABI } from "./abis/delegationABI";
-import { contractABI } from './abis/contractABI';
-import { registryABI } from './abis/registryABI';
-import { avsDirectoryABI } from './abis/avsDirectoryABI';
+const fs = require('fs');
+const path = require('path');
 dotenv.config();
 
 // Check if the process.env object is empty
@@ -16,14 +14,22 @@ const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
 
 const delegationManagerAddress = process.env.DELEGATION_MANAGER_ADDRESS!;
-const avsContractProxyAddress = process.env.CONTRACT_ADDRESS!;
-const stakeRegistryAddress = process.env.STAKE_REGISTRY_ADDRESS!;
+const helloWorldServiceManagerAddress = process.env.CONTRACT_ADDRESS!;
+const ecdsaStakeRegistryAddress = process.env.STAKE_REGISTRY_ADDRESS!;
 const avsDirectoryAddress = process.env.AVS_DIRECTORY_ADDRESS!;
 
-const delegationManager = new ethers.Contract(delegationManagerAddress, delegationABI, wallet);
-const avsContractProxy = new ethers.Contract(avsContractProxyAddress, contractABI, wallet);
-const registryContract = new ethers.Contract(stakeRegistryAddress, registryABI, wallet);
+// Load ABIs
+const delegationManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/DelegationManager.abi'), 'utf8'));
+const ecdsaRegistryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/ECDSAStakeRegistry.abi'), 'utf8'));
+const helloWorldServiceManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/HelloWorldServiceManager.abi'), 'utf8'));
+const avsDirectoryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/AVSDirectory.abi'), 'utf8'));
+
+// Initialize contract objects from ABIs
+const delegationManager = new ethers.Contract(delegationManagerAddress, delegationManagerABI, wallet);
+const helloWorldServiceManager = new ethers.Contract(helloWorldServiceManagerAddress, helloWorldServiceManagerABI, wallet);
+const ecdsaRegistryContract = new ethers.Contract(ecdsaStakeRegistryAddress, ecdsaRegistryABI, wallet);
 const avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, wallet);
+
 
 const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number, taskName: string) => {
     const message = `Hello, ${taskName}`;
@@ -35,7 +41,7 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
         `Signing and responding to task ${taskIndex}`
     )
 
-    const tx = await avsContractProxy.respondToTask(
+    const tx = await helloWorldServiceManager.respondToTask(
         { name: taskName, taskCreatedBlock: taskCreatedBlock },
         taskIndex,
         signature
@@ -45,12 +51,11 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
 };
 
 const registerOperator = async () => {
-    console.log("check")
     
     // Registers as an Operator in EigenLayer.
     try {
         const tx1 = await delegationManager.registerAsOperator({
-            earningsReceiver: await wallet.address,
+            __deprecated_earningsReceiver: await wallet.address,
             delegationApprover: "0x0000000000000000000000000000000000000000",
             stakerOptOutWindowBlocks: 0
         }, "");
@@ -73,7 +78,7 @@ const registerOperator = async () => {
     // Calculate the digest hash, which is a unique value representing the operator, avs, unique value (salt) and expiration date.
     const operatorDigestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
         wallet.address, 
-        await avsContractProxy.getAddress(), 
+        await helloWorldServiceManager.getAddress(), 
         salt, 
         expiry
     );
@@ -86,18 +91,27 @@ const registerOperator = async () => {
     // Encode the signature in the required format
     operatorSignatureWithSaltAndExpiry.signature = ethers.Signature.from(operatorSignedDigestHash).serialized;
 
-    const tx2 = await registryContract.registerOperatorWithSignature(
-        wallet.address,
-        operatorSignatureWithSaltAndExpiry
+    console.log("Registering Operator to AVS Registry contract");
+    
+    //Debugging
+    console.log('operatorSignatureWithSaltAndExpiry before processing:', operatorSignatureWithSaltAndExpiry);
+    console.log('wallet.address before processing:', wallet.address);
+    console.log('registerOperatorWithSignature details: '+ ecdsaRegistryContract.interface.getFunction('registerOperatorWithSignature'))
+    
+    
+    const tx2 = await ecdsaRegistryContract.registerOperatorWithSignature(
+        operatorSignatureWithSaltAndExpiry,
+        wallet.address
     );
     await tx2.wait();
     console.log("Operator registered on AVS successfully");
 };
 
 const monitorNewTasks = async () => {
-    await avsContractProxy.createNewTask("EigenWorld");
+    console.log(`Creating new task "EigenWorld"`);
+    await helloWorldServiceManager.createNewTask("EigenWorld");
 
-    avsContractProxy.on("NewTaskCreated", async (taskIndex: number, task: any) => {
+    helloWorldServiceManager.on("NewTaskCreated", async (taskIndex: number, task: any) => {
         console.log(`New task detected: Hello, ${task.name}`);
         await signAndRespondToTask(taskIndex, task.taskCreatedBlock, task.name);
     });

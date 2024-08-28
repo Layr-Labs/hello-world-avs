@@ -36,25 +36,26 @@ Open a separate terminal window #2, execute the following commands
 
 ```sh
 
-# Setup .env file
-cp .env.local .env
+# Deploy the EigenLayer contracts
+(cd contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts &&\
+forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast -vvv --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json && \
+rm -rf script/output/devnet/M2_from_scratch_deployment_data.json)
 
-# Compile the contracts
-cd contracts && forge build
-cd lib/eigenlayer-middleware/lib/eigenlayer-contracts
-
-forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url http://localhost:8545 \
---private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast \
--vvv --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json
-
-# Move back to parent contracts directory
-cd -
 # Deploy Hello World AVS specific contracts
-forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast -vvv debug
+(cd contracts &&\
+forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast debug)
+
+# Parse and save newly built ABIs for Operator
+jq .abi contracts/out/DelegationManager.sol/DelegationManager.json > abis/DelegationManager.abi
+jq .abi contracts/out/HelloWorldServiceManager.sol/HelloWorldServiceManager.json > abis/HelloWorldServiceManager.abi
+jq .abi contracts/out/ECDSAStakeRegistry.sol/ECDSAStakeRegistry.json > abis/ECDSAStakeRegistry.abi
+jq .abi contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/out/AVSDirectory.sol/AVSDirectory.json > abis/AVSDirectory.abi
 
 # Install Operator package dependencies
-cd ..
 npm install
+
+# Setup .env file
+cp .env.local .env
 
 # Start the Operator application
 tsc && node dist/index.js
@@ -171,8 +172,8 @@ The architecture can be further enhanced via:
 
 
 ## Todos
-- Rewrite the local devnet EigenLayer contract deployment steps to work without requiring the json config file.
+- Rewrite the local devnet EigenLayer contract deployment steps to work without requiring the json config input file and remove deployment json output file.
+- Reorganize Operator code folder. Migrate from typescript to simple javascript.
 - Add operator demo steps for Holesky and Tenderly
 - Add contract verification to the deploy scripts.
-- Add a script that updates the git submodule and overwrites the ABIs folder.
 - Rebuild the hello world architecture in Excalidraw.
