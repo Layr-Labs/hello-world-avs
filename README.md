@@ -43,7 +43,7 @@ cp .env.local .env
 
 # Deploy the EigenLayer contracts
 (cd contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts &&\
-forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast -vvv --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json && \
+forge script script/deploy/devnet/M2_Deploy_From_Scratch.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast -vvv --sig "run(string memory configFile)" -- M2_deploy_from_scratch.anvil.config.json --revert-strings debug && \
 rm -rf script/output/devnet/M2_from_scratch_deployment_data.json)
 
 # Write the newly deployed contract addresses to .env
@@ -55,7 +55,7 @@ echo AVS_DIRECTORY_ADDRESS=$AVS_DIRECTORY_ADDRESS | sed 's/"//g' >> .env
 
 # Deploy Hello World AVS specific contracts
 (cd contracts &&\
-forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast debug)
+forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast --revert-strings debug )
 
 # Write the newly deployed contract addresses to .env
 ECDSA_STAKE_REGISTRY_ADDRESS=$(jq '.transactions[] | select(.contractName == "ECDSAStakeRegistry") | .contractAddress' contracts/broadcast/HelloWorldDeployer.s.sol/31337/run-latest.json)
@@ -76,6 +76,9 @@ npm install
 # Start the Operator application
 tsc && node dist/index.js
 
+#Questions for Steven
+# Am I making any mistake in HelloWorldDeployer.s.sol:105?
+# How could I debug the 'execution reverted: revert: Target contract does not contain code' error further
 
 
 # todo remove this

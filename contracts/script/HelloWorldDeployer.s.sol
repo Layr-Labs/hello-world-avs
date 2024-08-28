@@ -27,7 +27,7 @@ contract HelloWorldDeployer is Script, Utils {
     StrategyBase public erc20MockStrategy;
 
     // Hello World contracts
-    ProxyAdmin public helloWorldProxyAdmin;
+    ProxyAdmin public proxyAdmin;
     PauserRegistry public helloWorldPauserReg;
     
     ECDSAStakeRegistry public stakeRegistryProxy;
@@ -50,7 +50,7 @@ contract HelloWorldDeployer is Script, Utils {
         
         
  // Deploy proxy admin for ability to upgrade proxy contracts
-        helloWorldProxyAdmin = new ProxyAdmin();
+        proxyAdmin = new ProxyAdmin();
 
         EmptyContract emptyContract = new EmptyContract();
 
@@ -59,7 +59,7 @@ contract HelloWorldDeployer is Script, Utils {
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
-                    address(helloWorldProxyAdmin),
+                    address(proxyAdmin),
                     ""
                 )
             )
@@ -69,28 +69,28 @@ contract HelloWorldDeployer is Script, Utils {
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
-                    address(helloWorldProxyAdmin),
+                    address(proxyAdmin),
                     ""
                 )
             )
         );
   
-        // Second, deploy the implementation contracts, using the proxy contracts as inputs
-        
+        // Deploy the implementation contracts, using the proxy contracts as inputs
         stakeRegistryImplementation = new ECDSAStakeRegistry(
             delegationManager
         );
-
-        helloWorldProxyAdmin.upgrade(
+        
+        // Upgrade stake registry proxy to point to the implementation
+        proxyAdmin.upgrade(
             TransparentUpgradeableProxy(payable(address(stakeRegistryProxy))),
             address(stakeRegistryImplementation)
         );
         
+        // Build quorum struct
         StrategyParams memory strategyParams = StrategyParams({
             strategy: wethStrategy,
             multiplier: 10_000
         });
-
         StrategyParams[] memory quorumsStrategyParams = new StrategyParams[](1);
         quorumsStrategyParams[0] = strategyParams;
         Quorum memory quorum = Quorum(
@@ -98,7 +98,7 @@ contract HelloWorldDeployer is Script, Utils {
         );
 
         // Upgrade HelloWorldServiceManager contract
-        helloWorldProxyAdmin.upgradeAndCall(
+        proxyAdmin.upgradeAndCall(
             TransparentUpgradeableProxy(
                 payable(address(stakeRegistryProxy))
             ),
@@ -118,7 +118,7 @@ contract HelloWorldDeployer is Script, Utils {
             address(delegationManager)
         );
         // Upgrade the proxy contracts to use the correct implementation contracts and initialize them.
-        helloWorldProxyAdmin.upgrade(
+        proxyAdmin.upgrade(
             TransparentUpgradeableProxy(
                 payable(address(helloWorldServiceManagerProxy))
             ),
