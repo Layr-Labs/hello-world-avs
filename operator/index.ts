@@ -14,8 +14,8 @@ const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
 
 const delegationManagerAddress = process.env.DELEGATION_MANAGER_ADDRESS!;
-const helloWorldServiceManagerAddress = process.env.CONTRACT_ADDRESS!;
-const ecdsaStakeRegistryAddress = process.env.STAKE_REGISTRY_ADDRESS!;
+const helloWorldServiceManagerAddress = process.env.HELLO_WORLD_SERVICE_MANAGER_ADDRESS!;
+const ecdsaStakeRegistryAddress = process.env.ECDSA_STAKE_REGISTRY_ADDRESS!;
 const avsDirectoryAddress = process.env.AVS_DIRECTORY_ADDRESS!;
 
 // Load ABIs
