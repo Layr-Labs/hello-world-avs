@@ -10,9 +10,14 @@ import "forge-std/StdJson.sol";
 
 contract Utils is Script {
     // Note that this fct will only work for the ERC20Mock that has a public mint function
-    function _mintTokens(address strategyAddress, address[] memory tos, uint256[] memory amounts) internal {
+    function _mintTokens(
+        address strategyAddress,
+        address[] memory tos,
+        uint256[] memory amounts
+    ) internal {
         for (uint256 i = 0; i < tos.length; i++) {
-            ERC20Mock underlyingToken = ERC20Mock(address(StrategyBase(strategyAddress).underlyingToken()));
+            ERC20Mock underlyingToken =
+                ERC20Mock(address(StrategyBase(strategyAddress).underlyingToken()));
             underlyingToken.mint(tos[i], amounts[i]);
         }
     }
@@ -25,11 +30,9 @@ contract Utils is Script {
         }
     }
 
-    function convertOperatorStatusToString(IRegistryCoordinator.OperatorStatus operatorStatus)
-        public
-        pure
-        returns (string memory)
-    {
+    function convertOperatorStatusToString(
+        IRegistryCoordinator.OperatorStatus operatorStatus
+    ) public pure returns (string memory) {
         if (operatorStatus == IRegistryCoordinator.OperatorStatus.NEVER_REGISTERED) {
             return "NEVER_REGISTERED";
         } else if (operatorStatus == IRegistryCoordinator.OperatorStatus.REGISTERED) {

@@ -18,5 +18,9 @@ interface IHelloWorldServiceManager {
     function createNewTask(string memory name) external;
 
     // NOTE: this function is called by operators to respond to a task.
-    function respondToTask(Task calldata task, uint32 referenceTaskIndex, bytes calldata signature) external;
+    function respondToTask(
+        Task calldata task,
+        uint32 referenceTaskIndex,
+        bytes calldata signature
+    ) external;
 }

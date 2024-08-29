@@ -12,7 +12,10 @@ import {ISlasher} from "@eigenlayer/contracts/interfaces/ISlasher.sol";
 import {StrategyBaseTVLLimits} from "@eigenlayer/contracts/strategies/StrategyBaseTVLLimits.sol";
 import "@eigenlayer/test/mocks/EmptyContract.sol";
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
-import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+import {
+    Quorum,
+    StrategyParams
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import {HelloWorldServiceManager, IServiceManager} from "../src/HelloWorldServiceManager.sol";
 import "../test/ERC20Mock.sol";
@@ -43,7 +46,8 @@ contract AddStrategyScript is Script, Utils {
     function _deployStrategy(ERC20Mock erc20Mock) internal returns (StrategyBaseTVLLimits) {
         ProxyAdmin eigenLayerProxyAdmin = ProxyAdmin(eigenLayerProxyAdminAddr);
         PauserRegistry eigenLayerPauserReg = PauserRegistry(eigenLayerPauserRegAddr);
-        StrategyBaseTVLLimits baseStrategyImplementation = StrategyBaseTVLLimits(baseStrategyImplementationAddr);
+        StrategyBaseTVLLimits baseStrategyImplementation =
+            StrategyBaseTVLLimits(baseStrategyImplementationAddr);
 
         return StrategyBaseTVLLimits(
             address(
@@ -79,7 +83,8 @@ contract AddStrategyScript is Script, Utils {
             HelloWorldServiceManager(helloWorldServiceManagerProxyAddr);
         ECDSAStakeRegistry stakeRegistryProxy = ECDSAStakeRegistry(stakeRegistryProxyAddr);
 
-        StrategyParams memory strategyParams = StrategyParams({strategy: erc20MockStrategy, multiplier: 10_000});
+        StrategyParams memory strategyParams =
+            StrategyParams({strategy: erc20MockStrategy, multiplier: 10_000});
 
         StrategyParams[] memory strategies = new StrategyParams[](1);
         strategies[0] = strategyParams;
