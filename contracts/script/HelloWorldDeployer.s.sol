@@ -41,7 +41,6 @@ contract HelloWorldDeployer is Script, Utils {
     address internal helloWorldServiceManagerImpl;
 
     StrategyParams internal strategyParams;
-    StrategyParams[] internal quorumsStrategyParams;
     Quorum internal quorum;
 
     function setUp() public virtual {
@@ -54,9 +53,7 @@ contract HelloWorldDeployer is Script, Utils {
             strategy: IStrategy(wethStrategy),
             multiplier: 10_000
         });
-        quorumsStrategyParams = new StrategyParams[](1);
-        quorumsStrategyParams[0] = strategyParams;
-        quorum = Quorum(quorumsStrategyParams);
+        quorum.strategies.push(strategyParams);
     }
 
     function run() external {
@@ -89,8 +86,14 @@ contract HelloWorldDeployer is Script, Utils {
         upgrade(helloWorldServiceManager, helloWorldServiceManagerImpl);
         vm.stopBroadcast();
 
-        require(stakeRegistry != address(0), "");
-        require(stakeRegistryImpl != address(0), "");
+        require(stakeRegistry != address(0), "StakeRegistry address cannot be zero");
+        require(stakeRegistryImpl != address(0), "StakeRegistry implementation address cannot be zero");
+        require(helloWorldServiceManager != address(0), "HelloWorldServiceManager address cannot be zero");
+        require(helloWorldServiceManagerImpl != address(0), "HelloWorldServiceManager implementation address cannot be zero");
+        require(proxyAdmin != address(0), "ProxyAdmin address cannot be zero");
+        require(delegationManager != address(0), "DelegationManager address cannot be zero");
+        require(avsDirectory != address(0), "AVSDirectory address cannot be zero");
+        require(wethStrategy != address(0), "WETHStrategy address cannot be zero");
     }
 
     function upgrade(address proxy, address impl) internal {
