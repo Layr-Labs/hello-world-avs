@@ -29,10 +29,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
     /* MODIFIERS */
     modifier onlyOperator() {
-        require(
-            ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender) 
-            == 
-            true, 
+        require(ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender), 
             "Operator must be the caller"
         );
         _;
