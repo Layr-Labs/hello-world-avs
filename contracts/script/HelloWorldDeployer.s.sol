@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@eigenlayer/contracts/permissions/PauserRegistry.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
-import {IStrategyManager, IStrategy} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
-import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
+import {IStrategy} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
-import "@eigenlayer/test/mocks/EmptyContract.sol";
-import "../test/ERC20Mock.sol";
-import "forge-std/Script.sol";
-import "forge-std/StdJson.sol";
+import {EmptyContract} from "@eigenlayer/test/mocks/EmptyContract.sol";
+import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/Test.sol";
 import {Utils} from "./utils/Utils.sol";
 
@@ -135,7 +131,7 @@ contract HelloWorldDeployer is Script, Utils {
         }
 
         vm.writeFile(fileName, deploymentData);
-        console.log("Deployment artifacts written to:", fileName);
+        console2.log("Deployment artifacts written to:", fileName);
     }
 
 }
