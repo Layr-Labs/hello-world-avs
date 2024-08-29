@@ -5,18 +5,13 @@ import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDS
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {ECDSAUpgradeable} from "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
-import {Pausable} from "@eigenlayer/contracts/permissions/Pausable.sol";
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
  * @author Eigen Labs, Inc.
  */
-contract HelloWorldServiceManager is 
-    ECDSAServiceManagerBase,
-    IHelloWorldServiceManager,
-    Pausable
-{
+contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldServiceManager{
     using ECDSAUpgradeable for bytes32;
 
     /* STORAGE */
