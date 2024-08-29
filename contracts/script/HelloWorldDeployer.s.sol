@@ -158,10 +158,8 @@ contract HelloWorldDeployer is Script, Utils {
                 vm.toString(wethStrategy),
                 '"}}'
                 );
-        string memory directoryPath = "script/deployments/";
+        string memory directoryPath = "deployments/";
         string memory fileName = string.concat(directoryPath, vm.toString(block.chainid), ".json");
-
-        // Create directory if it doesn't exist
         if (!vm.exists(directoryPath)) {
             vm.createDir(directoryPath, true);
         }
