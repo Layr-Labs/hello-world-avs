@@ -69,34 +69,23 @@ contract AddStrategyScript is Script, Utils {
         strats[0] = erc20MockStrategy;
         bool[] memory thirdPartyTransfersForbiddenValues = new bool[](1);
         thirdPartyTransfersForbiddenValues[0] = false;
-        strategyManager.addStrategiesToDepositWhitelist(
-            strats,
-            thirdPartyTransfersForbiddenValues
-        );
+        strategyManager.addStrategiesToDepositWhitelist(strats, thirdPartyTransfersForbiddenValues);
     }
 
     function _updateHelloWorldAVS(StrategyBaseTVLLimits erc20MockStrategy) internal {
         IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
         IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryAddr);
-        HelloWorldServiceManager helloWorldServiceManagerProxy = HelloWorldServiceManager(helloWorldServiceManagerProxyAddr);
+        HelloWorldServiceManager helloWorldServiceManagerProxy =
+            HelloWorldServiceManager(helloWorldServiceManagerProxyAddr);
         ECDSAStakeRegistry stakeRegistryProxy = ECDSAStakeRegistry(stakeRegistryProxyAddr);
 
-        StrategyParams memory strategyParams = StrategyParams({
-            strategy: erc20MockStrategy,
-            multiplier: 10_000
-        });
+        StrategyParams memory strategyParams = StrategyParams({strategy: erc20MockStrategy, multiplier: 10_000});
 
         StrategyParams[] memory strategies = new StrategyParams[](1);
         strategies[0] = strategyParams;
 
-        Quorum memory quorum = Quorum({
-            strategies: strategies
-        });
+        Quorum memory quorum = Quorum({strategies: strategies});
 
-        stakeRegistryProxy.initialize(
-            address(helloWorldServiceManagerProxy),
-            1,
-            quorum
-        );
+        stakeRegistryProxy.initialize(address(helloWorldServiceManagerProxy), 1, quorum);
     }
 }

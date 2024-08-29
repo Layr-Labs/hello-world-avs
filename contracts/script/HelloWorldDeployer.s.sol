@@ -18,10 +18,10 @@ import {Utils} from "./utils/Utils.sol";
 // forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
 contract HelloWorldDeployer is Script, Utils {
     bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-    bytes32 internal constant ADMIN_SLOT=0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
     address private deployer;
 
-   // ERC20 and Strategy: we need to deploy this erc20, create a strategy for it, and whitelist this strategy in the strategy manager
+    // ERC20 and Strategy: we need to deploy this erc20, create a strategy for it, and whitelist this strategy in the strategy manager
     address internal erc20Mock;
     address internal erc20MockStrategy;
     address internal delegationManager;
@@ -52,19 +52,16 @@ contract HelloWorldDeployer is Script, Utils {
         wethStrategy = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
         vm.label(wethStrategy, "WETHStrategy");
 
-        strategyParams = StrategyParams({
-            strategy: IStrategy(wethStrategy),
-            multiplier: 10_000
-        });
+        strategyParams = StrategyParams({strategy: IStrategy(wethStrategy), multiplier: 10_000});
         quorum.strategies.push(strategyParams);
     }
 
     function run() external {
         vm.startBroadcast(deployer);
-        
+
         deployContracts();
         upgradeContracts();
-        
+
         vm.stopBroadcast();
 
         verifyDeployment();
@@ -77,17 +74,18 @@ contract HelloWorldDeployer is Script, Utils {
         vm.label(proxyAdmin, "ProxyAdmin");
 
         // First, deploy upgradeable proxy contracts that will point to the implementations.
-        helloWorldServiceManager =  setUpEmptyProxy(proxyAdmin);
+        helloWorldServiceManager = setUpEmptyProxy(proxyAdmin);
         vm.label(helloWorldServiceManager, "HelloWorldServiceManager");
 
         stakeRegistry = setUpEmptyProxy(proxyAdmin);
         vm.label(stakeRegistry, "StakeRegistry");
-  
+
         // Deploy the implementation contracts, using the proxy contracts as inputs
         stakeRegistryImpl = address(new ECDSAStakeRegistry(IDelegationManager(delegationManager)));
         vm.label(stakeRegistryImpl, "StakeRegistry Implementation");
 
-        helloWorldServiceManagerImpl = address(new HelloWorldServiceManager(avsDirectory, stakeRegistry, delegationManager));
+        helloWorldServiceManagerImpl =
+            address(new HelloWorldServiceManager(avsDirectory, stakeRegistry, delegationManager));
         vm.label(helloWorldServiceManagerImpl, "HelloWorldServiceManager Implementation");
     }
 
@@ -101,7 +99,9 @@ contract HelloWorldDeployer is Script, Utils {
         require(stakeRegistry != address(0), "StakeRegistry address cannot be zero");
         require(stakeRegistryImpl != address(0), "StakeRegistry implementation address cannot be zero");
         require(helloWorldServiceManager != address(0), "HelloWorldServiceManager address cannot be zero");
-        require(helloWorldServiceManagerImpl != address(0), "HelloWorldServiceManager implementation address cannot be zero");
+        require(
+            helloWorldServiceManagerImpl != address(0), "HelloWorldServiceManager implementation address cannot be zero"
+        );
         require(proxyAdmin != address(0), "ProxyAdmin address cannot be zero");
         require(delegationManager != address(0), "DelegationManager address cannot be zero");
         require(avsDirectory != address(0), "AVSDirectory address cannot be zero");
@@ -118,7 +118,7 @@ contract HelloWorldDeployer is Script, Utils {
         admin.upgradeAndCall(TransparentUpgradeableProxy(payable(proxy)), impl, initData);
     }
 
-    function setUpEmptyProxy(address admin) internal returns (address){
+    function setUpEmptyProxy(address admin) internal returns (address) {
         address emptyContract = address(new EmptyContract());
         return address(new TransparentUpgradeableProxy(emptyContract, admin, ""));
     }
@@ -136,28 +136,28 @@ contract HelloWorldDeployer is Script, Utils {
     function _updateDeploymentJson() internal {
         // Write deployment artifacts
         string memory deploymentData = string.concat(
-                '{"lastUpdate":{"timestamp":"',
-                vm.toString(block.timestamp),
-                '","block_number":"',
-                vm.toString(block.number),
-                '"},"contracts":{"proxyAdmin":"',
-                vm.toString(proxyAdmin),
-                '","helloWorldServiceManager":"',
-                vm.toString(helloWorldServiceManager),
-                '","helloWorldServiceManagerImpl":"',
-                vm.toString(helloWorldServiceManagerImpl),
-                '","stakeRegistry":"',
-                vm.toString(stakeRegistry),
-                '","stakeRegistryImpl":"',
-                vm.toString(stakeRegistryImpl),
-                '","delegationManager":"',
-                vm.toString(delegationManager),
-                '","avsDirectory":"',
-                vm.toString(avsDirectory),
-                '","wethStrategy":"',
-                vm.toString(wethStrategy),
-                '"}}'
-                );
+            '{"lastUpdate":{"timestamp":"',
+            vm.toString(block.timestamp),
+            '","block_number":"',
+            vm.toString(block.number),
+            '"},"contracts":{"proxyAdmin":"',
+            vm.toString(proxyAdmin),
+            '","helloWorldServiceManager":"',
+            vm.toString(helloWorldServiceManager),
+            '","helloWorldServiceManagerImpl":"',
+            vm.toString(helloWorldServiceManagerImpl),
+            '","stakeRegistry":"',
+            vm.toString(stakeRegistry),
+            '","stakeRegistryImpl":"',
+            vm.toString(stakeRegistryImpl),
+            '","delegationManager":"',
+            vm.toString(delegationManager),
+            '","avsDirectory":"',
+            vm.toString(avsDirectory),
+            '","wethStrategy":"',
+            vm.toString(wethStrategy),
+            '"}}'
+        );
         string memory directoryPath = "deployments/";
         string memory fileName = string.concat(directoryPath, vm.toString(block.chainid), ".json");
         if (!vm.exists(directoryPath)) {

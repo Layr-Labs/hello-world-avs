@@ -11,7 +11,7 @@ import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
  * @title Primary entrypoint for procuring services from HelloWorld.
  * @author Eigen Labs, Inc.
  */
-contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldServiceManager{
+contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldServiceManager {
     using ECDSAUpgradeable for bytes32;
 
     /* STORAGE */
@@ -29,17 +29,11 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
     /* MODIFIERS */
     modifier onlyOperator() {
-        require(ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender), 
-            "Operator must be the caller"
-        );
+        require(ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender), "Operator must be the caller");
         _;
     }
 
-    constructor(
-        address _avsDirectory,
-        address _stakeRegistry,
-        address _delegationManager
-    )
+    constructor(address _avsDirectory, address _stakeRegistry, address _delegationManager)
         ECDSAServiceManagerBase(
             _avsDirectory,
             _stakeRegistry,
@@ -48,12 +42,9 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         )
     {}
 
-
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
-    function createNewTask(
-        string memory name
-    ) external {
+    function createNewTask(string memory name) external {
         // create a new task struct
         Task memory newTask;
         newTask.name = name;
@@ -66,25 +57,19 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     }
 
     // NOTE: this function responds to existing tasks.
-    function respondToTask(
-        Task calldata task,
-        uint32 referenceTaskIndex,
-        bytes calldata signature
-    ) external onlyOperator {
-        require(
-            operatorHasMinimumWeight(msg.sender),
-            "Operator does not have match the weight requirements"
-        );
+    function respondToTask(Task calldata task, uint32 referenceTaskIndex, bytes calldata signature)
+        external
+        onlyOperator
+    {
+        require(operatorHasMinimumWeight(msg.sender), "Operator does not have match the weight requirements");
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
-            keccak256(abi.encode(task)) ==
-                allTaskHashes[referenceTaskIndex],
+            keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
             "supplied task does not match the one recorded in the contract"
         );
         // some logical checks
         require(
-            allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
-            "Operator has already responded to the task"
+            allTaskResponses[msg.sender][referenceTaskIndex].length == 0, "Operator has already responded to the task"
         );
 
         // The message that was signed
@@ -106,6 +91,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     // HELPER
 
     function operatorHasMinimumWeight(address operator) public view returns (bool) {
-        return ECDSAStakeRegistry(stakeRegistry).getOperatorWeight(operator) >= ECDSAStakeRegistry(stakeRegistry).minimumWeight();
+        return ECDSAStakeRegistry(stakeRegistry).getOperatorWeight(operator)
+            >= ECDSAStakeRegistry(stakeRegistry).minimumWeight();
     }
 }
