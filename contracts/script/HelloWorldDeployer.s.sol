@@ -41,9 +41,16 @@ contract HelloWorldDeployer is Script, Utils {
 
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
+        vm.label(deployer, "Deployer");
+
         delegationManager = 0xA44151489861Fe9e3055d95adC98FbD462B948e7;
+        vm.label(delegationManager, "DelegationManager");
+
         avsDirectory = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
+        vm.label(avsDirectory, "AVSDirectory");
+
         wethStrategy = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
+        vm.label(wethStrategy, "WETHStrategy");
 
         strategyParams = StrategyParams({
             strategy: IStrategy(wethStrategy),
@@ -55,33 +62,42 @@ contract HelloWorldDeployer is Script, Utils {
     function run() external {
         vm.startBroadcast(deployer);
         
+        deployContracts();
+        upgradeContracts();
+        
+        vm.stopBroadcast();
+
+        verifyDeployment();
+        _updateDeploymentJson();
+    }
+
+    function deployContracts() internal {
         // Deploy proxy admin for ability to upgrade proxy contracts
         proxyAdmin = address(new ProxyAdmin());
+        vm.label(proxyAdmin, "ProxyAdmin");
 
         // First, deploy upgradeable proxy contracts that will point to the implementations.
         helloWorldServiceManager =  setUpEmptyProxy(proxyAdmin);
+        vm.label(helloWorldServiceManager, "HelloWorldServiceManager");
+
         stakeRegistry = setUpEmptyProxy(proxyAdmin);
+        vm.label(stakeRegistry, "StakeRegistry");
   
         // Deploy the implementation contracts, using the proxy contracts as inputs
         stakeRegistryImpl = address(new ECDSAStakeRegistry(IDelegationManager(delegationManager)));
-        helloWorldServiceManagerImpl = address(new HelloWorldServiceManager(avsDirectory, stakeRegistry, delegationManager));
-
-        // Label contracts for easier debugging
-        vm.label(deployer, "Deployer");
-        vm.label(delegationManager, "DelegationManager");
-        vm.label(avsDirectory, "AVSDirectory");
-        vm.label(wethStrategy, "WETHStrategy");
-        vm.label(proxyAdmin, "ProxyAdmin");
-        vm.label(helloWorldServiceManager, "HelloWorldServiceManager");
-        vm.label(stakeRegistry, "StakeRegistry");
         vm.label(stakeRegistryImpl, "StakeRegistry Implementation");
+
+        helloWorldServiceManagerImpl = address(new HelloWorldServiceManager(avsDirectory, stakeRegistry, delegationManager));
         vm.label(helloWorldServiceManagerImpl, "HelloWorldServiceManager Implementation");
-        
+    }
+
+    function upgradeContracts() internal {
         bytes memory upgradeCall = abi.encodeCall(ECDSAStakeRegistry.initialize, (helloWorldServiceManager, 1, quorum));
         upgrade(stakeRegistry, stakeRegistryImpl, upgradeCall);
         upgrade(helloWorldServiceManager, helloWorldServiceManagerImpl);
-        vm.stopBroadcast();
+    }
 
+    function verifyDeployment() internal view {
         require(stakeRegistry != address(0), "StakeRegistry address cannot be zero");
         require(stakeRegistryImpl != address(0), "StakeRegistry implementation address cannot be zero");
         require(helloWorldServiceManager != address(0), "HelloWorldServiceManager address cannot be zero");
@@ -100,7 +116,6 @@ contract HelloWorldDeployer is Script, Utils {
     function upgrade(address proxy, address impl, bytes memory initData) internal {
         ProxyAdmin admin = getProxyAdmin(proxy);
         admin.upgradeAndCall(TransparentUpgradeableProxy(payable(proxy)), impl, initData);
-
     }
 
     function setUpEmptyProxy(address admin) internal returns (address){
@@ -120,10 +135,31 @@ contract HelloWorldDeployer is Script, Utils {
 
     function _updateDeploymentJson() internal {
         // Write deployment artifacts
-        string memory deploymentData = string("");
+        string memory deploymentData = string.concat(
+                '{"lastUpdate":{"timestamp":"',
+                vm.toString(block.timestamp),
+                '","block_number":"',
+                vm.toString(block.number),
+                '"},"contracts":{"proxyAdmin":"',
+                vm.toString(proxyAdmin),
+                '","helloWorldServiceManager":"',
+                vm.toString(helloWorldServiceManager),
+                '","helloWorldServiceManagerImpl":"',
+                vm.toString(helloWorldServiceManagerImpl),
+                '","stakeRegistry":"',
+                vm.toString(stakeRegistry),
+                '","stakeRegistryImpl":"',
+                vm.toString(stakeRegistryImpl),
+                '","delegationManager":"',
+                vm.toString(delegationManager),
+                '","avsDirectory":"',
+                vm.toString(avsDirectory),
+                '","wethStrategy":"',
+                vm.toString(wethStrategy),
+                '"}}'
+                );
         string memory directoryPath = "script/deployments/";
-        string memory fileName =
-            string(abi.encodePacked(directoryPath, vm.toString(block.chainid), ".json"));
+        string memory fileName = string.concat(directoryPath, vm.toString(block.chainid), ".json");
 
         // Create directory if it doesn't exist
         if (!vm.exists(directoryPath)) {
@@ -133,5 +169,4 @@ contract HelloWorldDeployer is Script, Utils {
         vm.writeFile(fileName, deploymentData);
         console2.log("Deployment artifacts written to:", fileName);
     }
-
 }
