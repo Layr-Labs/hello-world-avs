@@ -4,30 +4,20 @@ pragma solidity ^0.8.0;
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {EmptyContract} from "@eigenlayer/test/mocks/EmptyContract.sol";
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {stdJson} from "forge-std/StdJson.sol";
+import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
+import {HelloWorldServiceManager} from "../../src/HelloWorldServiceManager.sol";
+import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
+import {Quorum} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
 
 library HelloWorldDeploymentLib {
     using stdJson for *;
 
-    bytes32 internal constant IMPLEMENTATION_SLOT =
-        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-    bytes32 internal constant ADMIN_SLOT =
-        0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
-
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
-
-    function deployProxyAdmin() external returns (address) {
-        return address(new ProxyAdmin());
-    }
-
-    function upgrade(address proxy, address impl) external {
-        ProxyAdmin admin = getProxyAdmin(proxy);
-        admin.upgrade(TransparentUpgradeableProxy(payable(proxy)), impl);
-    }
 
     struct DeploymentData {
         address helloWorldServiceManager;
@@ -35,9 +25,53 @@ library HelloWorldDeploymentLib {
         address delegationManager;
         address avsDirectory;
         address wethStrategy;
+        address strategyManager;
+        address eigenPodManager;
     }
 
-    function readDeploymentJson(uint256 chainId) external returns (DeploymentData memory) {
+    function deployContracts(
+        address proxyAdmin,
+        address delegationManager,
+        address avsDirectory,
+        Quorum memory quorum
+    ) internal returns (DeploymentData memory) {
+        DeploymentData memory result;
+
+        // First, deploy upgradeable proxy contracts that will point to the implementations.
+        result.helloWorldServiceManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
+        vm.label(result.helloWorldServiceManager, "HelloWorldServiceManager");
+
+        result.stakeRegistry = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
+        vm.label(result.stakeRegistry, "StakeRegistry");
+
+        // Deploy the implementation contracts, using the proxy contracts as inputs
+        address stakeRegistryImpl =
+            address(new ECDSAStakeRegistry(IDelegationManager(delegationManager)));
+        vm.label(stakeRegistryImpl, "StakeRegistry Implementation");
+
+        address helloWorldServiceManagerImpl = address(
+            new HelloWorldServiceManager(avsDirectory, result.stakeRegistry, delegationManager)
+        );
+        vm.label(helloWorldServiceManagerImpl, "HelloWorldServiceManager Implementation");
+
+        // Upgrade contracts
+        bytes memory upgradeCall = abi.encodeCall(
+            ECDSAStakeRegistry.initialize, (result.helloWorldServiceManager, 1, quorum)
+        );
+        UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
+        UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
+
+        result.avsDirectory = avsDirectory;
+        result.delegationManager = delegationManager;
+        result.wethStrategy = address(quorum.strategies[0].strategy);
+
+        return result;
+    }
+
+    function readDeploymentJson(
+        uint256 chainId
+    ) internal returns (DeploymentData memory) {
+        /// TODO: Parameterize this
         string memory directoryPath = "deployments/";
         string memory fileName = string.concat(directoryPath, vm.toString(chainId), ".json");
 
@@ -46,6 +80,8 @@ library HelloWorldDeploymentLib {
         string memory json = vm.readFile(fileName);
 
         DeploymentData memory data;
+        data.strategyManager = json.readAddress(".contracts.strategyManager");
+        data.eigenPodManager = json.readAddress(".contracts.eigenPodManager");
         data.helloWorldServiceManager = json.readAddress(".contracts.helloWorldServiceManager");
         data.stakeRegistry = json.readAddress(".contracts.stakeRegistry");
         data.delegationManager = json.readAddress(".contracts.delegationManager");
@@ -56,38 +92,13 @@ library HelloWorldDeploymentLib {
     }
 
     function writeDeploymentJson(
-        address helloWorldServiceManager,
-        address stakeRegistry,
-        address delegationManager,
-        address avsDirectory,
-        address wethStrategy
-    ) external {
-        address proxyAdmin = address(getProxyAdmin(helloWorldServiceManager));
-        address helloWorldServiceManagerImpl = getImplementation(helloWorldServiceManager);
-        address stakeRegistryImpl = getImplementation(stakeRegistry);
-        string memory deploymentData = string.concat(
-            '{"lastUpdate":{"timestamp":"',
-            vm.toString(block.timestamp),
-            '","block_number":"',
-            vm.toString(block.number),
-            '"},"contracts":{"proxyAdmin":"',
-            vm.toString(proxyAdmin),
-            '","helloWorldServiceManager":"',
-            vm.toString(helloWorldServiceManager),
-            '","helloWorldServiceManagerImpl":"',
-            vm.toString(helloWorldServiceManagerImpl),
-            '","stakeRegistry":"',
-            vm.toString(stakeRegistry),
-            '","stakeRegistryImpl":"',
-            vm.toString(stakeRegistryImpl),
-            '","delegationManager":"',
-            vm.toString(delegationManager),
-            '","avsDirectory":"',
-            vm.toString(avsDirectory),
-            '","wethStrategy":"',
-            vm.toString(wethStrategy),
-            '"}}'
-        );
+        DeploymentData memory data
+    ) internal {
+        address proxyAdmin =
+            address(UpgradeableProxyLib.getProxyAdmin(data.helloWorldServiceManager));
+
+        string memory deploymentData = _generateDeploymentJson(data, proxyAdmin);
+
         string memory directoryPath = "deployments/";
         string memory fileName = string.concat(directoryPath, vm.toString(block.chainid), ".json");
         if (!vm.exists(directoryPath)) {
@@ -98,23 +109,55 @@ library HelloWorldDeploymentLib {
         console2.log("Deployment artifacts written to:", fileName);
     }
 
-    function setUpEmptyProxy(address admin) internal returns (address) {
-        address emptyContract = address(new EmptyContract());
-        return address(new TransparentUpgradeableProxy(emptyContract, admin, ""));
+    function _generateDeploymentJson(
+        DeploymentData memory data,
+        address proxyAdmin
+    ) private view returns (string memory) {
+        return string.concat(
+            '{"lastUpdate":{"timestamp":"',
+            vm.toString(block.timestamp),
+            '","block_number":"',
+            vm.toString(block.number),
+            '"},"contracts":',
+            _generateContractsJson(data, proxyAdmin),
+            "}"
+        );
     }
 
-    function upgradeAndCall(address proxy, address impl, bytes memory initData) external {
-        ProxyAdmin admin = getProxyAdmin(proxy);
-        admin.upgradeAndCall(TransparentUpgradeableProxy(payable(proxy)), impl, initData);
-    }
-
-    function getImplementation(address proxy) internal view returns (address) {
-        bytes32 value = vm.load(proxy, IMPLEMENTATION_SLOT);
-        return address(uint160(uint256(value)));
-    }
-
-    function getProxyAdmin(address proxy) internal view returns (ProxyAdmin) {
-        bytes32 value = vm.load(proxy, ADMIN_SLOT);
-        return ProxyAdmin(address(uint160(uint256(value))));
+    function _generateContractsJson(
+        DeploymentData memory data,
+        address proxyAdmin
+    ) private view returns (string memory) {
+        return string.concat(
+            '{"proxyAdmin":"',
+            vm.toString(proxyAdmin),
+            '","helloWorldServiceManager":"',
+            vm.toString(data.helloWorldServiceManager),
+            '","helloWorldServiceManagerImpl":"',
+            vm.toString(UpgradeableProxyLib.getImplementation(data.helloWorldServiceManager)),
+            '","stakeRegistry":"',
+            vm.toString(data.stakeRegistry),
+            '","stakeRegistryImpl":"',
+            vm.toString(UpgradeableProxyLib.getImplementation(data.stakeRegistry)),
+            '","delegationManager":"',
+            vm.toString(data.delegationManager),
+            '","delegationManagerImpl":"',
+            vm.toString(UpgradeableProxyLib.getImplementation(data.delegationManager)),
+            '","avsDirectory":"',
+            vm.toString(data.avsDirectory),
+            '","avsDirectoryImpl":"',
+            vm.toString(UpgradeableProxyLib.getImplementation(data.avsDirectory)),
+            '","wethStrategy":"',
+            vm.toString(data.wethStrategy),
+            '","strategyManager":"',
+            vm.toString(data.strategyManager),
+            '","strategyManagerImpl":"',
+            vm.toString(UpgradeableProxyLib.getImplementation(data.strategyManager)),
+            '","eigenPodManager":"',
+            vm.toString(data.eigenPodManager),
+            '","eigenPodManagerImpl":"',
+            vm.toString(UpgradeableProxyLib.getImplementation(data.eigenPodManager)),
+            '"}'
+        );
     }
 }

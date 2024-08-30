@@ -18,6 +18,7 @@ import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/Test.sol";
 import {Utils} from "./utils/Utils.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
+import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 
 // # To deploy and verify our contract
 // forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
@@ -49,7 +50,7 @@ contract HelloWorldDeployer is Script, Utils {
         delegationManager = 0xA44151489861Fe9e3055d95adC98FbD462B948e7;
         vm.label(delegationManager, "DelegationManager");
 
-        avsDirectory = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
+        avsDirectory = 0x055733000064333CaDDbC92763c58BF0192fFeBf; // TODO: need to get the actual anvil deployed address
         vm.label(avsDirectory, "AVSDirectory");
 
         wethStrategy = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
@@ -62,57 +63,24 @@ contract HelloWorldDeployer is Script, Utils {
     function run() external {
         vm.startBroadcast(deployer);
 
-        deployContracts();
-        upgradeContracts();
+        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+        HelloWorldDeploymentLib.DeploymentData memory result = HelloWorldDeploymentLib
+            .deployContracts(address(proxyAdmin), delegationManager, avsDirectory, quorum);
+
+        helloWorldServiceManager = result.helloWorldServiceManager;
+        stakeRegistry = result.stakeRegistry;
 
         vm.stopBroadcast();
 
         verifyDeployment();
-        HelloWorldDeploymentLib.writeDeploymentJson(
-            helloWorldServiceManager, stakeRegistry, delegationManager, avsDirectory, wethStrategy
-        );
-    }
-
-    function deployContracts() internal {
-        // Deploy proxy admin for ability to upgrade proxy contracts
-        proxyAdmin = HelloWorldDeploymentLib.deployProxyAdmin();
-        vm.label(proxyAdmin, "ProxyAdmin");
-
-        // First, deploy upgradeable proxy contracts that will point to the implementations.
-        helloWorldServiceManager = HelloWorldDeploymentLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(helloWorldServiceManager, "HelloWorldServiceManager");
-
-        stakeRegistry = HelloWorldDeploymentLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(stakeRegistry, "StakeRegistry");
-
-        // Deploy the implementation contracts, using the proxy contracts as inputs
-        stakeRegistryImpl = address(new ECDSAStakeRegistry(IDelegationManager(delegationManager)));
-        vm.label(stakeRegistryImpl, "StakeRegistry Implementation");
-
-        helloWorldServiceManagerImpl =
-            address(new HelloWorldServiceManager(avsDirectory, stakeRegistry, delegationManager));
-        vm.label(helloWorldServiceManagerImpl, "HelloWorldServiceManager Implementation");
-    }
-
-    function upgradeContracts() internal {
-        bytes memory upgradeCall =
-            abi.encodeCall(ECDSAStakeRegistry.initialize, (helloWorldServiceManager, 1, quorum));
-        HelloWorldDeploymentLib.upgradeAndCall(stakeRegistry, stakeRegistryImpl, upgradeCall);
-        HelloWorldDeploymentLib.upgrade(helloWorldServiceManager, helloWorldServiceManagerImpl);
+        HelloWorldDeploymentLib.writeDeploymentJson(result);
     }
 
     function verifyDeployment() internal view {
         require(stakeRegistry != address(0), "StakeRegistry address cannot be zero");
         require(
-            stakeRegistryImpl != address(0), "StakeRegistry implementation address cannot be zero"
-        );
-        require(
             helloWorldServiceManager != address(0),
             "HelloWorldServiceManager address cannot be zero"
-        );
-        require(
-            helloWorldServiceManagerImpl != address(0),
-            "HelloWorldServiceManager implementation address cannot be zero"
         );
         require(proxyAdmin != address(0), "ProxyAdmin address cannot be zero");
         require(delegationManager != address(0), "DelegationManager address cannot be zero");
