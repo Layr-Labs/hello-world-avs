@@ -3,8 +3,6 @@ pragma solidity ^0.8.12;
 
 import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
 import {MockAVSDeployer} from "@eigenlayer-middleware/test/utils/MockAVSDeployer.sol";
-import {TransparentUpgradeableProxy} from
-    "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract HelloWorldTaskManagerTest is MockAVSDeployer {
