@@ -14,6 +14,11 @@ const contractAddress = process.env.CONTRACT_ADDRESS!;
 const stakeRegistryAddress = process.env.STAKE_REGISTRY_ADDRESS!;
 const avsDirectoryAddress = process.env.AVS_DIRECTORY_ADDRESS!;
 
+const remoteSignerUrl = process.env.REMOTE_SIGNER_URL!;
+const operatorAddress = process.env.OPERATOR_ADDRESS!;
+
+const signerType = process.env.SIGNER_TYPE!;
+
 const delegationManager = new ethers.Contract(delegationManagerAddress, delegationABI, wallet);
 const contract = new ethers.Contract(contractAddress, contractABI, wallet);
 const registryContract = new ethers.Contract(stakeRegistryAddress, registryABI, wallet);
@@ -22,8 +27,20 @@ const avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, w
 const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number, taskName: string) => {
     const message = `Hello, ${taskName}`;
     const messageHash = ethers.utils.solidityKeccak256(["string"], [message]);
-    const messageBytes = ethers.utils.arrayify(messageHash);
-    const signature = await wallet.signMessage(messageBytes);
+
+    let signature = "";
+    if (signerType === "local") {
+        console.log("Using local private key to sign message")
+        const messageBytes = ethers.utils.arrayify(messageHash);
+        signature = await wallet.signMessage(messageBytes);
+    } else if (signerType === "remote") {
+        console.log("Using remote signer to sign message")
+        signature = await callJsonRpcEndpoint(
+            remoteSignerUrl,
+            "eth_sign",
+            [operatorAddress, messageHash]
+        );
+    }
 
     console.log(
         `Signing and responding to task ${taskIndex}`
@@ -60,16 +77,16 @@ const registerOperator = async () => {
 
     // Calculate the digest hash using the avsDirectory's method
     const digestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
-        wallet.address, 
-        contract.address, 
-        salt, 
+        wallet.address,
+        contract.address,
+        salt,
         expiry
     );
 
     // // Sign the digest hash with the operator's private key
     const signingKey = new ethers.utils.SigningKey(process.env.PRIVATE_KEY!);
     const signature = signingKey.signDigest(digestHash);
-    
+
     // // Encode the signature in the required format
     operatorSignature.signature = ethers.utils.joinSignature(signature);
 
@@ -102,3 +119,53 @@ const main = async () => {
 main().catch((error) => {
     console.error("Error in main function:", error);
 });
+
+interface JsonRpcRequest {
+    jsonrpc: string;
+    method: string;
+    params: any[];
+    id: number;
+}
+
+interface JsonRpcResponse {
+    jsonrpc: string;
+    result?: any;
+    error?: {
+        code: number;
+        message: string;
+    };
+    id: number;
+}
+
+async function callJsonRpcEndpoint(
+    url: string,
+    method: string,
+    params: any[] = []
+): Promise<any> {
+    const request: JsonRpcRequest = {
+        jsonrpc: "2.0",
+        method,
+        params,
+        id: 1, // You might want to generate a unique id for each request
+    };
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const jsonResponse: JsonRpcResponse = await response.json();
+
+    if (jsonResponse.error) {
+        throw new Error(`JSON-RPC error: ${jsonResponse.error.message}`);
+    }
+
+    return jsonResponse.result;
+}
