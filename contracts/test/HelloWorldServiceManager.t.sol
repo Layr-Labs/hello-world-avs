@@ -4,6 +4,7 @@ pragma solidity ^0.8.12;
 import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
 import {MockAVSDeployer} from "@eigenlayer-middleware/test/utils/MockAVSDeployer.sol";
 import {Vm} from "forge-std/Vm.sol";
+import {console2} from "forge-std/Test.sol";
 
 contract HelloWorldTaskManagerSetup is MockAVSDeployer {
     struct Operator {
@@ -21,12 +22,8 @@ contract HelloWorldTaskManagerSetup is MockAVSDeployer {
     function setUp() public {
         operators.push(
             Operator({
-                key: vm.createWallet(
-                    string.concat("operator_", string(abi.encodePacked(operators.length)))
-                ),
-                signingKey: vm.createWallet(
-                    string.concat("operator_signing_wallet", string(abi.encodePacked(operators.length)))
-                )
+                key: vm.createWallet("operator"),
+                signingKey: vm.createWallet("operator_signing_wallet")
             })
         );
 
@@ -36,6 +33,6 @@ contract HelloWorldTaskManagerSetup is MockAVSDeployer {
 
 contract HelloWorldServiceManagerTest is HelloWorldTaskManagerSetup {
     function testTrue() public {
-        vm.skip(true);
+        assertTrue(true);
     }
 }
