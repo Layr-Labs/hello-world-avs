@@ -12,17 +12,21 @@ if (!Object.keys(process.env).length) {
 // Setup env variables
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
+/// TODO: Hack
+let chainId = 31337;
 
-const delegationManagerAddress = process.env.DELEGATION_MANAGER_ADDRESS!;
-const helloWorldServiceManagerAddress = process.env.HELLO_WORLD_SERVICE_MANAGER_ADDRESS!;
-const ecdsaStakeRegistryAddress = process.env.ECDSA_STAKE_REGISTRY_ADDRESS!;
-const avsDirectoryAddress = process.env.AVS_DIRECTORY_ADDRESS!;
+const deploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/${chainId}.json`), 'utf8'));
+
+const delegationManagerAddress = deploymentData.contracts.delegationManager;
+const helloWorldServiceManagerAddress = deploymentData.contracts.helloWorldServiceManager;
+const ecdsaStakeRegistryAddress = deploymentData.contracts.stakeRegistry;
+const avsDirectoryAddress = deploymentData.contracts.avsDirectory;
 
 // Load ABIs
-const delegationManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/DelegationManager.abi'), 'utf8'));
-const ecdsaRegistryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/ECDSAStakeRegistry.abi'), 'utf8'));
-const helloWorldServiceManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/HelloWorldServiceManager.abi'), 'utf8'));
-const avsDirectoryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/AVSDirectory.abi'), 'utf8'));
+const delegationManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/IDelegationManager.json'), 'utf8'));
+const ecdsaRegistryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/ECDSAStakeRegistry.json'), 'utf8'));
+const helloWorldServiceManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/HelloWorldServiceManager.json'), 'utf8'));
+const avsDirectoryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/IAVSDirectory.json'), 'utf8'));
 
 // Initialize contract objects from ABIs
 const delegationManager = new ethers.Contract(delegationManagerAddress, delegationManagerABI, wallet);
@@ -76,12 +80,18 @@ const registerOperator = async () => {
     };
 
     // Calculate the digest hash, which is a unique value representing the operator, avs, unique value (salt) and expiration date.
+    console.log(wallet.address);
+    console.log(await helloWorldServiceManager.getAddress());
+    console.log(salt, "salt");
+    console.log(expiry, "expiry");
+
     const operatorDigestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
         wallet.address, 
         await helloWorldServiceManager.getAddress(), 
         salt, 
         expiry
     );
+    console.log(operatorDigestHash);
     
     // Sign the digest hash with the operator's private key
     console.log("Signing digest hash with operator's private key");
