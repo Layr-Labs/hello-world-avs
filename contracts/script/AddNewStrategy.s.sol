@@ -43,7 +43,9 @@ contract AddStrategyScript is Script, Utils {
         _updateHelloWorldAVS(erc20MockStrategy);
     }
 
-    function _deployStrategy(ERC20Mock erc20Mock) internal returns (StrategyBaseTVLLimits) {
+    function _deployStrategy(
+        ERC20Mock erc20Mock
+    ) internal returns (StrategyBaseTVLLimits) {
         ProxyAdmin eigenLayerProxyAdmin = ProxyAdmin(eigenLayerProxyAdminAddr);
         PauserRegistry eigenLayerPauserReg = PauserRegistry(eigenLayerPauserRegAddr);
         StrategyBaseTVLLimits baseStrategyImplementation =
@@ -66,7 +68,9 @@ contract AddStrategyScript is Script, Utils {
         );
     }
 
-    function _whitelistStrategy(StrategyBaseTVLLimits erc20MockStrategy) internal {
+    function _whitelistStrategy(
+        StrategyBaseTVLLimits erc20MockStrategy
+    ) internal {
         IStrategyManager strategyManager = IStrategyManager(strategyManagerAddr);
 
         IStrategy[] memory strats = new IStrategy[](1);
@@ -76,7 +80,9 @@ contract AddStrategyScript is Script, Utils {
         strategyManager.addStrategiesToDepositWhitelist(strats, thirdPartyTransfersForbiddenValues);
     }
 
-    function _updateHelloWorldAVS(StrategyBaseTVLLimits erc20MockStrategy) internal {
+    function _updateHelloWorldAVS(
+        StrategyBaseTVLLimits erc20MockStrategy
+    ) internal {
         IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
         IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryAddr);
         HelloWorldServiceManager helloWorldServiceManagerProxy =

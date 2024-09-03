@@ -15,7 +15,9 @@ interface IHelloWorldServiceManager {
 
     // FUNCTIONS
     // NOTE: this function creates new task.
-    function createNewTask(string memory name) external;
+    function createNewTask(
+        string memory name
+    ) external;
 
     // NOTE: this function is called by operators to respond to a task.
     function respondToTask(

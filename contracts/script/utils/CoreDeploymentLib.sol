@@ -29,13 +29,46 @@ import {ISlasher} from "@eigenlayer/contracts/interfaces/ISlasher.sol";
 import {IEigenPodManager} from "@eigenlayer/contracts/interfaces/IEigenPodManager.sol";
 import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {IPauserRegistry} from "@eigenlayer/contracts/interfaces/IPauserRegistry.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
 
 library CoreDeploymentLib {
     using stdJson for *;
+    using Strings for *;
+    using UpgradeableProxyLib for address;
 
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+
+    struct StrategyManagerConfig {
+        uint256 initPausedStatus;
+        uint256 initWithdrawalDelayBlocks;
+    }
+
+    struct SlasherConfig {
+        uint256 initPausedStatus;
+    }
+
+    struct DelegationManagerConfig {
+        uint256 initPausedStatus;
+        uint256 withdrawalDelayBlocks;
+    }
+
+    struct EigenPodManagerConfig {
+        uint256 initPausedStatus;
+    }
+
+    struct RewardsCoordinatorConfig {
+        uint256 initPausedStatus;
+        uint256 maxRewardsDuration;
+        uint256 maxRetroactiveLength;
+        uint256 maxFutureLength;
+        uint256 genesisRewardsTimestamp;
+        address updater;
+        uint256 activationDelay;
+        uint256 calculationIntervalSeconds;
+        uint256 globalOperatorCommissionBips;
+    }
 
     struct DeploymentData {
         address delegationManager;
@@ -53,7 +86,6 @@ library CoreDeploymentLib {
     ) internal returns (DeploymentData memory) {
         DeploymentData memory result;
 
-        // First, deploy upgradeable proxy contracts that will point to the implementations.
         result.delegationManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
         vm.label(result.delegationManager, "DelegationManager");
 
@@ -75,7 +107,13 @@ library CoreDeploymentLib {
         vm.label(result.pauserRegistry, "PauserRegistry");
 
         // Deploy the implementation contracts, using the proxy contracts as inputs
-        address delegationManagerImpl;
+        address delegationManagerImpl = address(
+            new DelegationManager(
+                IStrategyManager(result.strategyManager),
+                ISlasher(address(0)),
+                IEigenPodManager(result.eigenPodManager)
+            )
+        );
         vm.label(delegationManagerImpl, "DelegationManager Implementation");
         address avsDirectoryImpl =
             address(new AVSDirectory(IDelegationManager(result.delegationManager)));
@@ -91,6 +129,13 @@ library CoreDeploymentLib {
         vm.label(strategyManagerImpl, "StrategyManager Implementation");
 
         address ethPOSDeposit;
+        if (block.chainid == 1) {
+            ethPOSDeposit = 0x00000000219ab540356cBB839Cbe05303d7705Fa;
+        } else {
+            // For non-mainnet chains, you might want to deploy a mock or read from a config
+            // This assumes you have a similar config setup as in M2_Deploy_From_Scratch.s.sol
+            /// TODO: Handle Eth pos
+        }
 
         address eigenPodManagerImpl = address(
             new EigenPodManager(
@@ -103,11 +148,12 @@ library CoreDeploymentLib {
         );
         vm.label(eigenPodManagerImpl, "EigenPodManager Implementation");
 
-        uint32 CALCULATION_INTERVAL_SECONDS;
-        uint32 MAX_REWARDS_DURATION;
-        uint32 MAX_RETROACTIVE_LENGTH;
-        uint32 MAX_FUTURE_LENGTH;
-        uint32 GENESIS_REWARDS_TIMESTAMP;
+        /// TODO: Get actual values
+        uint32 CALCULATION_INTERVAL_SECONDS = 10 days;
+        uint32 MAX_REWARDS_DURATION = 10;
+        uint32 MAX_RETROACTIVE_LENGTH = 1;
+        uint32 MAX_FUTURE_LENGTH = 1;
+        uint32 GENESIS_REWARDS_TIMESTAMP = 100 days;
         address rewardsCoordinatorImpl = address(
             new RewardsCoordinator(
                 IDelegationManager(result.delegationManager),
@@ -121,7 +167,9 @@ library CoreDeploymentLib {
         );
         vm.label(rewardsCoordinatorImpl, "RewardsCoordinator Implementation");
 
-        uint64 GENESIS_TIME;
+        /// TODO: Get actual genesis time
+        uint64 GENESIS_TIME = 1_564_000;
+
         address eigenPodImpl = address(
             new EigenPod(
                 IETHPOSDeposit(ethPOSDeposit),
@@ -147,8 +195,18 @@ library CoreDeploymentLib {
         vm.label(pauserRegistryImpl, "PauserRegistry Implementation");
 
         // Upgrade contracts
-        bytes memory upgradeCall;
-        //  = abi.encodeCall(DelegationManager.initialize, ());
+        /// TODO: Get from config
+        bytes memory upgradeCall = abi.encodeCall(
+            DelegationManager.initialize,
+            (
+                proxyAdmin, // initialOwner
+                IPauserRegistry(result.pauserRegistry), // _pauserRegistry
+                0, // initialPausedStatus
+                0, // _minWithdrawalDelayBlocks
+                new IStrategy[](0), // _strategies (empty array for now)
+                new uint256[](0) // _withdrawalDelayBlocks (empty array for now)
+            )
+        );
         UpgradeableProxyLib.upgradeAndCall(
             result.delegationManager, delegationManagerImpl, upgradeCall
         );
@@ -156,8 +214,13 @@ library CoreDeploymentLib {
     }
 
     struct DeploymentConfigData {
-        uint256 value;
+        StrategyManagerConfig strategyManager;
+        DelegationManagerConfig delegationManager;
+        SlasherConfig slasher;
+        EigenPodManagerConfig eigenPodManager;
+        RewardsCoordinatorConfig rewardsCoordinator;
     }
+    // StrategyConfig[] strategies;
 
     function readDeploymentConfigValues(
         string memory directoryPath,
@@ -171,6 +234,41 @@ library CoreDeploymentLib {
 
         DeploymentConfigData memory data;
 
+        // StrategyManager config
+        data.strategyManager.initPausedStatus = json.readUint(".strategyManager.init_paused_status");
+        data.strategyManager.initWithdrawalDelayBlocks =
+            uint32(json.readUint(".strategyManager.init_withdrawal_delay_blocks"));
+
+        // DelegationManager config
+        data.delegationManager.initPausedStatus = json.readUint(".delegation.init_paused_status");
+        data.delegationManager.withdrawalDelayBlocks =
+            json.readUint(".delegation.init_withdrawal_delay_blocks");
+
+        // Slasher config
+        data.slasher.initPausedStatus = json.readUint(".slasher.init_paused_status");
+
+        // EigenPodManager config
+        data.eigenPodManager.initPausedStatus = json.readUint(".eigenPodManager.init_paused_status");
+
+        // RewardsCoordinator config
+        data.rewardsCoordinator.initPausedStatus =
+            json.readUint(".rewardsCoordinator.init_paused_status");
+        data.rewardsCoordinator.maxRewardsDuration =
+            json.readUint(".rewardsCoordinator.MAX_REWARDS_DURATION");
+        data.rewardsCoordinator.maxRetroactiveLength =
+            json.readUint(".rewardsCoordinator.MAX_RETROACTIVE_LENGTH");
+        data.rewardsCoordinator.maxFutureLength =
+            json.readUint(".rewardsCoordinator.MAX_FUTURE_LENGTH");
+        data.rewardsCoordinator.genesisRewardsTimestamp =
+            json.readUint(".rewardsCoordinator.GENESIS_REWARDS_TIMESTAMP");
+        data.rewardsCoordinator.updater =
+            json.readAddress(".rewardsCoordinator.rewards_updater_address");
+        data.rewardsCoordinator.activationDelay =
+            json.readUint(".rewardsCoordinator.activation_delay");
+        data.rewardsCoordinator.calculationIntervalSeconds =
+            json.readUint(".rewardsCoordinator.calculation_interval_seconds");
+        data.rewardsCoordinator.globalOperatorCommissionBips =
+            json.readUint(".rewardsCoordinator.global_operator_commission_bips");
         return data;
     }
 
@@ -233,25 +331,25 @@ library CoreDeploymentLib {
         /// TODO: namespace contracts -> {avs, core}
         return string.concat(
             '{"proxyAdmin":"',
-            vm.toString(proxyAdmin),
+            proxyAdmin.toHexString(),
             '","delegationManager":"',
-            vm.toString(data.delegationManager),
+            data.delegationManager.toHexString(),
             '","delegationManagerImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.delegationManager)),
+            data.delegationManager.getImplementation().toHexString(),
             '","avsDirectory":"',
-            vm.toString(data.avsDirectory),
+            data.avsDirectory.toHexString(),
             '","avsDirectoryImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.avsDirectory)),
+            data.avsDirectory.getImplementation().toHexString(),
             '","wethStrategy":"',
-            vm.toString(data.wethStrategy),
+            data.wethStrategy.toHexString(),
             '","strategyManager":"',
-            vm.toString(data.strategyManager),
+            data.strategyManager.toHexString(),
             '","strategyManagerImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.strategyManager)),
+            data.strategyManager.getImplementation().toHexString(),
             '","eigenPodManager":"',
-            vm.toString(data.eigenPodManager),
+            data.eigenPodManager.toHexString(),
             '","eigenPodManagerImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.eigenPodManager)),
+            data.eigenPodManager.getImplementation().toHexString(),
             '"}'
         );
     }

@@ -5,6 +5,7 @@ libs = ["lib"]
 fs_permissions = [{ access = "read-write", path = "./" }]
 solc = "0.8.26"
 via-ir = true
+
 remappings = [
     "@eigenlayer/=lib/eigenlayer-middleware/lib/eigenlayer-contracts/src/",
     "@eigenlayer-scripts/=lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/",

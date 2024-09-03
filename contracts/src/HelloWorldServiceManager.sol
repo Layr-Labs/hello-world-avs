@@ -53,7 +53,9 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
-    function createNewTask(string memory name) external {
+    function createNewTask(
+        string memory name
+    ) external {
         // create a new task struct
         Task memory newTask;
         newTask.name = name;
@@ -104,7 +106,9 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
     // HELPER
 
-    function operatorHasMinimumWeight(address operator) public view returns (bool) {
+    function operatorHasMinimumWeight(
+        address operator
+    ) public view returns (bool) {
         return ECDSAStakeRegistry(stakeRegistry).getOperatorWeight(operator)
             >= ECDSAStakeRegistry(stakeRegistry).minimumWeight();
     }

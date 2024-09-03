@@ -13,9 +13,12 @@ import {HelloWorldServiceManager} from "../../src/HelloWorldServiceManager.sol";
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {Quorum} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 library HelloWorldDeploymentLib {
     using stdJson for *;
+    using Strings for *;
+    using UpgradeableProxyLib for address;
 
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
@@ -130,33 +133,33 @@ library HelloWorldDeploymentLib {
     ) private view returns (string memory) {
         return string.concat(
             '{"proxyAdmin":"',
-            vm.toString(proxyAdmin),
+            proxyAdmin.toHexString(),
             '","helloWorldServiceManager":"',
-            vm.toString(data.helloWorldServiceManager),
+            data.helloWorldServiceManager.toHexString(),
             '","helloWorldServiceManagerImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.helloWorldServiceManager)),
+            data.helloWorldServiceManager.getImplementation().toHexString(),
             '","stakeRegistry":"',
-            vm.toString(data.stakeRegistry),
+            data.stakeRegistry.toHexString(),
             '","stakeRegistryImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.stakeRegistry)),
+            data.stakeRegistry.getImplementation().toHexString(),
             '","delegationManager":"',
-            vm.toString(data.delegationManager),
+            data.delegationManager.toHexString(),
             '","delegationManagerImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.delegationManager)),
+            data.delegationManager.getImplementation().toHexString(),
             '","avsDirectory":"',
-            vm.toString(data.avsDirectory),
+            data.avsDirectory.toHexString(),
             '","avsDirectoryImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.avsDirectory)),
+            data.avsDirectory.getImplementation().toHexString(),
             '","wethStrategy":"',
-            vm.toString(data.wethStrategy),
+            data.wethStrategy.toHexString(),
             '","strategyManager":"',
-            vm.toString(data.strategyManager),
+            data.strategyManager.toHexString(),
             '","strategyManagerImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.strategyManager)),
+            data.strategyManager.getImplementation().toHexString(),
             '","eigenPodManager":"',
-            vm.toString(data.eigenPodManager),
+            data.eigenPodManager.toHexString(),
             '","eigenPodManagerImpl":"',
-            vm.toString(UpgradeableProxyLib.getImplementation(data.eigenPodManager)),
+            data.eigenPodManager.getImplementation().toHexString(),
             '"}'
         );
     }

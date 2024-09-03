@@ -59,9 +59,11 @@ contract DeployEigenlayerCore is Script, Test {
     EigenPodManager internal eigenPodManager;
     UpgradeableBeacon internal eigenPodBeacon;
 
-    address executorMultisig;
-    address operationsMultisig;
-    address pauserMultisig;
+    address internal executorMultisig;
+    address internal operationsMultisig;
+    address internal pauserMultisig;
+
+    address[] internal pausers;
 
     // the ETH2 deposit contract -- if not on mainnet, we deploy a mock as stand-in
     IETHPOSDeposit internal ethPOSDeposit;
@@ -73,14 +75,24 @@ contract DeployEigenlayerCore is Script, Test {
     // IMMUTABLES TO SET
     uint64 internal GOERLI_GENESIS_TIME = 1_616_508_000;
 
-    // OTHER DEPLOYMENT PARAMETERS
+    /// StrategyManager
     uint256 internal STRATEGY_MANAGER_INIT_PAUSED_STATUS;
-    uint256 internal SLASHER_INIT_PAUSED_STATUS;
+    uint32 internal STRATEGY_MANAGER_INIT_WITHDRAWAL_DELAY_BLOCKS;
+
+    /// DelegationManager
     uint256 internal DELEGATION_INIT_PAUSED_STATUS;
+    uint256 internal DELEGATION_WITHDRAWAL_DELAY_BLOCKS;
+    IStrategy[] internal strategies;
+    uint256[] internal withdrawalDelayBlocks;
+
+    /// Slasher
+    uint256 internal SLASHER_INIT_PAUSED_STATUS;
+
+    /// EigenPod Manager
     uint256 internal EIGENPOD_MANAGER_INIT_PAUSED_STATUS;
-    uint256 internal REWARDS_COORDINATOR_INIT_PAUSED_STATUS;
 
     // RewardsCoordinator
+    uint256 internal REWARDS_COORDINATOR_INIT_PAUSED_STATUS;
     uint32 internal REWARDS_COORDINATOR_MAX_REWARDS_DURATION;
     uint32 internal REWARDS_COORDINATOR_MAX_RETROACTIVE_LENGTH;
     uint32 internal REWARDS_COORDINATOR_MAX_FUTURE_LENGTH;
@@ -90,11 +102,17 @@ contract DeployEigenlayerCore is Script, Test {
     uint32 internal REWARDS_COORDINATOR_CALCULATION_INTERVAL_SECONDS;
     uint32 internal REWARDS_COORDINATOR_GLOBAL_OPERATOR_COMMISSION_BIPS;
 
-    // one week in blocks -- 50400
-    uint32 internal STRATEGY_MANAGER_INIT_WITHDRAWAL_DELAY_BLOCKS;
-    uint256 internal DELEGATION_WITHDRAWAL_DELAY_BLOCKS;
-
     function setUp() public virtual {
+        _setUpCoreContractsConfig();
+    }
+
+    function run() external {
+        vm.startBroadcast();
+        _deployCoreContracts();
+        vm.stopBroadcast();
+    }
+
+    function _setUpCoreContractsConfig() internal {
         /// TODO: Better parameterization of this
         string memory configFileName = "M2_deploy_from_scratch.anvil.config.json";
         // READ JSON CONFIG DATA
@@ -144,6 +162,11 @@ contract DeployEigenlayerCore is Script, Test {
         executorMultisig = configData.readAddress(".multisig_addresses.executorMultisig");
         operationsMultisig = configData.readAddress(".multisig_addresses.operationsMultisig");
         pauserMultisig = configData.readAddress(".multisig_addresses.pauserMultisig");
+
+        pausers = new address[](3);
+        (pausers[0], pausers[1], pausers[2]) =
+            (executorMultisig, operationsMultisig, pauserMultisig);
+
         // load token list
         bytes memory strategyConfigsRaw = configData.parseRaw(".strategies");
         // tokens to deploy strategies for
@@ -169,15 +192,9 @@ contract DeployEigenlayerCore is Script, Test {
         );
     }
 
-    function run() external {
-        vm.startBroadcast();
-
+    function _deployCoreContracts() internal {
         eigenLayerProxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
-        address[] memory pausers = new address[](3);
-        pausers[0] = executorMultisig;
-        pausers[1] = operationsMultisig;
-        pausers[2] = pauserMultisig;
         eigenLayerPauserReg = new PauserRegistry(pausers, executorMultisig);
 
         /**
@@ -193,6 +210,7 @@ contract DeployEigenlayerCore is Script, Test {
 
         EigenPod eigenPodImplementation =
             new EigenPod(ethPOSDeposit, eigenPodManager, GOERLI_GENESIS_TIME);
+        /// TODO: what is the holesky genesis time?
 
         eigenPodBeacon = new UpgradeableBeacon(address(eigenPodImplementation));
 
@@ -219,8 +237,6 @@ contract DeployEigenlayerCore is Script, Test {
         );
 
         // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
-        IStrategy[] memory _strategies;
-        uint256[] memory _withdrawalDelayBlocks;
 
         bytes memory upgradeDelegationData = abi.encodeCall(
             DelegationManager.initialize,
@@ -229,8 +245,8 @@ contract DeployEigenlayerCore is Script, Test {
                 eigenLayerPauserReg,
                 DELEGATION_INIT_PAUSED_STATUS,
                 DELEGATION_WITHDRAWAL_DELAY_BLOCKS,
-                _strategies,
-                _withdrawalDelayBlocks
+                strategies,
+                withdrawalDelayBlocks
             )
         );
         address(delegation).upgradeAndCall(delegationImpl, upgradeDelegationData);
@@ -306,7 +322,5 @@ contract DeployEigenlayerCore is Script, Test {
 
         ProxyAdmin(eigenLayerProxyAdmin).transferOwnership(executorMultisig);
         eigenPodBeacon.transferOwnership(executorMultisig);
-
-        vm.stopBroadcast();
     }
 }
