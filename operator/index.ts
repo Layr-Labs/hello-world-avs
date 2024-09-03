@@ -4,25 +4,27 @@ import { delegationABI } from "./abis/delegationABI";
 import { contractABI } from './abis/contractABI';
 import { registryABI } from './abis/registryABI';
 import { avsDirectoryABI } from './abis/avsDirectoryABI';
+import { RemoteSigner } from "./remoteSigner";
 dotenv.config();
 
+const remoteSignerUrl = process.env.REMOTE_SIGNER_URL!;
+const operatorAddress = process.env.OPERATOR_ADDRESS!;
 const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
+const signer = new RemoteSigner(operatorAddress, provider, remoteSignerUrl);
+let address = "";
 
 const delegationManagerAddress = process.env.DELEGATION_MANAGER_ADDRESS!;
 const contractAddress = process.env.CONTRACT_ADDRESS!;
 const stakeRegistryAddress = process.env.STAKE_REGISTRY_ADDRESS!;
 const avsDirectoryAddress = process.env.AVS_DIRECTORY_ADDRESS!;
 
-const remoteSignerUrl = process.env.REMOTE_SIGNER_URL!;
-const operatorAddress = process.env.OPERATOR_ADDRESS!;
-
 const signerType = process.env.SIGNER_TYPE!;
 
-const delegationManager = new ethers.Contract(delegationManagerAddress, delegationABI, wallet);
-const contract = new ethers.Contract(contractAddress, contractABI, wallet);
-const registryContract = new ethers.Contract(stakeRegistryAddress, registryABI, wallet);
-const avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, wallet);
+let delegationManager: ethers.Contract;
+let contract: ethers.Contract;
+let registryContract: ethers.Contract;
+let avsDirectory: ethers.Contract;
 
 const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number, taskName: string) => {
     const message = `Hello, ${taskName}`;
@@ -35,11 +37,7 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
         signature = await wallet.signMessage(messageBytes);
     } else if (signerType === "remote") {
         console.log("Using remote signer to sign message")
-        signature = await callJsonRpcEndpoint(
-            remoteSignerUrl,
-            "eth_sign",
-            [operatorAddress, messageHash]
-        );
+        signature = await signer.signMessage(messageHash);
     }
 
     console.log(
@@ -58,7 +56,7 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
 const registerOperator = async () => {
     console.log("check")
     const tx1 = await delegationManager.registerAsOperator({
-        earningsReceiver: await wallet.address,
+        earningsReceiver: address,
         delegationApprover: "0x0000000000000000000000000000000000000000",
         stakerOptOutWindowBlocks: 0
     }, "");
@@ -77,13 +75,15 @@ const registerOperator = async () => {
 
     // Calculate the digest hash using the avsDirectory's method
     const digestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
-        wallet.address,
+        address,
         contract.address,
         salt,
         expiry
     );
 
     // // Sign the digest hash with the operator's private key
+    // TODO(shrimalmadhur): I am not completely sure about how to make this work with remote signer
+    // as the signDigest function is not available on the remote signer.
     const signingKey = new ethers.utils.SigningKey(process.env.PRIVATE_KEY!);
     const signature = signingKey.signDigest(digestHash);
 
@@ -92,7 +92,7 @@ const registerOperator = async () => {
 
     const tx2 = await registryContract.registerOperatorWithSignature(
         operatorSignature,
-        wallet.address
+        address
     );
     await tx2.wait();
     console.log("Operator registered on AVS successfully");
@@ -110,6 +110,19 @@ const monitorNewTasks = async () => {
 };
 
 const main = async () => {
+    if (signerType === "local") {
+        address = wallet.address;
+        delegationManager = new ethers.Contract(delegationManagerAddress, delegationABI, wallet);
+        contract = new ethers.Contract(contractAddress, contractABI, wallet);
+        registryContract = new ethers.Contract(stakeRegistryAddress, registryABI, wallet);
+        avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, wallet);
+    } else {
+        address = await signer.getAddress();
+        delegationManager = new ethers.Contract(delegationManagerAddress, delegationABI, signer);
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+        registryContract = new ethers.Contract(stakeRegistryAddress, registryABI, signer);
+        avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, signer);
+    }
     await registerOperator();
     monitorNewTasks().catch((error) => {
         console.error("Error monitoring tasks:", error);
