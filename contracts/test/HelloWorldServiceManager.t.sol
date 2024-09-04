@@ -51,9 +51,8 @@ contract HelloWorldTaskManagerSetup is MockAVSDeployer {
         );
 
         /// TODO: Update to take in as input the core deployment data struct which will clean things up
-        helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
-            proxyAdmin, coreDeployment.delegationManager, coreDeployment.avsDirectory, quorum
-        );
+        helloWorldDeployment =
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
     }
 }
 

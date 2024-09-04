@@ -18,6 +18,7 @@ import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/Test.sol";
 import {Utils} from "./utils/Utils.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
+import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 
 // # To deploy and verify our contract
@@ -64,8 +65,9 @@ contract HelloWorldDeployer is Script, Utils {
         vm.startBroadcast(deployer);
 
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
-        HelloWorldDeploymentLib.DeploymentData memory result = HelloWorldDeploymentLib
-            .deployContracts(address(proxyAdmin), delegationManager, avsDirectory, quorum);
+        CoreDeploymentLib.DeploymentData memory core;
+        HelloWorldDeploymentLib.DeploymentData memory result =
+            HelloWorldDeploymentLib.deployContracts(address(proxyAdmin), core, quorum);
 
         helloWorldServiceManager = result.helloWorldServiceManager;
         stakeRegistry = result.stakeRegistry;

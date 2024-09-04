@@ -13,6 +13,7 @@ import {HelloWorldServiceManager} from "../../src/HelloWorldServiceManager.sol";
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {Quorum} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
+import {CoreDeploymentLib} from "./CoreDeploymentLib.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 library HelloWorldDeploymentLib {
@@ -25,17 +26,12 @@ library HelloWorldDeploymentLib {
     struct DeploymentData {
         address helloWorldServiceManager;
         address stakeRegistry;
-        address delegationManager;
-        address avsDirectory;
         address wethStrategy;
-        address strategyManager;
-        address eigenPodManager;
     }
 
     function deployContracts(
         address proxyAdmin,
-        address delegationManager,
-        address avsDirectory,
+        CoreDeploymentLib.DeploymentData memory core,
         Quorum memory quorum
     ) internal returns (DeploymentData memory) {
         DeploymentData memory result;
@@ -49,11 +45,13 @@ library HelloWorldDeploymentLib {
 
         // Deploy the implementation contracts, using the proxy contracts as inputs
         address stakeRegistryImpl =
-            address(new ECDSAStakeRegistry(IDelegationManager(delegationManager)));
+            address(new ECDSAStakeRegistry(IDelegationManager(core.delegationManager)));
         vm.label(stakeRegistryImpl, "StakeRegistry Implementation");
 
         address helloWorldServiceManagerImpl = address(
-            new HelloWorldServiceManager(avsDirectory, result.stakeRegistry, delegationManager)
+            new HelloWorldServiceManager(
+                core.avsDirectory, result.stakeRegistry, core.delegationManager
+            )
         );
         vm.label(helloWorldServiceManagerImpl, "HelloWorldServiceManager Implementation");
 
@@ -64,8 +62,6 @@ library HelloWorldDeploymentLib {
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
         UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
 
-        result.avsDirectory = avsDirectory;
-        result.delegationManager = delegationManager;
         result.wethStrategy = address(quorum.strategies[0].strategy);
 
         return result;
@@ -83,12 +79,9 @@ library HelloWorldDeploymentLib {
         string memory json = vm.readFile(fileName);
 
         DeploymentData memory data;
-        data.strategyManager = json.readAddress(".contracts.strategyManager");
-        data.eigenPodManager = json.readAddress(".contracts.eigenPodManager");
+        /// TODO: 2 Step for reading deployment json.  Read to the core and the AVS data
         data.helloWorldServiceManager = json.readAddress(".contracts.helloWorldServiceManager");
         data.stakeRegistry = json.readAddress(".contracts.stakeRegistry");
-        data.delegationManager = json.readAddress(".contracts.delegationManager");
-        data.avsDirectory = json.readAddress(".contracts.avsDirectory");
         data.wethStrategy = json.readAddress(".contracts.wethStrategy");
 
         return data;
@@ -142,24 +135,8 @@ library HelloWorldDeploymentLib {
             data.stakeRegistry.toHexString(),
             '","stakeRegistryImpl":"',
             data.stakeRegistry.getImplementation().toHexString(),
-            '","delegationManager":"',
-            data.delegationManager.toHexString(),
-            '","delegationManagerImpl":"',
-            data.delegationManager.getImplementation().toHexString(),
-            '","avsDirectory":"',
-            data.avsDirectory.toHexString(),
-            '","avsDirectoryImpl":"',
-            data.avsDirectory.getImplementation().toHexString(),
             '","wethStrategy":"',
             data.wethStrategy.toHexString(),
-            '","strategyManager":"',
-            data.strategyManager.toHexString(),
-            '","strategyManagerImpl":"',
-            data.strategyManager.getImplementation().toHexString(),
-            '","eigenPodManager":"',
-            data.eigenPodManager.toHexString(),
-            '","eigenPodManagerImpl":"',
-            data.eigenPodManager.getImplementation().toHexString(),
             '"}'
         );
     }
