@@ -31,8 +31,6 @@ contract HelloWorldDeployer is Script, Utils {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
-        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
-
         coreConfigData = CoreDeploymentLib.readDeploymentConfigValues("config/core/", block.chainid);
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
 
@@ -43,6 +41,7 @@ contract HelloWorldDeployer is Script, Utils {
 
     function run() external {
         vm.startBroadcast(deployer);
+        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         helloWorldDeployment =
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
