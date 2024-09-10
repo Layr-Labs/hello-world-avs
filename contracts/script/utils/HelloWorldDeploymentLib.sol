@@ -88,7 +88,7 @@ library HelloWorldDeploymentLib {
     function writeDeploymentJson(
         DeploymentData memory data
     ) internal {
-        writeDeploymentJson("deployments/", block.chainid, data);
+        writeDeploymentJson("deployments/hello-world/", block.chainid, data);
     }
 
     function writeDeploymentJson(
