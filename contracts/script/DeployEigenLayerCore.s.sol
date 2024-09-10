@@ -11,21 +11,14 @@ contract DeployEigenlayerCore is Script, Test {
     using CoreDeploymentLib for *;
     using UpgradeableProxyLib for address;
 
+    address deployer;
     address proxyAdmin;
     CoreDeploymentLib.DeploymentData deploymentData;
     CoreDeploymentLib.DeploymentConfigData configData;
 
     function setUp() public virtual {
-        _setUpCoreContractsConfig();
-    }
-
-    function run() external {
-        vm.startBroadcast();
-        _deployCoreContracts();
-        vm.stopBroadcast();
-    }
-
-    function _setUpCoreContractsConfig() internal {
+        deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
+        vm.label(deployer, "Deployer");
         string memory configPath =
             "lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/configs/devnet/";
         uint256 chainId = block.chainid;
@@ -33,12 +26,12 @@ contract DeployEigenlayerCore is Script, Test {
         configData = CoreDeploymentLib.readDeploymentConfigValues(configPath, chainId);
     }
 
-    function _deployCoreContracts() internal {
+    function run() external {
+        vm.startBroadcast(deployer);
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
-
-        // Write deployment data to JSON file
-        string memory deploymentPath = "script/output/";
+        vm.stopBroadcast();
+        string memory deploymentPath = "deployments/core/";
         CoreDeploymentLib.writeDeploymentJson(deploymentPath, block.chainid, deploymentData);
     }
 }
