@@ -16,7 +16,6 @@ contract DeployEigenlayerCore is Script, Test {
     CoreDeploymentLib.DeploymentConfigData configData;
 
     function setUp() public virtual {
-        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         _setUpCoreContractsConfig();
     }
 
@@ -35,6 +34,7 @@ contract DeployEigenlayerCore is Script, Test {
     }
 
     function _deployCoreContracts() internal {
+        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
 
         // Write deployment data to JSON file
