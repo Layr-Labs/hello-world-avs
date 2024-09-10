@@ -23,7 +23,6 @@ contract HelloWorldDeployer is Script, Utils {
     address private deployer;
     address proxyAdmin;
     CoreDeploymentLib.DeploymentData coreDeployment;
-    CoreDeploymentLib.DeploymentConfigData coreConfigData;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     Quorum internal quorum;
 
@@ -31,11 +30,10 @@ contract HelloWorldDeployer is Script, Utils {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
-        coreConfigData = CoreDeploymentLib.readDeploymentConfigValues("config/core/", block.chainid);
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
 
         quorum.strategies.push(
-            StrategyParams({strategy: IStrategy(coreDeployment.wethStrategy), multiplier: 10_000})
+            StrategyParams({strategy: IStrategy(address(420)), multiplier: 10_000})
         );
     }
 
@@ -66,6 +64,5 @@ contract HelloWorldDeployer is Script, Utils {
             "DelegationManager address cannot be zero"
         );
         require(coreDeployment.avsDirectory != address(0), "AVSDirectory address cannot be zero");
-        require(coreDeployment.wethStrategy != address(0), "WETHStrategy address cannot be zero");
     }
 }

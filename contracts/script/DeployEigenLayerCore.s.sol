@@ -20,10 +20,10 @@ contract DeployEigenlayerCore is Script, Test {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
         string memory configPath =
-            "lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/configs/devnet/";
-        uint256 chainId = block.chainid;
+            "lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/output/devnet/";
+        string memory configFilename = "M2_from_scratch_deployment_data.json";
 
-        configData = CoreDeploymentLib.readDeploymentConfigValues(configPath, chainId);
+        deploymentData = CoreDeploymentLib.readDeploymentJson(configPath, configFilename);
     }
 
     function run() external {
