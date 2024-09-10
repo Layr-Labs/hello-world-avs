@@ -3,6 +3,7 @@ pragma solidity ^0.8.12;
 
 import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
 import {MockAVSDeployer} from "@eigenlayer-middleware/test/utils/MockAVSDeployer.sol";
+import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "../script/utils/HelloWorldDeploymentLib.sol";
@@ -50,16 +51,37 @@ contract HelloWorldTaskManagerSetup is MockAVSDeployer {
             StrategyParams({strategy: IStrategy(address(420)), multiplier: 10_000})
         );
 
-        /// TODO: Update to take in as input the core deployment data struct which will clean things up
         helloWorldDeployment =
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+        labelContracts(coreDeployment, helloWorldDeployment);
+    }
+
+    function labelContracts(
+        CoreDeploymentLib.DeploymentData memory coreDeployment,
+        HelloWorldDeploymentLib.DeploymentData memory helloWorldDeployment
+    ) internal {
+        vm.label(coreDeployment.delegationManager, "DelegationManager");
+        vm.label(coreDeployment.avsDirectory, "AVSDirectory");
+        vm.label(coreDeployment.strategyManager, "StrategyManager");
+        vm.label(coreDeployment.eigenPodManager, "EigenPodManager");
+        vm.label(coreDeployment.rewardsCoordinator, "RewardsCoordinator");
+        vm.label(coreDeployment.eigenPodBeacon, "EigenPodBeacon");
+        vm.label(coreDeployment.pauserRegistry, "PauserRegistry");
+        vm.label(coreDeployment.wethStrategy, "WETHStrategy");
+
+        vm.label(helloWorldDeployment.helloWorldServiceManager, "HelloWorldServiceManager");
+        vm.label(helloWorldDeployment.stakeRegistry, "StakeRegistry");
+        vm.label(helloWorldDeployment.wethStrategy, "WETHStrategy");
     }
 }
 
-contract HelloWorldServiceManagerTest is HelloWorldTaskManagerSetup {
-    function testTrue() public {
-        assertTrue(true);
+contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
+    function testInitialization() public view {
+        assertTrue(helloWorldDeployment.stakeRegistry != address(0), "Not deployed");
+        assertTrue(helloWorldDeployment.helloWorldServiceManager != address(0), "Not deployed");
+        assertTrue(coreDeployment.delegationManager != address(0), "Not deployed");
+        assertTrue(coreDeployment.avsDirectory != address(0), "Not deployed");
+        assertTrue(coreDeployment.strategyManager != address(0), "Not deployed");
+        assertTrue(coreDeployment.eigenPodManager != address(0), "Not deployed");
     }
-
-    // Add more tests here
 }

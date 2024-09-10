@@ -38,23 +38,15 @@ library HelloWorldDeploymentLib {
 
         // First, deploy upgradeable proxy contracts that will point to the implementations.
         result.helloWorldServiceManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.helloWorldServiceManager, "HelloWorldServiceManager");
-
         result.stakeRegistry = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.stakeRegistry, "StakeRegistry");
-
         // Deploy the implementation contracts, using the proxy contracts as inputs
         address stakeRegistryImpl =
             address(new ECDSAStakeRegistry(IDelegationManager(core.delegationManager)));
-        vm.label(stakeRegistryImpl, "StakeRegistry Implementation");
-
         address helloWorldServiceManagerImpl = address(
             new HelloWorldServiceManager(
                 core.avsDirectory, result.stakeRegistry, core.delegationManager
             )
         );
-        vm.label(helloWorldServiceManagerImpl, "HelloWorldServiceManager Implementation");
-
         // Upgrade contracts
         bytes memory upgradeCall = abi.encodeCall(
             ECDSAStakeRegistry.initialize, (result.helloWorldServiceManager, 1, quorum)
@@ -70,8 +62,13 @@ library HelloWorldDeploymentLib {
     function readDeploymentJson(
         uint256 chainId
     ) internal returns (DeploymentData memory) {
-        /// TODO: Parameterize this
-        string memory directoryPath = "deployments/";
+        return readDeploymentJson("deployments/", chainId);
+    }
+
+    function readDeploymentJson(
+        string memory directoryPath,
+        uint256 chainId
+    ) internal returns (DeploymentData memory) {
         string memory fileName = string.concat(directoryPath, vm.toString(chainId), ".json");
 
         require(vm.exists(fileName), "Deployment file does not exist");
@@ -87,7 +84,16 @@ library HelloWorldDeploymentLib {
         return data;
     }
 
+    /// write to default output path
     function writeDeploymentJson(
+        DeploymentData memory data
+    ) internal {
+        writeDeploymentJson("deployments/", block.chainid, data);
+    }
+
+    function writeDeploymentJson(
+        string memory outputPath,
+        uint256 chainId,
         DeploymentData memory data
     ) internal {
         address proxyAdmin =
@@ -95,10 +101,9 @@ library HelloWorldDeploymentLib {
 
         string memory deploymentData = _generateDeploymentJson(data, proxyAdmin);
 
-        string memory directoryPath = "deployments/";
-        string memory fileName = string.concat(directoryPath, vm.toString(block.chainid), ".json");
-        if (!vm.exists(directoryPath)) {
-            vm.createDir(directoryPath, true);
+        string memory fileName = string.concat(outputPath, vm.toString(chainId), ".json");
+        if (!vm.exists(outputPath)) {
+            vm.createDir(outputPath, true);
         }
 
         vm.writeFile(fileName, deploymentData);
@@ -135,6 +140,7 @@ library HelloWorldDeploymentLib {
             data.stakeRegistry.toHexString(),
             '","stakeRegistryImpl":"',
             data.stakeRegistry.getImplementation().toHexString(),
+            /// TODO: Should be quorum info vs hardcoding a strategy
             '","wethStrategy":"',
             data.wethStrategy.toHexString(),
             '"}'

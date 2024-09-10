@@ -87,24 +87,12 @@ library CoreDeploymentLib {
         DeploymentData memory result;
 
         result.delegationManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.delegationManager, "DelegationManager");
-
         result.avsDirectory = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.avsDirectory, "AVSDirectory");
         result.strategyManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.strategyManager, "StrategyManager");
-
         result.eigenPodManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.eigenPodManager, "EigenPodManager");
-
         result.rewardsCoordinator = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.rewardsCoordinator, "RewardsCoordinator");
-
         result.eigenPodBeacon = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.eigenPodBeacon, "EigenPodBeacon");
-
         result.pauserRegistry = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        vm.label(result.pauserRegistry, "PauserRegistry");
 
         // Deploy the implementation contracts, using the proxy contracts as inputs
         address delegationManagerImpl = address(
@@ -114,10 +102,8 @@ library CoreDeploymentLib {
                 IEigenPodManager(result.eigenPodManager)
             )
         );
-        vm.label(delegationManagerImpl, "DelegationManager Implementation");
         address avsDirectoryImpl =
             address(new AVSDirectory(IDelegationManager(result.delegationManager)));
-        vm.label(avsDirectoryImpl, "AVSDirectory Implementation");
 
         address strategyManagerImpl = address(
             new StrategyManager(
@@ -126,7 +112,6 @@ library CoreDeploymentLib {
                 ISlasher(address(0))
             )
         );
-        vm.label(strategyManagerImpl, "StrategyManager Implementation");
 
         address ethPOSDeposit;
         if (block.chainid == 1) {
@@ -146,7 +131,6 @@ library CoreDeploymentLib {
                 IDelegationManager(result.delegationManager)
             )
         );
-        vm.label(eigenPodManagerImpl, "EigenPodManager Implementation");
 
         /// TODO: Get actual values
         uint32 CALCULATION_INTERVAL_SECONDS = 10 days;
@@ -165,7 +149,6 @@ library CoreDeploymentLib {
                 GENESIS_REWARDS_TIMESTAMP
             )
         );
-        vm.label(rewardsCoordinatorImpl, "RewardsCoordinator Implementation");
 
         /// TODO: Get actual genesis time
         uint64 GENESIS_TIME = 1_564_000;
@@ -177,23 +160,15 @@ library CoreDeploymentLib {
                 GENESIS_TIME
             )
         );
-        vm.label(eigenPodImpl, "EigenPod Implementation");
-
         address eigenPodBeaconImpl = address(new UpgradeableBeacon(eigenPodImpl));
-        vm.label(eigenPodBeaconImpl, "EigenPodBeacon Implementation");
-
         address baseStrategyImpl =
             address(new StrategyBaseTVLLimits(IStrategyManager(result.strategyManager)));
-        vm.label(baseStrategyImpl, "BaseStrategy Implementation");
-
         address pauserRegistryImpl = address(
             new PauserRegistry(
                 new address[](0), // Empty array for pausers
                 proxyAdmin // ProxyAdmin as the unpauser
             )
         );
-        vm.label(pauserRegistryImpl, "PauserRegistry Implementation");
-
         // Upgrade contracts
         /// TODO: Get from config
         bytes memory upgradeCall = abi.encodeCall(
@@ -234,23 +209,28 @@ library CoreDeploymentLib {
 
         DeploymentConfigData memory data;
 
-        // StrategyManager config
+        // StrategyManager start
         data.strategyManager.initPausedStatus = json.readUint(".strategyManager.init_paused_status");
         data.strategyManager.initWithdrawalDelayBlocks =
             uint32(json.readUint(".strategyManager.init_withdrawal_delay_blocks"));
+        // slasher config end
 
-        // DelegationManager config
+        // DelegationManager config start
         data.delegationManager.initPausedStatus = json.readUint(".delegation.init_paused_status");
         data.delegationManager.withdrawalDelayBlocks =
             json.readUint(".delegation.init_withdrawal_delay_blocks");
+        // DelegationManager config end
 
-        // Slasher config
+        // Slasher config start
         data.slasher.initPausedStatus = json.readUint(".slasher.init_paused_status");
 
-        // EigenPodManager config
-        data.eigenPodManager.initPausedStatus = json.readUint(".eigenPodManager.init_paused_status");
+        // Slasher config end
 
-        // RewardsCoordinator config
+        // EigenPodManager config start
+        data.eigenPodManager.initPausedStatus = json.readUint(".eigenPodManager.init_paused_status");
+        // EigenPodManager config end
+
+        // RewardsCoordinator config start
         data.rewardsCoordinator.initPausedStatus =
             json.readUint(".rewardsCoordinator.init_paused_status");
         data.rewardsCoordinator.maxRewardsDuration =
@@ -269,6 +249,8 @@ library CoreDeploymentLib {
             json.readUint(".rewardsCoordinator.calculation_interval_seconds");
         data.rewardsCoordinator.globalOperatorCommissionBips =
             json.readUint(".rewardsCoordinator.global_operator_commission_bips");
+        // RewardsCoordinator config end
+
         return data;
     }
 
@@ -292,17 +274,27 @@ library CoreDeploymentLib {
         return data;
     }
 
+    /// TODO: Need to be able to read json from eigenlayer-contracts repo for holesky/mainnet and output the json here
+
     function writeDeploymentJson(
+        DeploymentData memory data
+    ) internal {
+        /// TODO: Verify this
+        writeDeploymentJson("deployments/core/", block.chainid, data);
+    }
+
+    function writeDeploymentJson(
+        string memory path,
+        uint256 chainId,
         DeploymentData memory data
     ) internal {
         address proxyAdmin = address(UpgradeableProxyLib.getProxyAdmin(data.strategyManager));
 
         string memory deploymentData = _generateDeploymentJson(data, proxyAdmin);
 
-        string memory directoryPath = "deployments/";
-        string memory fileName = string.concat(directoryPath, vm.toString(block.chainid), ".json");
-        if (!vm.exists(directoryPath)) {
-            vm.createDir(directoryPath, true);
+        string memory fileName = string.concat(path, vm.toString(chainId), ".json");
+        if (!vm.exists(path)) {
+            vm.createDir(path, true);
         }
 
         vm.writeFile(fileName, deploymentData);
