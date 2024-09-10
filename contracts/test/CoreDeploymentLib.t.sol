@@ -40,7 +40,10 @@ contract CoreDeploymentLibTest is Test {
     }
 
     function test_DeployContracts() public {
-        CoreDeploymentLib.DeploymentData memory data = CoreDeploymentLib.deployContracts(proxyAdmin);
+        configData =
+            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
+        CoreDeploymentLib.DeploymentData memory data =
+            CoreDeploymentLib.deployContracts(proxyAdmin, configData);
 
         assertTrue(data.delegationManager != address(0), "DelegationManager not deployed");
         assertTrue(data.avsDirectory != address(0), "AVSDirectory not deployed");
@@ -48,7 +51,10 @@ contract CoreDeploymentLibTest is Test {
     }
 
     function test_WriteDeploymentJson() public {
-        CoreDeploymentLib.DeploymentData memory data = CoreDeploymentLib.deployContracts(proxyAdmin);
+        configData =
+            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
+        CoreDeploymentLib.DeploymentData memory data =
+            CoreDeploymentLib.deployContracts(proxyAdmin, configData);
 
         string memory scratchPath = "test/mockData/scratch/";
         CoreDeploymentLib.writeDeploymentJson(scratchPath, block.chainid, data);
@@ -57,13 +63,27 @@ contract CoreDeploymentLibTest is Test {
         assertTrue(vm.exists(fileName), "Deployment file not created");
     }
 
+    function test_WriteAndReadDeploymentJson() public {
+        configData =
+            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
+        CoreDeploymentLib.DeploymentData memory initialData =
+            CoreDeploymentLib.deployContracts(proxyAdmin, configData);
+
+        string memory scratchPath = "test/mockData/scratch/";
+
+        CoreDeploymentLib.writeDeploymentJson(scratchPath, block.chainid, initialData);
+
+        string memory fileName = string.concat(vm.toString(block.chainid), ".json");
+
+        CoreDeploymentLib.readDeploymentJson(scratchPath, fileName);
+    }
+
     function test_ReadConfigFromM2DeploymentData() public {
         // Path to the M2 deployment data JSON file
         string memory m2DeploymentDataPath =
-            "lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/output/";
+            "lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/output/devnet/";
+        string memory m2DeploymentFilename = "M2_from_scratch_deployment_data.json";
 
-        /// TODO: this is going to revert for now
-        vm.expectRevert();
-        CoreDeploymentLib.readDeploymentJson(m2DeploymentDataPath, block.chainid);
+        CoreDeploymentLib.readDeploymentJson(m2DeploymentDataPath, m2DeploymentFilename);
     }
 }

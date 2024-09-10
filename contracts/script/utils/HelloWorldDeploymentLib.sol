@@ -119,7 +119,7 @@ library HelloWorldDeploymentLib {
             vm.toString(block.timestamp),
             '","block_number":"',
             vm.toString(block.number),
-            '"},"contracts":',
+            '"},"addresses":',
             _generateContractsJson(data, proxyAdmin),
             "}"
         );

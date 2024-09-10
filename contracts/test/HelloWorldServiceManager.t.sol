@@ -33,6 +33,7 @@ contract HelloWorldTaskManagerSetup is MockAVSDeployer {
 
     HelloWorldDeploymentLib.DeploymentData internal helloWorldDeployment;
     CoreDeploymentLib.DeploymentData internal coreDeployment;
+    CoreDeploymentLib.DeploymentConfigData coreConfigData;
 
     function setUp() public virtual {
         operators.push(
@@ -45,7 +46,10 @@ contract HelloWorldTaskManagerSetup is MockAVSDeployer {
         generator = TrafficGenerator({key: vm.createWallet("generator_wallet")});
 
         address proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
-        coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin);
+
+        coreConfigData =
+            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+        coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
 
         quorum.strategies.push(
             StrategyParams({strategy: IStrategy(address(420)), multiplier: 10_000})

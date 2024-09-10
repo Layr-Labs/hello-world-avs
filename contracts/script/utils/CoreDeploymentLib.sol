@@ -82,7 +82,8 @@ library CoreDeploymentLib {
     }
 
     function deployContracts(
-        address proxyAdmin
+        address proxyAdmin,
+        DeploymentConfigData memory configData
     ) internal returns (DeploymentData memory) {
         DeploymentData memory result;
 
@@ -163,6 +164,7 @@ library CoreDeploymentLib {
         address eigenPodBeaconImpl = address(new UpgradeableBeacon(eigenPodImpl));
         address baseStrategyImpl =
             address(new StrategyBaseTVLLimits(IStrategyManager(result.strategyManager)));
+        /// TODO: PauserRegistry isn't upgradeable
         address pauserRegistryImpl = address(
             new PauserRegistry(
                 new address[](0), // Empty array for pausers
@@ -176,8 +178,8 @@ library CoreDeploymentLib {
             (
                 proxyAdmin, // initialOwner
                 IPauserRegistry(result.pauserRegistry), // _pauserRegistry
-                0, // initialPausedStatus
-                0, // _minWithdrawalDelayBlocks
+                configData.delegationManager.initPausedStatus, // initialPausedStatus
+                configData.delegationManager.withdrawalDelayBlocks, // _minWithdrawalDelayBlocks
                 new IStrategy[](0), // _strategies (empty array for now)
                 new uint256[](0) // _withdrawalDelayBlocks (empty array for now)
             )
@@ -185,6 +187,66 @@ library CoreDeploymentLib {
         UpgradeableProxyLib.upgradeAndCall(
             result.delegationManager, delegationManagerImpl, upgradeCall
         );
+
+        // Upgrade StrategyManager contract
+        upgradeCall = abi.encodeCall(
+            StrategyManager.initialize,
+            (
+                proxyAdmin, // initialOwner
+                address(this), // initialStrategyWhitelister
+                IPauserRegistry(result.pauserRegistry), // _pauserRegistry
+                configData.strategyManager.initPausedStatus // initialPausedStatus
+            )
+        );
+        UpgradeableProxyLib.upgradeAndCall(result.strategyManager, strategyManagerImpl, upgradeCall);
+
+        // Upgrade EigenPodManager contract
+        upgradeCall = abi.encodeCall(
+            EigenPodManager.initialize,
+            (
+                proxyAdmin, // initialOwner
+                IPauserRegistry(result.pauserRegistry), // _pauserRegistry
+                configData.eigenPodManager.initPausedStatus // initialPausedStatus
+            )
+        );
+        UpgradeableProxyLib.upgradeAndCall(result.eigenPodManager, eigenPodManagerImpl, upgradeCall);
+
+        // Upgrade AVSDirectory contract
+        upgradeCall = abi.encodeCall(
+            AVSDirectory.initialize,
+            (
+                proxyAdmin, // initialOwner
+                IPauserRegistry(result.pauserRegistry), // _pauserRegistry
+                0 // TODO: AVS Missing configinitialPausedStatus
+            )
+        );
+        UpgradeableProxyLib.upgradeAndCall(result.avsDirectory, avsDirectoryImpl, upgradeCall);
+
+        // Upgrade RewardsCoordinator contract
+        upgradeCall = abi.encodeCall(
+            RewardsCoordinator.initialize,
+            (
+                proxyAdmin, // initialOwner
+                IPauserRegistry(result.pauserRegistry), // _pauserRegistry
+                configData.rewardsCoordinator.initPausedStatus, // initialPausedStatus
+                /// TODO: is there a setter and is this expected?
+                address(0), // rewards updater
+                uint32(configData.rewardsCoordinator.activationDelay), // _activationDelay
+                uint16(configData.rewardsCoordinator.globalOperatorCommissionBips) // _globalCommissionBips
+            )
+        );
+        UpgradeableProxyLib.upgradeAndCall(
+            result.rewardsCoordinator, rewardsCoordinatorImpl, upgradeCall
+        );
+
+        // Upgrade EigenPod contract
+        upgradeCall = abi.encodeCall(
+            EigenPod.initialize,
+            // TODO: Double check this
+            (address(result.eigenPodManager)) // _podOwner
+        );
+        UpgradeableProxyLib.upgradeAndCall(result.eigenPodBeacon, eigenPodImpl, upgradeCall);
+
         return result;
     }
 
@@ -199,13 +261,13 @@ library CoreDeploymentLib {
 
     function readDeploymentConfigValues(
         string memory directoryPath,
-        uint256 chainId
+        string memory fileName
     ) internal returns (DeploymentConfigData memory) {
-        string memory fileName = string.concat(directoryPath, vm.toString(chainId), ".json");
+        string memory pathToFile = string.concat(directoryPath, fileName);
 
-        require(vm.exists(fileName), "Deployment file does not exist");
+        require(vm.exists(pathToFile), "Deployment file does not exist");
 
-        string memory json = vm.readFile(fileName);
+        string memory json = vm.readFile(pathToFile);
 
         DeploymentConfigData memory data;
 
@@ -254,32 +316,44 @@ library CoreDeploymentLib {
         return data;
     }
 
+    function readDeploymentConfigValues(
+        string memory directoryPath,
+        uint256 chainId
+    ) internal returns (DeploymentConfigData memory) {
+        return
+            readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
+    }
+
     function readDeploymentJson(
         string memory directoryPath,
         uint256 chainId
     ) internal returns (DeploymentData memory) {
-        string memory fileName = string.concat(directoryPath, vm.toString(chainId), ".json");
+        return readDeploymentJson(directoryPath, string.concat(vm.toString(chainId), ".json"));
+    }
 
-        require(vm.exists(fileName), "Deployment file does not exist");
+    function readDeploymentJson(
+        string memory path,
+        string memory fileName
+    ) internal returns (DeploymentData memory) {
+        string memory pathToFile = string.concat(path, fileName);
 
-        string memory json = vm.readFile(fileName);
+        require(vm.exists(pathToFile), "Deployment file does not exist");
+
+        string memory json = vm.readFile(pathToFile);
 
         DeploymentData memory data;
-        data.strategyManager = json.readAddress(".contracts.strategyManager");
-        data.eigenPodManager = json.readAddress(".contracts.eigenPodManager");
-        data.delegationManager = json.readAddress(".contracts.delegationManager");
-        data.avsDirectory = json.readAddress(".contracts.avsDirectory");
-        data.wethStrategy = json.readAddress(".contracts.wethStrategy");
+        data.strategyManager = json.readAddress(".addresses.strategyManager");
+        data.eigenPodManager = json.readAddress(".addresses.eigenPodManager");
+        data.delegationManager = json.readAddress(".addresses.delegation");
+        data.avsDirectory = json.readAddress(".addresses.avsDirectory");
 
         return data;
     }
 
     /// TODO: Need to be able to read json from eigenlayer-contracts repo for holesky/mainnet and output the json here
-
     function writeDeploymentJson(
         DeploymentData memory data
     ) internal {
-        /// TODO: Verify this
         writeDeploymentJson("deployments/core/", block.chainid, data);
     }
 
@@ -310,7 +384,7 @@ library CoreDeploymentLib {
             vm.toString(block.timestamp),
             '","block_number":"',
             vm.toString(block.number),
-            '"},"contracts":',
+            '"},"addresses":',
             _generateContractsJson(data, proxyAdmin),
             "}"
         );
@@ -324,7 +398,7 @@ library CoreDeploymentLib {
         return string.concat(
             '{"proxyAdmin":"',
             proxyAdmin.toHexString(),
-            '","delegationManager":"',
+            '","delegation":"',
             data.delegationManager.toHexString(),
             '","delegationManagerImpl":"',
             data.delegationManager.getImplementation().toHexString(),
@@ -332,8 +406,6 @@ library CoreDeploymentLib {
             data.avsDirectory.toHexString(),
             '","avsDirectoryImpl":"',
             data.avsDirectory.getImplementation().toHexString(),
-            '","wethStrategy":"',
-            data.wethStrategy.toHexString(),
             '","strategyManager":"',
             data.strategyManager.toHexString(),
             '","strategyManagerImpl":"',
