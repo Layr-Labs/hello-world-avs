@@ -6,7 +6,8 @@
     "start:operator": "ts-node operator/index.ts",
     "start:anvil": "anvil",
     "deploy:core": "cd contracts && forge script script/DeployEigenlayerCore.s.sol:DeployEigenlayerCore --rpc-url http://localhost:8545 --broadcast",
-    "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url http://localhost:8545 --broadcast"
+    "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url http://localhost:8545 --broadcast",
+    "extract:abis": "node utils/abis.js"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
