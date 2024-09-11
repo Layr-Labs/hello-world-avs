@@ -3,15 +3,20 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js"
+    "start:operator": "ts-node operator/index.ts",
+    "start:anvil": "anvil",
+    "deploy:core": "cd contracts && forge script script/DeployEigenlayerCore.s.sol:DeployEigenlayerCore --rpc-url http://localhost:8545 --broadcast",
+    "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url http://localhost:8545 --broadcast",
+    "build": "cd contracts && forge build",
+    "extract:abis": "npm run build && node utils/abis.js"
   },
   "dependencies": {
-    "@types/node": "^20.12.12",
-    "bls-signatures": "^2.0.3",
     "dotenv": "^10.0.0",
     "ethers": "^6.13.2"
   },
   "devDependencies": {
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }
 }

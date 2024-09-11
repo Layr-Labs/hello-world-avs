@@ -1,130 +1,68 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@eigenlayer/contracts/permissions/PauserRegistry.sol";
-import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
-import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
-import {IStrategyManager, IStrategy} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
-import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
-import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
-import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
-import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
-import "@eigenlayer/test/mocks/EmptyContract.sol";
-import "../src/ERC20Mock.sol";
-import "forge-std/Script.sol";
-import "forge-std/StdJson.sol";
-import "forge-std/console.sol";
+import {Script} from "forge-std/Script.sol";
+import {console2} from "forge-std/Test.sol";
 import {Utils} from "./utils/Utils.sol";
+import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
+import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
+import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
+
+import {
+    Quorum,
+    StrategyParams,
+    IStrategy
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 
 // # To deploy and verify our contract
 // forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
 contract HelloWorldDeployer is Script, Utils {
-   // ERC20 and Strategy: we need to deploy this erc20, create a strategy for it, and whitelist this strategy in the strategy manager
+    using CoreDeploymentLib for *;
+    using UpgradeableProxyLib for address;
 
-    ERC20Mock public erc20Mock;
-    StrategyBase public erc20MockStrategy;
+    address private deployer;
+    address proxyAdmin;
+    CoreDeploymentLib.DeploymentData coreDeployment;
+    HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
+    Quorum internal quorum;
 
-    // Hello World contracts
-    ProxyAdmin public proxyAdmin;
-    PauserRegistry public helloWorldPauserReg;
-    
-    ECDSAStakeRegistry public stakeRegistryProxy;
-    ECDSAStakeRegistry public stakeRegistryImplementation;
+    function setUp() public virtual {
+        deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
+        vm.label(deployer, "Deployer");
 
-    HelloWorldServiceManager public helloWorldServiceManagerProxy;
-    HelloWorldServiceManager public helloWorldServiceManagerImplementation;
+        coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
+
+        quorum.strategies.push(
+            StrategyParams({strategy: IStrategy(address(420)), multiplier: 10_000})
+        );
+    }
 
     function run() external {
-        // Manually pasted addresses of Eigenlayer contracts from https://github.com/Layr-Labs/eigenlayer-contracts/?tab=readme-ov-file#current-testnet-deployment
-        address delegationManagerProxyAddr = 0xA44151489861Fe9e3055d95adC98FbD462B948e7;
-        address avsDirectoryProxyAddr = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
-        address wethStrategyProxyAddr = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
+        vm.startBroadcast(deployer);
+        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
-        IDelegationManager delegationManager = IDelegationManager(delegationManagerProxyAddr);
-        IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryProxyAddr);
-        StrategyBase wethStrategy = StrategyBase(wethStrategyProxyAddr);
+        helloWorldDeployment =
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
 
-        vm.startBroadcast();
-        
-        
- // Deploy proxy admin for ability to upgrade proxy contracts
-        proxyAdmin = new ProxyAdmin();
-
-        EmptyContract emptyContract = new EmptyContract();
-
-        // First, deploy upgradeable proxy contracts that will point to the implementations.
-        helloWorldServiceManagerProxy = HelloWorldServiceManager(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(emptyContract),
-                    address(proxyAdmin),
-                    ""
-                )
-            )
-        );
-
-        stakeRegistryProxy = ECDSAStakeRegistry(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(emptyContract),
-                    address(proxyAdmin),
-                    ""
-                )
-            )
-        );
-  
-        // Deploy the implementation contracts, using the proxy contracts as inputs
-        stakeRegistryImplementation = new ECDSAStakeRegistry(
-            delegationManager
-        );
-        
-        // Upgrade stake registry proxy to point to the implementation
-        proxyAdmin.upgrade(
-            TransparentUpgradeableProxy(payable(address(stakeRegistryProxy))),
-            address(stakeRegistryImplementation)
-        );
-        
-        // Build quorum struct
-        StrategyParams memory strategyParams = StrategyParams({
-            strategy: wethStrategy,
-            multiplier: 10_000
-        });
-        StrategyParams[] memory quorumsStrategyParams = new StrategyParams[](1);
-        quorumsStrategyParams[0] = strategyParams;
-        Quorum memory quorum = Quorum(
-            quorumsStrategyParams
-        );
-
-        // Upgrade HelloWorldServiceManager contract
-        proxyAdmin.upgradeAndCall(
-            TransparentUpgradeableProxy(
-                payable(address(stakeRegistryProxy))
-            ),
-            address(stakeRegistryImplementation),
-            abi.encodeWithSelector(
-                ECDSAStakeRegistry.initialize.selector,
-                address(helloWorldServiceManagerProxy),
-                1,
-                quorum
-            )
-        );
-        
-        
-        helloWorldServiceManagerImplementation = new HelloWorldServiceManager(
-            address(avsDirectory),
-            address(stakeRegistryProxy),
-            address(delegationManager)
-        );
-        // Upgrade the proxy contracts to use the correct implementation contracts and initialize them.
-        proxyAdmin.upgrade(
-            TransparentUpgradeableProxy(
-                payable(address(helloWorldServiceManagerProxy))
-            ),
-            address(helloWorldServiceManagerImplementation)
-        );
         vm.stopBroadcast();
+
+        verifyDeployment();
+        HelloWorldDeploymentLib.writeDeploymentJson(helloWorldDeployment);
     }
-       
+
+    function verifyDeployment() internal view {
+        require(
+            helloWorldDeployment.stakeRegistry != address(0), "StakeRegistry address cannot be zero"
+        );
+        require(
+            helloWorldDeployment.helloWorldServiceManager != address(0),
+            "HelloWorldServiceManager address cannot be zero"
+        );
+        require(proxyAdmin != address(0), "ProxyAdmin address cannot be zero");
+        require(
+            coreDeployment.delegationManager != address(0),
+            "DelegationManager address cannot be zero"
+        );
+        require(coreDeployment.avsDirectory != address(0), "AVSDirectory address cannot be zero");
+    }
 }

@@ -7,6 +7,7 @@ This project shows you the simplest functionality you can expect from an AVS. It
 ![hello-world-png](./assets/hello-world-diagram.png)
 
 AVS User Flow
+
 - AVS consumer requests a "Hello World" message to be generated and signed.
 - AVS contract takes on the request and emits an event for the request.
 - Any operator who is staked to serve this AVS takes this request, generates this message and signs it.
@@ -15,26 +16,28 @@ AVS User Flow
 
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
-
 ## Local Devnet Deployment
 
 The following instructions explain how to manually deploy the AVS from scratch including EigenLayer and AVS specific contracts using Foundry (forge) to a local anvil chain, and start Typescript Operator application and tasks.
 
 Install dependencies:
-* [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-* [Foundry](https://getfoundry.sh/)
-* [tcs](https://www.npmjs.com/package/tcs#installation)
-* [ethers](https://www.npmjs.com/package/ethers)
 
+- [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+- [Foundry](https://getfoundry.sh/)
+- [tcs](https://www.npmjs.com/package/tcs#installation)
+- [ethers](https://www.npmjs.com/package/ethers)
 
-### Start Anvil Chain 
+### Start Anvil Chain
+
 In terminal window #1, execute the following commands:
+
 ```sh
 # Start local anvil chain
 anvil
 ```
 
 ### Deploy Contracts and Start Operator
+
 Open a separate terminal window #2, execute the following commands
 
 ```sh
@@ -55,7 +58,7 @@ echo AVS_DIRECTORY_ADDRESS=$AVS_DIRECTORY_ADDRESS | sed 's/"//g' >> .env
 
 # Deploy Hello World AVS specific contracts
 (cd contracts &&\
-forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast --revert-strings debug )
+forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast)
 
 # Write the newly deployed contract addresses to .env
 ECDSA_STAKE_REGISTRY_ADDRESS=$(jq '.transactions[] | select(.contractName == "ECDSAStakeRegistry") | .contractAddress' contracts/broadcast/HelloWorldDeployer.s.sol/31337/run-latest.json)
@@ -74,7 +77,7 @@ jq .abi contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/out/AVSDire
 npm install
 
 # Start the Operator application
-tsc && node dist/index.js
+ts-node operator/index.ts
 
 #Questions for Steven
 # Am I making any mistake in HelloWorldDeployer.s.sol:105?
@@ -88,15 +91,14 @@ cast send --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6
 ```
 
 ### Create Hello-World-AVS Tasks
+
 Open a separate terminal window #3, execute the following commands
 
 ```sh
-source .env
+source .env #not sure this is needed
 # Start the createNewTasks application 
-tsc && node dist/createNewTasks.js
+ts-node operator/createNewTasks.ts
 ```
-
-
 
 ## Holesky Deployment
 
@@ -104,10 +106,12 @@ To deploy the Hello World AVS contracts to the Holesky network, follow these ste
 
 1. Ensure you have the necessary RPC URL and private key for the Holesky network.
 2. Run the deployment script using Foundry:
+
     ```bash
     # todo test
     forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast debug
     ```
+
     Replace `$RPC_URL` with your Holesky RPC URL and `$PRIVATE_KEY` with your private key.
 
 ## Deployment on Tenderly Virtual Testnet
@@ -150,13 +154,12 @@ forge script script/HelloWorldDeployerHolesky.s.sol:HelloWorldDeployerHolesky \
 
 # Appendix
 
-
 ## Rust Operator instructions
 
 ### Automated deployment (uses existing state file)
 
 1. Run `make start-chain-with-contracts-deployed`
-    * This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+    - This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
 
 2. Run `make start-rust-operator`
 
@@ -167,7 +170,6 @@ Tests are supported in anvil only . Make sure to run the 1st command before runn
 ```
 cargo test --workspace
 ```
-
 
 ## Existing Holesky Testnet Deployment
 
@@ -183,22 +185,23 @@ You don't need to run a deployment script for holesky testnet, the contracts are
 
 2. Run `make start-rust-operator`
 
-3. Run `make spam-rust-tasks `
-
+3. Run `make spam-rust-tasks`
 
 ## Adding a New Strategy
 
 To add a new strategy to the Hello World AVS, follow the guide provided in [`AddNewStrategy.md`](https://github.com/Layr-Labs/hello-world-avs/blob/master/AddNewStrategy.md). This guide walks you through the necessary steps to add and whitelist a new strategy for the AVS.
 
 ## Potential Enhancements to the AVS (for learning purposes)
+
 The architecture can be further enhanced via:
+
 - the nature of the request is more sophisticated than generating a constant string
 - the operators might need to coordinate with each other
 - the type of signature is different based on the constraints of the service
 - the type and amount of security used to secure the AVS
 
-
 ## Todos
+
 - Rewrite the local devnet EigenLayer contract deployment steps to work without requiring the json config input file and remove deployment json output file.
 - Reorganize Operator code folder. Migrate from typescript to simple javascript.
 - Add operator demo steps for Holesky and Tenderly

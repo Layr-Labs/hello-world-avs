@@ -12,10 +12,13 @@ import {ISlasher} from "@eigenlayer/contracts/interfaces/ISlasher.sol";
 import {StrategyBaseTVLLimits} from "@eigenlayer/contracts/strategies/StrategyBaseTVLLimits.sol";
 import "@eigenlayer/test/mocks/EmptyContract.sol";
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
-import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+import {
+    Quorum,
+    StrategyParams
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import {HelloWorldServiceManager, IServiceManager} from "../src/HelloWorldServiceManager.sol";
-import "../src/ERC20Mock.sol";
+import "../test/ERC20Mock.sol";
 import {Utils} from "./utils/Utils.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
@@ -40,10 +43,13 @@ contract AddStrategyScript is Script, Utils {
         _updateHelloWorldAVS(erc20MockStrategy);
     }
 
-    function _deployStrategy(ERC20Mock erc20Mock) internal returns (StrategyBaseTVLLimits) {
+    function _deployStrategy(
+        ERC20Mock erc20Mock
+    ) internal returns (StrategyBaseTVLLimits) {
         ProxyAdmin eigenLayerProxyAdmin = ProxyAdmin(eigenLayerProxyAdminAddr);
         PauserRegistry eigenLayerPauserReg = PauserRegistry(eigenLayerPauserRegAddr);
-        StrategyBaseTVLLimits baseStrategyImplementation = StrategyBaseTVLLimits(baseStrategyImplementationAddr);
+        StrategyBaseTVLLimits baseStrategyImplementation =
+            StrategyBaseTVLLimits(baseStrategyImplementationAddr);
 
         return StrategyBaseTVLLimits(
             address(
@@ -62,41 +68,35 @@ contract AddStrategyScript is Script, Utils {
         );
     }
 
-    function _whitelistStrategy(StrategyBaseTVLLimits erc20MockStrategy) internal {
+    function _whitelistStrategy(
+        StrategyBaseTVLLimits erc20MockStrategy
+    ) internal {
         IStrategyManager strategyManager = IStrategyManager(strategyManagerAddr);
 
         IStrategy[] memory strats = new IStrategy[](1);
         strats[0] = erc20MockStrategy;
         bool[] memory thirdPartyTransfersForbiddenValues = new bool[](1);
         thirdPartyTransfersForbiddenValues[0] = false;
-        strategyManager.addStrategiesToDepositWhitelist(
-            strats,
-            thirdPartyTransfersForbiddenValues
-        );
+        strategyManager.addStrategiesToDepositWhitelist(strats, thirdPartyTransfersForbiddenValues);
     }
 
-    function _updateHelloWorldAVS(StrategyBaseTVLLimits erc20MockStrategy) internal {
+    function _updateHelloWorldAVS(
+        StrategyBaseTVLLimits erc20MockStrategy
+    ) internal {
         IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
         IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryAddr);
-        HelloWorldServiceManager helloWorldServiceManagerProxy = HelloWorldServiceManager(helloWorldServiceManagerProxyAddr);
+        HelloWorldServiceManager helloWorldServiceManagerProxy =
+            HelloWorldServiceManager(helloWorldServiceManagerProxyAddr);
         ECDSAStakeRegistry stakeRegistryProxy = ECDSAStakeRegistry(stakeRegistryProxyAddr);
 
-        StrategyParams memory strategyParams = StrategyParams({
-            strategy: erc20MockStrategy,
-            multiplier: 10_000
-        });
+        StrategyParams memory strategyParams =
+            StrategyParams({strategy: erc20MockStrategy, multiplier: 10_000});
 
         StrategyParams[] memory strategies = new StrategyParams[](1);
         strategies[0] = strategyParams;
 
-        Quorum memory quorum = Quorum({
-            strategies: strategies
-        });
+        Quorum memory quorum = Quorum({strategies: strategies});
 
-        stakeRegistryProxy.initialize(
-            address(helloWorldServiceManagerProxy),
-            1,
-            quorum
-        );
+        stakeRegistryProxy.initialize(address(helloWorldServiceManagerProxy), 1, quorum);
     }
 }
