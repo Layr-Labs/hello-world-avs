@@ -22,9 +22,12 @@ The following instructions explain how to manually deploy the AVS from scratch i
 
 Install dependencies:
 
+- [Node](https://nodejs.org/en/download/)
+- [Typescript](https://www.typescriptlang.org/download)
+- [ts-node](https://www.npmjs.com/package/ts-node)
+- [tcs](https://www.npmjs.com/package/tcs#installation)
 - [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [Foundry](https://getfoundry.sh/)
-- [tcs](https://www.npmjs.com/package/tcs#installation)
 - [ethers](https://www.npmjs.com/package/ethers)
 
 ### Start Anvil Chain
@@ -32,8 +35,12 @@ Install dependencies:
 In terminal window #1, execute the following commands:
 
 ```sh
+
+# Install npm packages
+npm install
+
 # Start local anvil chain
-anvil
+npm run start:anvil
 ```
 
 ### Deploy Contracts and Start Operator
@@ -42,7 +49,39 @@ Open a separate terminal window #2, execute the following commands
 
 ```sh
 # Setup .env file
-cp .env.local .env
+(cd contracts && cp .env.example .env && source .env)
+
+# Deploy the EigenLayer contracts
+npm run deploy:core
+
+# Deploy the Hello World AVS contracts
+npm run deploy:hello-world
+
+# (Optional) Update ABIs
+npm run extract:abis
+
+# Start the Operator application
+npm run start:operator
+
+```
+
+### Create Hello-World-AVS Tasks
+
+Open a separate terminal window #3, execute the following commands
+
+```sh
+cp .env.example .env && source .env
+
+# Start the createNewTasks application 
+ts-node operator/createNewTasks.ts
+```
+
+
+
+
+# Appendix (Future Capabilities In Progress)
+
+
 
 # Deploy the EigenLayer contracts
 (cd contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts &&\
@@ -73,32 +112,13 @@ jq .abi contracts/out/ECDSAStakeRegistry.sol/ECDSAStakeRegistry.json > abis/ECDS
 jq .abi contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/out/AVSDirectory.sol/AVSDirectory.json > abis/AVSDirectory.abi
 
 
-# Install Operator package dependencies
-npm install
-
-# Start the Operator application
-ts-node operator/index.ts
-
-#Questions for Steven
-# Am I making any mistake in HelloWorldDeployer.s.sol:105?
-# How could I debug the 'execution reverted: revert: Target contract does not contain code' error further
 
 
-# todo remove this
-#DATA=0x3d5611f60000000000000000000000000000000000000000000000000000000000000040000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb922660000000000000000000000000000000000000000000000000000000000000060bf68a1ee4cb28b950f7d9f839689439ac650ae275309f75a82901ad63c2025770000000000000000000000000000000000000000000000000000000066cf34560000000000000000000000000000000000000000000000000000000000000041aab8ad201b3b118cf92197e030f8054138966715bbf21478467b370b5c89a2a918b843536b9b062fa69eacb34f72f91719fb74fd9a105635e7971d557e7596591b00000000000000000000000000000000000000000000000000000000000000'
-cast send --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 0x9E545E3C0baAB3E08CdfD552C960A1050f373042 $DATA 
 
-```
 
-### Create Hello-World-AVS Tasks
 
-Open a separate terminal window #3, execute the following commands
 
-```sh
-source .env #not sure this is needed
-# Start the createNewTasks application 
-ts-node operator/createNewTasks.ts
-```
+
 
 ## Holesky Deployment
 
@@ -147,12 +167,7 @@ curl $TENDERLY_RPC_ADMIN \
 # Deploy AVS contracts to Tenderly Holesky using Foundry
 forge script script/HelloWorldDeployerHolesky.s.sol:HelloWorldDeployerHolesky \
     --rpc-url $TENDERLY_RPC_ADMIN --private-key $TENDERLY_PRIVATE_KEY --broadcast -vvv debug
-
-
-
 ```
-
-# Appendix
 
 ## Rust Operator instructions
 
@@ -201,8 +216,7 @@ The architecture can be further enhanced via:
 - the type and amount of security used to secure the AVS
 
 ## Todos
-
-- Rewrite the local devnet EigenLayer contract deployment steps to work without requiring the json config input file and remove deployment json output file.
+- Consolidate the use of .env files across folders.
 - Reorganize Operator code folder. Migrate from typescript to simple javascript.
 - Add operator demo steps for Holesky and Tenderly
 - Add contract verification to the deploy scripts.

@@ -15,12 +15,17 @@ const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
 /// TODO: Hack
 let chainId = 31337;
 
-const deploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/${chainId}.json`), 'utf8'));
+const avsDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/hello-world/${chainId}.json`), 'utf8'));
+// Load core deployment data
+const coreDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/core/${chainId}.json`), 'utf8'));
 
-const delegationManagerAddress = deploymentData.contracts.delegationManager;
-const helloWorldServiceManagerAddress = deploymentData.contracts.helloWorldServiceManager;
-const ecdsaStakeRegistryAddress = deploymentData.contracts.stakeRegistry;
-const avsDirectoryAddress = deploymentData.contracts.avsDirectory;
+
+const delegationManagerAddress = coreDeploymentData.addresses.delegation; // todo: reminder to fix the naming of this contract in the deployment file, change to delegationManager
+const avsDirectoryAddress = coreDeploymentData.addresses.avsDirectory;
+const helloWorldServiceManagerAddress = avsDeploymentData.addresses.helloWorldServiceManager;
+const ecdsaStakeRegistryAddress = avsDeploymentData.addresses.stakeRegistry;
+
+
 
 // Load ABIs
 const delegationManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/IDelegationManager.json'), 'utf8'));

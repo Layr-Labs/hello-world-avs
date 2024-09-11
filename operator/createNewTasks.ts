@@ -36,7 +36,7 @@ async function createNewTask(taskName: string) {
     // Wait for the transaction to be mined
     const receipt = await tx.wait();
     
-    console.log(`Transaction successful with hash: ${receipt.transactionHash}`);
+    console.log(`Transaction successful with hash: ${receipt.hash}`);
   } catch (error) {
     console.error('Error sending transaction:', error);
   }
