@@ -2,14 +2,9 @@
 
 Welcome to the Hello World AVS. This project shows you the simplest functionality you can expect from an AVS. It will give you a concrete understanding of the basic components.
 
-### Caveats
-
-- This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
-- Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `HelloWorldServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
-
 ![hello-world-png](./assets/hello-world-diagramv2.png)
 
-### AVS User Flow
+## AVS User Flow
 
 1) AVS consumer requests a "Hello World" message to be generated and signed.
 2) HelloWorld contract receives the request and emits a NewTaskCreated event for the request.
@@ -19,7 +14,7 @@ Welcome to the Hello World AVS. This project shows you the simplest functionalit
 
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
-## Local Devnet Deployment
+# Local Devnet Deployment
 
 The following instructions explain how to manually deploy the AVS from scratch including EigenLayer and AVS specific contracts using Foundry (forge) to a local anvil chain, and start Typescript Operator application and tasks.
 
@@ -80,38 +75,12 @@ source .env
 npm run start:traffic
 ```
 
-## Rust Operator instructions
+### Disclaimers
 
-### Automated deployment (uses existing state file)
+- This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
+- Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `HelloWorldServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
 
-1. Run `make start-chain-with-contracts-deployed`
-    - This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
-
-2. Run `make start-rust-operator`
-
-3. Run `make spam-rust-tasks`
-
-Tests are supported in anvil only . Make sure to run the 1st command before running the  tests:
-
-```
-cargo test --workspace
-```
-
-## Existing Holesky Testnet Deployment
-
-| Contract Name               | Holesky Address                                   |
-| -------------               | -------------                                     |
-| Hello World Service Manager | [0x3361953F4a9628672dCBcDb29e91735fb1985390](https://holesky.etherscan.io/address/0x3361953F4a9628672dCBcDb29e91735fb1985390)    |
-
-Please see [Current Testnet Deployment](https://github.com/Layr-Labs/eigenlayer-contracts?tab=readme-ov-file#current-testnet-deployment) for additional deployed addresses.
-
-You don't need to run a deployment script for holesky testnet, the contracts are already deployed.
-
-1. Use the HOLESKY_ namespace env parameters in the code , instead of normal parameters.
-
-2. Run `make start-rust-operator`
-
-3. Run `make spam-rust-tasks`
+  
 
 # Appendix (Future Capabilities In Progress)
 
@@ -160,3 +129,38 @@ The architecture can be further enhanced via:
 - the operators might need to coordinate with each other
 - the type of signature is different based on the constraints of the service
 - the type and amount of security used to secure the AVS
+
+
+
+## Rust Operator instructions
+
+### Automated deployment (uses existing state file)
+
+1. Run `make start-chain-with-contracts-deployed`
+    - This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+
+2. Run `make start-rust-operator`
+
+3. Run `make spam-rust-tasks`
+
+Tests are supported in anvil only . Make sure to run the 1st command before running the  tests:
+
+```
+cargo test --workspace
+```
+
+## Existing Holesky Testnet Deployment
+
+| Contract Name               | Holesky Address                                   |
+| -------------               | -------------                                     |
+| Hello World Service Manager | [0x3361953F4a9628672dCBcDb29e91735fb1985390](https://holesky.etherscan.io/address/0x3361953F4a9628672dCBcDb29e91735fb1985390)    |
+
+Please see [Current Testnet Deployment](https://github.com/Layr-Labs/eigenlayer-contracts?tab=readme-ov-file#current-testnet-deployment) for additional deployed addresses.
+
+You don't need to run a deployment script for holesky testnet, the contracts are already deployed.
+
+1. Use the HOLESKY_ namespace env parameters in the code , instead of normal parameters.
+
+2. Run `make start-rust-operator`
+
+3. Run `make spam-rust-tasks`
