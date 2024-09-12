@@ -1,25 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "@eigenlayer/contracts/libraries/BytesLib.sol";
-import "@eigenlayer/contracts/core/DelegationManager.sol";
-import "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
-import "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
-import "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
-import "@eigenlayer/contracts/permissions/Pausable.sol";
-import {IRegistryCoordinator} from "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
-import "./IHelloWorldServiceManager.sol";
+import {ECDSAServiceManagerBase} from
+    "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
+import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
+import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
+import {ECDSAUpgradeable} from
+    "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
+import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
  * @author Eigen Labs, Inc.
  */
-contract HelloWorldServiceManager is 
-    ECDSAServiceManagerBase,
-    IHelloWorldServiceManager,
-    Pausable
-{
-    using BytesLib for bytes;
+contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldServiceManager {
     using ECDSAUpgradeable for bytes32;
 
     /* STORAGE */
@@ -38,9 +32,7 @@ contract HelloWorldServiceManager is
     /* MODIFIERS */
     modifier onlyOperator() {
         require(
-            ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender) 
-            == 
-            true, 
+            ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender),
             "Operator must be the caller"
         );
         _;
@@ -58,7 +50,6 @@ contract HelloWorldServiceManager is
             _delegationManager
         )
     {}
-
 
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
@@ -88,8 +79,7 @@ contract HelloWorldServiceManager is
         );
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
-            keccak256(abi.encode(task)) ==
-                allTaskHashes[referenceTaskIndex],
+            keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
             "supplied task does not match the one recorded in the contract"
         );
         // some logical checks
@@ -116,7 +106,10 @@ contract HelloWorldServiceManager is
 
     // HELPER
 
-    function operatorHasMinimumWeight(address operator) public view returns (bool) {
-        return ECDSAStakeRegistry(stakeRegistry).getOperatorWeight(operator) >= ECDSAStakeRegistry(stakeRegistry).minimumWeight();
+    function operatorHasMinimumWeight(
+        address operator
+    ) public view returns (bool) {
+        return ECDSAStakeRegistry(stakeRegistry).getOperatorWeight(operator)
+            >= ECDSAStakeRegistry(stakeRegistry).minimumWeight();
     }
 }

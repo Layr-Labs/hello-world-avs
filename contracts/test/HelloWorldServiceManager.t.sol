@@ -1,48 +1,91 @@
-// // SPDX-License-Identifier: UNLICENSED
-// pragma solidity ^0.8.12;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.12;
 
-// import "../src/HelloWorldServiceManager.sol" as hwsm;
-// import {HelloWorldTaskManager} from "../src/HelloWorldTaskManager.sol";
-// import {MockAVSDeployer} from "@eigenlayer-middleware/test/utils/MockAVSDeployer.sol";
-// import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
+import {MockAVSDeployer} from "@eigenlayer-middleware/test/utils/MockAVSDeployer.sol";
+import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
+import {Vm} from "forge-std/Vm.sol";
+import {console2} from "forge-std/Test.sol";
+import {HelloWorldDeploymentLib} from "../script/utils/HelloWorldDeploymentLib.sol";
+import {CoreDeploymentLib} from "../script/utils/CoreDeploymentLib.sol";
+import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 
-// contract HelloWorldTaskManagerTest is MockAVSDeployer {
-//     incsqsm.HelloWorldServiceManager sm;
-//     incsqsm.HelloWorldServiceManager smImplementation;
-//     HelloWorldTaskManager tm;
-//     HelloWorldTaskManager tmImplementation;
+import {
+    Quorum,
+    StrategyParams,
+    IStrategy
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 
-//     address operator =
-//         address(uint160(uint256(keccak256(abi.encodePacked("operator")))));
-//     address generator =
-//         address(uint160(uint256(keccak256(abi.encodePacked("generator")))));
+contract HelloWorldTaskManagerSetup is MockAVSDeployer {
+    Quorum internal quorum;
 
-//     function setUp() public {
-//         _setUpBLSMockAVSDeployer();
+    struct Operator {
+        Vm.Wallet key;
+        Vm.Wallet signingKey;
+    }
 
-//         tmImplementation = new HelloWorldTaskManager(
-//             incsqsm.IRegistryCoordinator(address(registryCoordinator))
-//         );
+    struct TrafficGenerator {
+        Vm.Wallet key;
+    }
 
-//         // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
-//         tm = HelloWorldTaskManager(
-//             address(
-//                 new TransparentUpgradeableProxy(
-//                     address(tmImplementation),
-//                     address(proxyAdmin),
-//                     abi.encodeWithSelector(
-//                         tm.initialize.selector,
-//                         pauserRegistry,
-//                         registryCoordinatorOwner
-//                     )
-//                 )
-//             )
-//         );
-//     }
+    Operator[] internal operators;
+    TrafficGenerator internal generator;
 
-//     function testCreateNewTask() public {
-//         cheats.prank(generator, generator);
-//         tm.createNewTask("world");
-//         assertEq(tm.latestTaskNum(), 1);
-//     }
-// }
+    HelloWorldDeploymentLib.DeploymentData internal helloWorldDeployment;
+    CoreDeploymentLib.DeploymentData internal coreDeployment;
+    CoreDeploymentLib.DeploymentConfigData coreConfigData;
+
+    function setUp() public virtual {
+        operators.push(
+            Operator({
+                key: vm.createWallet("operator"),
+                signingKey: vm.createWallet("operator_signing_wallet")
+            })
+        );
+
+        generator = TrafficGenerator({key: vm.createWallet("generator_wallet")});
+
+        address proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+
+        coreConfigData =
+            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+        coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+
+        quorum.strategies.push(
+            StrategyParams({strategy: IStrategy(address(420)), multiplier: 10_000})
+        );
+
+        helloWorldDeployment =
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+        labelContracts(coreDeployment, helloWorldDeployment);
+    }
+
+    function labelContracts(
+        CoreDeploymentLib.DeploymentData memory coreDeployment,
+        HelloWorldDeploymentLib.DeploymentData memory helloWorldDeployment
+    ) internal {
+        vm.label(coreDeployment.delegationManager, "DelegationManager");
+        vm.label(coreDeployment.avsDirectory, "AVSDirectory");
+        vm.label(coreDeployment.strategyManager, "StrategyManager");
+        vm.label(coreDeployment.eigenPodManager, "EigenPodManager");
+        vm.label(coreDeployment.rewardsCoordinator, "RewardsCoordinator");
+        vm.label(coreDeployment.eigenPodBeacon, "EigenPodBeacon");
+        vm.label(coreDeployment.pauserRegistry, "PauserRegistry");
+        vm.label(coreDeployment.wethStrategy, "WETHStrategy");
+
+        vm.label(helloWorldDeployment.helloWorldServiceManager, "HelloWorldServiceManager");
+        vm.label(helloWorldDeployment.stakeRegistry, "StakeRegistry");
+        vm.label(helloWorldDeployment.wethStrategy, "WETHStrategy");
+    }
+}
+
+contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
+    function testInitialization() public view {
+        assertTrue(helloWorldDeployment.stakeRegistry != address(0), "Not deployed");
+        assertTrue(helloWorldDeployment.helloWorldServiceManager != address(0), "Not deployed");
+        assertTrue(coreDeployment.delegationManager != address(0), "Not deployed");
+        assertTrue(coreDeployment.avsDirectory != address(0), "Not deployed");
+        assertTrue(coreDeployment.strategyManager != address(0), "Not deployed");
+        assertTrue(coreDeployment.eigenPodManager != address(0), "Not deployed");
+    }
+}

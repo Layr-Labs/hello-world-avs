@@ -1,35 +1,56 @@
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
-import { delegationABI } from "./abis/delegationABI";
-import { contractABI } from './abis/contractABI';
-import { registryABI } from './abis/registryABI';
-import { avsDirectoryABI } from './abis/avsDirectoryABI';
+const fs = require('fs');
+const path = require('path');
 dotenv.config();
 
-const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
+// Check if the process.env object is empty
+if (!Object.keys(process.env).length) {
+    throw new Error("process.env object is empty");
+}
+
+// Setup env variables
+const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
+/// TODO: Hack
+let chainId = 31337;
 
-const delegationManagerAddress = process.env.DELEGATION_MANAGER_ADDRESS!;
-const contractAddress = process.env.CONTRACT_ADDRESS!;
-const stakeRegistryAddress = process.env.STAKE_REGISTRY_ADDRESS!;
-const avsDirectoryAddress = process.env.AVS_DIRECTORY_ADDRESS!;
+const avsDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/hello-world/${chainId}.json`), 'utf8'));
+// Load core deployment data
+const coreDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/core/${chainId}.json`), 'utf8'));
 
-const delegationManager = new ethers.Contract(delegationManagerAddress, delegationABI, wallet);
-const contract = new ethers.Contract(contractAddress, contractABI, wallet);
-const registryContract = new ethers.Contract(stakeRegistryAddress, registryABI, wallet);
+
+const delegationManagerAddress = coreDeploymentData.addresses.delegation; // todo: reminder to fix the naming of this contract in the deployment file, change to delegationManager
+const avsDirectoryAddress = coreDeploymentData.addresses.avsDirectory;
+const helloWorldServiceManagerAddress = avsDeploymentData.addresses.helloWorldServiceManager;
+const ecdsaStakeRegistryAddress = avsDeploymentData.addresses.stakeRegistry;
+
+
+
+// Load ABIs
+const delegationManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/IDelegationManager.json'), 'utf8'));
+const ecdsaRegistryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/ECDSAStakeRegistry.json'), 'utf8'));
+const helloWorldServiceManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/HelloWorldServiceManager.json'), 'utf8'));
+const avsDirectoryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/IAVSDirectory.json'), 'utf8'));
+
+// Initialize contract objects from ABIs
+const delegationManager = new ethers.Contract(delegationManagerAddress, delegationManagerABI, wallet);
+const helloWorldServiceManager = new ethers.Contract(helloWorldServiceManagerAddress, helloWorldServiceManagerABI, wallet);
+const ecdsaRegistryContract = new ethers.Contract(ecdsaStakeRegistryAddress, ecdsaRegistryABI, wallet);
 const avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, wallet);
+
 
 const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number, taskName: string) => {
     const message = `Hello, ${taskName}`;
-    const messageHash = ethers.utils.solidityKeccak256(["string"], [message]);
-    const messageBytes = ethers.utils.arrayify(messageHash);
+    const messageHash = ethers.solidityPackedKeccak256(["string"], [message]);
+    const messageBytes = ethers.getBytes(messageHash);
     const signature = await wallet.signMessage(messageBytes);
 
     console.log(
         `Signing and responding to task ${taskIndex}`
     )
 
-    const tx = await contract.respondToTask(
+    const tx = await helloWorldServiceManager.respondToTask(
         { name: taskName, taskCreatedBlock: taskCreatedBlock },
         taskIndex,
         signature
@@ -39,42 +60,62 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
 };
 
 const registerOperator = async () => {
-    console.log("check")
-    const tx1 = await delegationManager.registerAsOperator({
-        earningsReceiver: await wallet.address,
-        delegationApprover: "0x0000000000000000000000000000000000000000",
-        stakerOptOutWindowBlocks: 0
-    }, "");
-    await tx1.wait();
-    console.log("Operator registered on EL successfully");
-
-    const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
+    
+    // Registers as an Operator in EigenLayer.
+    try {
+        const tx1 = await delegationManager.registerAsOperator({
+            __deprecated_earningsReceiver: await wallet.address,
+            delegationApprover: "0x0000000000000000000000000000000000000000",
+            stakerOptOutWindowBlocks: 0
+        }, "");
+        await tx1.wait();
+        console.log("Operator registered to Core EigenLayer contracts");
+    } catch (error) {
+        console.error("Error in registering as operator:", error);
+    }
+    
+    const salt = ethers.hexlify(ethers.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
 
     // Define the output structure
-    let operatorSignature = {
-        expiry: expiry,
+    let operatorSignatureWithSaltAndExpiry = {
+        signature: "",
         salt: salt,
-        signature: ""
+        expiry: expiry
     };
 
-    // Calculate the digest hash using the avsDirectory's method
-    const digestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
+    // Calculate the digest hash, which is a unique value representing the operator, avs, unique value (salt) and expiration date.
+    console.log(wallet.address);
+    console.log(await helloWorldServiceManager.getAddress());
+    console.log(salt, "salt");
+    console.log(expiry, "expiry");
+
+    const operatorDigestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
         wallet.address, 
-        contract.address, 
+        await helloWorldServiceManager.getAddress(), 
         salt, 
         expiry
     );
-
-    // // Sign the digest hash with the operator's private key
-    const signingKey = new ethers.utils.SigningKey(process.env.PRIVATE_KEY!);
-    const signature = signingKey.signDigest(digestHash);
+    console.log(operatorDigestHash);
     
-    // // Encode the signature in the required format
-    operatorSignature.signature = ethers.utils.joinSignature(signature);
+    // Sign the digest hash with the operator's private key
+    console.log("Signing digest hash with operator's private key");
+    const operatorSigningKey = new ethers.SigningKey(process.env.PRIVATE_KEY!);
+    const operatorSignedDigestHash = operatorSigningKey.sign(operatorDigestHash);
 
-    const tx2 = await registryContract.registerOperatorWithSignature(
-        operatorSignature,
+    // Encode the signature in the required format
+    operatorSignatureWithSaltAndExpiry.signature = ethers.Signature.from(operatorSignedDigestHash).serialized;
+
+    console.log("Registering Operator to AVS Registry contract");
+    
+    //Debugging
+    console.log('operatorSignatureWithSaltAndExpiry before processing:', operatorSignatureWithSaltAndExpiry);
+    console.log('wallet.address before processing:', wallet.address);
+    
+    // Register Operator to AVS
+    // Per release here: https://github.com/Layr-Labs/eigenlayer-middleware/blob/v0.2.1-mainnet-rewards/src/unaudited/ECDSAStakeRegistry.sol#L49
+    const tx2 = await ecdsaRegistryContract.registerOperatorWithSignature(
+        operatorSignatureWithSaltAndExpiry,
         wallet.address
     );
     await tx2.wait();
@@ -82,9 +123,10 @@ const registerOperator = async () => {
 };
 
 const monitorNewTasks = async () => {
-    await contract.createNewTask("EigenWorld");
+    console.log(`Creating new task "EigenWorld"`);
+    await helloWorldServiceManager.createNewTask("EigenWorld");
 
-    contract.on("NewTaskCreated", async (taskIndex: number, task: any) => {
+    helloWorldServiceManager.on("NewTaskCreated", async (taskIndex: number, task: any) => {
         console.log(`New task detected: Hello, ${task.name}`);
         await signAndRespondToTask(taskIndex, task.taskCreatedBlock, task.name);
     });

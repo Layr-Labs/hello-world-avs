@@ -12,9 +12,9 @@ dist/
 .idea/
 
 # Ignore TypeScript build artifacts
-*.js
-*.js.map
-*.d.ts
+dist/**/*.js
+dist/*.js.map
+dist/*.d.ts
 
 # Ignore local anvil state
 # utils/anvil/*.json
