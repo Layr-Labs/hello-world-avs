@@ -1,18 +1,19 @@
 # Hello World AVS
 
-Welcome to the Hello World AVS.
+Welcome to the Hello World AVS. This project shows you the simplest functionality you can expect from an AVS. It will give you a concrete understanding of the basic components.
 
-This project shows you the simplest functionality you can expect from an AVS. It will give you a concrete understanding of the basic components.
+### Caveats
+- This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
+- Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `HelloWorldServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
 
-![hello-world-png](./assets/hello-world-diagram.png)
+![hello-world-png](./assets/hello-world-diagramv2.png)
 
-AVS User Flow
-
-- AVS consumer requests a "Hello World" message to be generated and signed.
-- AVS contract takes on the request and emits an event for the request.
-- Any operator who is staked to serve this AVS takes this request, generates this message and signs it.
-- The operator submits this message with their signature back to the AVS.
-- *If the operator is in fact registered to the AVS and has the minimum needed stake*, the submission is accepted.
+### AVS User Flow
+1) AVS consumer requests a "Hello World" message to be generated and signed.
+2) HelloWorld contract receives the request and emits a NewTaskCreated event for the request.
+3) All Operators who are registered to the AVS and has staked, delegated assets takes this request. Operator generates the requested message, hashes it, and signs the hash with their private key.
+4) Each Operator submits their signed hash back to the HelloWorld AVS contract.
+5) If the Operator is registered to the AVS and has the minimum needed stake, the submission is accepted.
 
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
@@ -70,7 +71,8 @@ npm run start:operator
 Open a separate terminal window #3, execute the following commands
 
 ```sh
-cp .env.example .env && source .env
+cp .env.example .env
+source .env
 
 # Start the createNewTasks application 
 ts-node operator/createNewTasks.ts
