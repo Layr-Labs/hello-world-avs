@@ -47,7 +47,10 @@ Open a separate terminal window #2, execute the following commands
 
 ```sh
 # Setup .env file
-(cd contracts && cp .env.example .env && source .env)
+cp .env.example contracts/.env
+
+# Updates dependencies if necessary and builds the contracts 
+npm run build
 
 # Deploy the EigenLayer contracts
 npm run deploy:core
@@ -68,9 +71,6 @@ npm run start:operator
 Open a separate terminal window #3, execute the following commands
 
 ```sh
-cp .env.example .env
-source .env
-
 # Start the createNewTasks application 
 npm run start:traffic
 ```
@@ -79,8 +79,6 @@ npm run start:traffic
 
 - This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
 - Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `HelloWorldServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
-
-  
 
 # Appendix (Future Capabilities In Progress)
 
@@ -129,8 +127,6 @@ The architecture can be further enhanced via:
 - the operators might need to coordinate with each other
 - the type of signature is different based on the constraints of the service
 - the type and amount of security used to secure the AVS
-
-
 
 ## Rust Operator instructions
 
