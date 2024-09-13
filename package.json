@@ -6,8 +6,8 @@
     "start:operator": "ts-node operator/index.ts",
     "start:traffic": "ts-node operator/createNewTasks.ts",
     "start:anvil": "anvil",
-    "deploy:core": "cd contracts && forge script script/DeployEigenlayerCore.s.sol:DeployEigenlayerCore --rpc-url http://localhost:8545 --broadcast",
-    "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url http://localhost:8545 --broadcast",
+    "deploy:core": "cd contracts && forge script script/DeployEigenlayerCore.s.sol --rpc-url http://localhost:8545 --broadcast",
+    "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast",
     "build": "cd contracts && forge build",
     "extract:abis": "npm run build && node utils/abis.js"
   },
