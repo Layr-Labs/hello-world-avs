@@ -174,7 +174,7 @@ library CoreDeploymentLib {
         );
         address eigenPodBeaconImpl = address(new UpgradeableBeacon(eigenPodImpl));
         address baseStrategyImpl =
-            address(new StrategyBaseTVLLimits(IStrategyManager(result.strategyManager)));
+            address(new StrategyBase(IStrategyManager(result.strategyManager)));
         /// TODO: PauserRegistry isn't upgradeable
         address pauserRegistryImpl = address(
             new PauserRegistry(

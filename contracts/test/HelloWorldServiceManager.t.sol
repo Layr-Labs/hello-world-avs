@@ -21,8 +21,11 @@ import {IStrategyManager} from "@eigenlayer/contracts/interfaces/IStrategyManage
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
+import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
+import {Test, console2 as console} from "forge-std/Test.sol";
+import {IHelloWorldServiceManager} from "../src/IHelloWorldServiceManager.sol";
 
-contract HelloWorldTaskManagerSetup is MockAVSDeployer {
+contract HelloWorldTaskManagerSetup is Test {
     Quorum internal quorum;
 
     struct Operator {
@@ -46,13 +49,6 @@ contract HelloWorldTaskManagerSetup is MockAVSDeployer {
     mapping(address => IStrategy) public tokenToStrategy;
 
     function setUp() public virtual {
-        operators.push(
-            Operator({
-                key: vm.createWallet("operator"),
-                signingKey: vm.createWallet("operator_signing_wallet")
-            })
-        );
-
         generator = TrafficGenerator({key: vm.createWallet("generator_wallet")});
 
         address proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
@@ -177,7 +173,7 @@ contract HelloWorldTaskManagerSetup is MockAVSDeployer {
         ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature = ISignatureUtils
             .SignatureWithSaltAndExpiry({signature: signature, salt: salt, expiry: expiry});
 
-        vm.prank(address(helloWorldDeployment.helloWorldServiceManager));
+        vm.prank(address(operator.key.addr));
         stakeRegistry.registerOperatorWithSignature(operatorSignature, operator.signingKey.addr);
     }
 
@@ -248,5 +244,62 @@ contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
         assertTrue(coreDeployment.eigenPodManager != address(0), "EigenPodManager not deployed");
         assertTrue(coreDeployment.strategyFactory != address(0), "StrategyFactory not deployed");
         assertTrue(coreDeployment.strategyBeacon != address(0), "StrategyBeacon not deployed");
+    }
+}
+
+contract RegisterOperator is HelloWorldTaskManagerSetup {
+    uint256 internal constant INITIAL_BALANCE = 100 ether;
+    uint256 internal constant DEPOSIT_AMOUNT = 1;
+    uint256 internal constant OPERATOR_COUNT = 4;
+
+    IDelegationManager internal delegationManager;
+    AVSDirectory internal avsDirectory;
+    IHelloWorldServiceManager internal sm;
+    ECDSAStakeRegistry internal stakeRegistry;
+
+    function setUp() public override {
+        super.setUp();
+
+        addStrategy(address(mockToken));
+
+        while (operators.length < OPERATOR_COUNT) {
+            operators.push(createAndAddOperator());
+        }
+
+        for (uint256 i = 0; i < OPERATOR_COUNT; i++) {
+            mintMockTokens(operators[i], INITIAL_BALANCE);
+
+            registerAsOperator(operators[i]);
+
+            depositTokenIntoStrategy(operators[i], address(mockToken), DEPOSIT_AMOUNT);
+
+            registerOperatorToAVS(operators[i]);
+        }
+    }
+
+    function testVerifyOperatorStates() public view {
+        for (uint256 i = 0; i < OPERATOR_COUNT; i++) {
+            address operatorAddr = operators[i].key.addr;
+
+            uint256 operatorShares =
+                delegationManager.operatorShares(operatorAddr, tokenToStrategy[address(mockToken)]);
+            assertEq(
+                operatorShares, DEPOSIT_AMOUNT, "Operator shares in DelegationManager incorrect"
+            );
+
+            assertTrue(
+                avsDirectory.avsOperatorStatus(address(sm), operatorAddr)
+                    == IAVSDirectory.OperatorAVSRegistrationStatus.REGISTERED,
+                "Operator not registered in AVSDirectory"
+            );
+
+            address signingKey = stakeRegistry.getLastestOperatorSigningKey(operatorAddr);
+            assertTrue(
+                signingKey != address(0), "Operator signing key not set in ECDSAStakeRegistry"
+            );
+
+            uint256 operatorWeight = stakeRegistry.getLastCheckpointOperatorWeight(operatorAddr);
+            assertTrue(operatorWeight > 0, "Operator weight not set in ECDSAStakeRegistry");
+        }
     }
 }
