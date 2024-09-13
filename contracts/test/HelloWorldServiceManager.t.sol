@@ -57,15 +57,15 @@ contract HelloWorldTaskManagerSetup is Test {
             CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
 
+        mockToken = new ERC20Mock();
+
         quorum.strategies.push(
-            StrategyParams({strategy: IStrategy(address(420)), multiplier: 10_000})
+            StrategyParams({strategy: IStrategy(address(mockToken)), multiplier: 10_000})
         );
 
         helloWorldDeployment =
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
         labelContracts(coreDeployment, helloWorldDeployment);
-
-        mockToken = new ERC20Mock();
     }
 
     function addStrategy(
@@ -92,13 +92,10 @@ contract HelloWorldTaskManagerSetup is Test {
         vm.label(coreDeployment.rewardsCoordinator, "RewardsCoordinator");
         vm.label(coreDeployment.eigenPodBeacon, "EigenPodBeacon");
         vm.label(coreDeployment.pauserRegistry, "PauserRegistry");
-        vm.label(coreDeployment.wethStrategy, "WETHStrategy");
         vm.label(coreDeployment.strategyFactory, "StrategyFactory");
         vm.label(coreDeployment.strategyBeacon, "StrategyBeacon");
-
         vm.label(helloWorldDeployment.helloWorldServiceManager, "HelloWorldServiceManager");
         vm.label(helloWorldDeployment.stakeRegistry, "StakeRegistry");
-        vm.label(helloWorldDeployment.wethStrategy, "WETHStrategy");
     }
 
     function signWithOperatorKey(
@@ -259,11 +256,16 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
 
     function setUp() public override {
         super.setUp();
+        /// Setting to internal state for convenience
+        delegationManager = IDelegationManager(coreDeployment.delegationManager);
+        avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
+        sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
+        stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
 
         addStrategy(address(mockToken));
 
         while (operators.length < OPERATOR_COUNT) {
-            operators.push(createAndAddOperator());
+            createAndAddOperator();
         }
 
         for (uint256 i = 0; i < OPERATOR_COUNT; i++) {

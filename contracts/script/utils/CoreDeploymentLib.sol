@@ -78,7 +78,6 @@ library CoreDeploymentLib {
     struct DeploymentData {
         address delegationManager;
         address avsDirectory;
-        address wethStrategy;
         address strategyManager;
         address eigenPodManager;
         address rewardsCoordinator;
