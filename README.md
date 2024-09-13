@@ -71,8 +71,6 @@ npm run start:operator
 Open a separate terminal window #3, execute the following commands
 
 ```sh
-cp .env.example .env
-
 # Start the createNewTasks application 
 npm run start:traffic
 ```
