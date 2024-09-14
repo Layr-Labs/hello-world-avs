@@ -1,29 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.12;
 
-import "forge-std/Script.sol";
-import "forge-std/Test.sol";
+import {Script} from "forge-std/Script.sol";
 
 import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 
-contract DeployEigenlayerCore is Script, Test {
+contract DeployEigenlayerCore is Script {
     using CoreDeploymentLib for *;
     using UpgradeableProxyLib for address;
 
-    address deployer;
-    address proxyAdmin;
-    CoreDeploymentLib.DeploymentData deploymentData;
-    CoreDeploymentLib.DeploymentConfigData configData;
+    address internal deployer;
+    address internal proxyAdmin;
+    CoreDeploymentLib.DeploymentData internal deploymentData;
+    CoreDeploymentLib.DeploymentConfigData internal configData;
 
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
-        string memory configPath =
-            "lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/output/devnet/";
-        string memory configFilename = "M2_from_scratch_deployment_data.json";
-
-        deploymentData = CoreDeploymentLib.readDeploymentJson(configPath, configFilename);
     }
 
     function run() external {

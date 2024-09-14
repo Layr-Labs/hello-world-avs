@@ -30,6 +30,7 @@ import {IEigenPodManager} from "@eigenlayer/contracts/interfaces/IEigenPodManage
 import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {IPauserRegistry} from "@eigenlayer/contracts/interfaces/IPauserRegistry.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
 
@@ -70,15 +71,20 @@ library CoreDeploymentLib {
         uint256 globalOperatorCommissionBips;
     }
 
+    struct StrategyFactoryConfig {
+        uint256 initPausedStatus;
+    }
+
     struct DeploymentData {
         address delegationManager;
         address avsDirectory;
-        address wethStrategy;
         address strategyManager;
         address eigenPodManager;
         address rewardsCoordinator;
         address eigenPodBeacon;
         address pauserRegistry;
+        address strategyFactory;
+        address strategyBeacon;
     }
 
     function deployContracts(
@@ -94,6 +100,7 @@ library CoreDeploymentLib {
         result.rewardsCoordinator = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
         result.eigenPodBeacon = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
         result.pauserRegistry = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
+        result.strategyFactory = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
 
         // Deploy the implementation contracts, using the proxy contracts as inputs
         address delegationManagerImpl = address(
@@ -113,6 +120,9 @@ library CoreDeploymentLib {
                 ISlasher(address(0))
             )
         );
+
+        address strategyFactoryImpl =
+            address(new StrategyFactory(IStrategyManager(result.strategyManager)));
 
         address ethPOSDeposit;
         if (block.chainid == 1) {
@@ -163,7 +173,7 @@ library CoreDeploymentLib {
         );
         address eigenPodBeaconImpl = address(new UpgradeableBeacon(eigenPodImpl));
         address baseStrategyImpl =
-            address(new StrategyBaseTVLLimits(IStrategyManager(result.strategyManager)));
+            address(new StrategyBase(IStrategyManager(result.strategyManager)));
         /// TODO: PauserRegistry isn't upgradeable
         address pauserRegistryImpl = address(
             new PauserRegistry(
@@ -171,6 +181,10 @@ library CoreDeploymentLib {
                 proxyAdmin // ProxyAdmin as the unpauser
             )
         );
+
+        // Deploy and configure the strategy beacon
+        result.strategyBeacon = address(new UpgradeableBeacon(baseStrategyImpl));
+
         // Upgrade contracts
         /// TODO: Get from config
         bytes memory upgradeCall = abi.encodeCall(
@@ -193,12 +207,24 @@ library CoreDeploymentLib {
             StrategyManager.initialize,
             (
                 proxyAdmin, // initialOwner
-                address(this), // initialStrategyWhitelister
+                result.strategyFactory, // initialStrategyWhitelister
                 IPauserRegistry(result.pauserRegistry), // _pauserRegistry
                 configData.strategyManager.initPausedStatus // initialPausedStatus
             )
         );
         UpgradeableProxyLib.upgradeAndCall(result.strategyManager, strategyManagerImpl, upgradeCall);
+
+        // Upgrade StrategyFactory contract
+        upgradeCall = abi.encodeCall(
+            StrategyFactory.initialize,
+            (
+                proxyAdmin, // initialOwner
+                IPauserRegistry(result.pauserRegistry), // _pauserRegistry
+                configData.strategyFactory.initPausedStatus, // initialPausedStatus
+                IBeacon(result.strategyBeacon)
+            )
+        );
+        UpgradeableProxyLib.upgradeAndCall(result.strategyFactory, strategyFactoryImpl, upgradeCall);
 
         // Upgrade EigenPodManager contract
         upgradeCall = abi.encodeCall(
@@ -256,6 +282,7 @@ library CoreDeploymentLib {
         SlasherConfig slasher;
         EigenPodManagerConfig eigenPodManager;
         RewardsCoordinatorConfig rewardsCoordinator;
+        StrategyFactoryConfig strategyFactory;
     }
     // StrategyConfig[] strategies;
 
@@ -414,6 +441,12 @@ library CoreDeploymentLib {
             data.eigenPodManager.toHexString(),
             '","eigenPodManagerImpl":"',
             data.eigenPodManager.getImplementation().toHexString(),
+            '","strategyFactory":"',
+            data.strategyFactory.toHexString(),
+            '","strategyFactoryImpl":"',
+            data.strategyFactory.getImplementation().toHexString(),
+            '","strategyBeacon":"',
+            data.strategyBeacon.toHexString(),
             '"}'
         );
     }
