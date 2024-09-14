@@ -28,7 +28,7 @@ interface IHelloWorldServiceManager {
 
     function createNewTask(
         string memory name
-    ) external;
+    ) external returns (Task memory);
 
     function respondToTask(
         Task calldata task,
