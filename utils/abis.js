@@ -9,7 +9,10 @@ const contractsToExtract = [
   'IAVSDirectory',
   'IDelegationManager',
   'ECDSAStakeRegistry',
-  'HelloWorldServiceManager'
+  'HelloWorldServiceManager',
+  'ERC20Mock',
+  'StrategyFactory',
+  'StrategyManager'
 ];
 
 if (!fs.existsSync(abiDir)) {
