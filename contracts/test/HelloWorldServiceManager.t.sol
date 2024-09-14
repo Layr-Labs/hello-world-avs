@@ -24,6 +24,8 @@ import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
 import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {Test, console2 as console} from "forge-std/Test.sol";
 import {IHelloWorldServiceManager} from "../src/IHelloWorldServiceManager.sol";
+import {ECDSAUpgradeable} from
+    "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 
 contract HelloWorldTaskManagerSetup is Test {
     Quorum internal quorum;
@@ -301,7 +303,7 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
     IHelloWorldServiceManager internal sm;
     ECDSAStakeRegistry internal stakeRegistry;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         super.setUp();
         /// Setting to internal state for convenience
         delegationManager = IDelegationManager(coreDeployment.delegationManager);
@@ -350,5 +352,72 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
 
         uint256 operatorWeight = stakeRegistry.getLastCheckpointOperatorWeight(operatorAddr);
         assertTrue(operatorWeight > 0, "Operator weight not set in ECDSAStakeRegistry");
+    }
+}
+
+contract CreateTask is HelloWorldTaskManagerSetup {
+    IHelloWorldServiceManager internal sm;
+
+    function setUp() public override {
+        super.setUp();
+        sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
+    }
+
+    function testCreateTask() public {
+        string memory taskName = "Test Task";
+
+        vm.prank(generator.key.addr);
+        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+    }
+}
+
+contract RespondToTask is HelloWorldTaskManagerSetup {
+    using ECDSAUpgradeable for bytes32;
+
+    uint256 internal constant INITIAL_BALANCE = 100 ether;
+    uint256 internal constant DEPOSIT_AMOUNT = 1 ether;
+    uint256 internal constant OPERATOR_COUNT = 4;
+
+    IDelegationManager internal delegationManager;
+    AVSDirectory internal avsDirectory;
+    IHelloWorldServiceManager internal sm;
+    ECDSAStakeRegistry internal stakeRegistry;
+
+    function setUp() public override {
+        super.setUp();
+
+        delegationManager = IDelegationManager(coreDeployment.delegationManager);
+        avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
+        sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
+        stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+
+        addStrategy(address(mockToken));
+
+        while (operators.length < OPERATOR_COUNT) {
+            createAndAddOperator();
+        }
+
+        for (uint256 i = 0; i < OPERATOR_COUNT; i++) {
+            mintMockTokens(operators[i], INITIAL_BALANCE);
+
+            depositTokenIntoStrategy(operators[i], address(mockToken), DEPOSIT_AMOUNT);
+
+            registerAsOperator(operators[i]);
+
+            registerOperatorToAVS(operators[i]);
+        }
+    }
+
+    function testRespondToTask() public {
+        string memory taskName = "TestTask";
+        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        uint32 taskIndex = sm.latestTaskNum() - 1;
+
+        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", taskName));
+        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+        bytes memory signature = signWithOperatorKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
+
+        vm.prank(operators[0].key.addr);
+        sm.respondToTask(newTask, taskIndex, signature);
     }
 }

@@ -66,7 +66,6 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         return newTask;
     }
 
-    // NOTE: this function responds to existing tasks.
     function respondToTask(
         Task calldata task,
         uint32 referenceTaskIndex,
