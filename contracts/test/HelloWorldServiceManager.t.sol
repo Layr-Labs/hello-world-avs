@@ -238,6 +238,30 @@ contract HelloWorldTaskManagerSetup is Test {
 
         return signatures;
     }
+
+    function createTask(TrafficGenerator memory generator, string memory taskName) internal {
+        IHelloWorldServiceManager helloWorldServiceManager =
+            IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
+
+        vm.prank(generator.key.addr);
+        helloWorldServiceManager.createNewTask(taskName);
+    }
+
+    function respondToTask(
+        Operator memory operator,
+        IHelloWorldServiceManager.Task memory task,
+        uint32 referenceTaskIndex
+    ) internal {
+        // Create the message hash
+        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+
+        bytes memory signature = signWithSigningKey(operator, messageHash);
+
+        vm.prank(operator.key.addr);
+        IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager).respondToTask(
+            task, referenceTaskIndex, signature
+        );
+    }
 }
 
 contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
@@ -297,8 +321,6 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
             depositTokenIntoStrategy(operators[i], address(mockToken), DEPOSIT_AMOUNT);
 
             registerAsOperator(operators[i]);
-
-            registerOperatorToAVS(operators[i]);
         }
     }
 
@@ -311,20 +333,22 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
             assertEq(
                 operatorShares, DEPOSIT_AMOUNT, "Operator shares in DelegationManager incorrect"
             );
-
-            assertTrue(
-                avsDirectory.avsOperatorStatus(address(sm), operatorAddr)
-                    == IAVSDirectory.OperatorAVSRegistrationStatus.REGISTERED,
-                "Operator not registered in AVSDirectory"
-            );
-
-            address signingKey = stakeRegistry.getLastestOperatorSigningKey(operatorAddr);
-            assertTrue(
-                signingKey != address(0), "Operator signing key not set in ECDSAStakeRegistry"
-            );
-
-            uint256 operatorWeight = stakeRegistry.getLastCheckpointOperatorWeight(operatorAddr);
-            assertTrue(operatorWeight > 0, "Operator weight not set in ECDSAStakeRegistry");
         }
+    }
+
+    function test_RegisterOperatorToAVS() public {
+        address operatorAddr = operators[0].key.addr;
+        registerOperatorToAVS(operators[0]);
+        assertTrue(
+            avsDirectory.avsOperatorStatus(address(sm), operatorAddr)
+                == IAVSDirectory.OperatorAVSRegistrationStatus.REGISTERED,
+            "Operator not registered in AVSDirectory"
+        );
+
+        address signingKey = stakeRegistry.getLastestOperatorSigningKey(operatorAddr);
+        assertTrue(signingKey != address(0), "Operator signing key not set in ECDSAStakeRegistry");
+
+        uint256 operatorWeight = stakeRegistry.getLastCheckpointOperatorWeight(operatorAddr);
+        assertTrue(operatorWeight > 0, "Operator weight not set in ECDSAStakeRegistry");
     }
 }

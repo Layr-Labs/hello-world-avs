@@ -16,8 +16,6 @@ import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldServiceManager {
     using ECDSAUpgradeable for bytes32;
 
-    /* STORAGE */
-    // The latest task index
     uint32 public latestTaskNum;
 
     // mapping of task indices to all tasks hashes
