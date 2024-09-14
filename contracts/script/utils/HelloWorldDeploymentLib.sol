@@ -26,7 +26,6 @@ library HelloWorldDeploymentLib {
     struct DeploymentData {
         address helloWorldServiceManager;
         address stakeRegistry;
-        address wethStrategy;
     }
 
     function deployContracts(
@@ -54,8 +53,6 @@ library HelloWorldDeploymentLib {
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
         UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
 
-        result.wethStrategy = address(quorum.strategies[0].strategy);
-
         return result;
     }
 
@@ -79,7 +76,6 @@ library HelloWorldDeploymentLib {
         /// TODO: 2 Step for reading deployment json.  Read to the core and the AVS data
         data.helloWorldServiceManager = json.readAddress(".contracts.helloWorldServiceManager");
         data.stakeRegistry = json.readAddress(".contracts.stakeRegistry");
-        data.wethStrategy = json.readAddress(".contracts.wethStrategy");
 
         return data;
     }
@@ -140,9 +136,6 @@ library HelloWorldDeploymentLib {
             data.stakeRegistry.toHexString(),
             '","stakeRegistryImpl":"',
             data.stakeRegistry.getImplementation().toHexString(),
-            /// TODO: Should be quorum info vs hardcoding a strategy
-            '","wethStrategy":"',
-            data.wethStrategy.toHexString(),
             '"}'
         );
     }

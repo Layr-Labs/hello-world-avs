@@ -16,8 +16,6 @@ import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldServiceManager {
     using ECDSAUpgradeable for bytes32;
 
-    /* STORAGE */
-    // The latest task index
     uint32 public latestTaskNum;
 
     // mapping of task indices to all tasks hashes
@@ -29,7 +27,6 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(address => mapping(uint32 => bytes)) public allTaskResponses;
 
-    /* MODIFIERS */
     modifier onlyOperator() {
         require(
             ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender),
@@ -55,7 +52,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(
         string memory name
-    ) external {
+    ) external returns (Task memory) {
         // create a new task struct
         Task memory newTask;
         newTask.name = name;
@@ -65,9 +62,10 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         allTaskHashes[latestTaskNum] = keccak256(abi.encode(newTask));
         emit NewTaskCreated(latestTaskNum, newTask);
         latestTaskNum = latestTaskNum + 1;
+
+        return newTask;
     }
 
-    // NOTE: this function responds to existing tasks.
     function respondToTask(
         Task calldata task,
         uint32 referenceTaskIndex,
@@ -82,7 +80,6 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
             "supplied task does not match the one recorded in the contract"
         );
-        // some logical checks
         require(
             allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
             "Operator has already responded to the task"
@@ -103,8 +100,6 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }
-
-    // HELPER
 
     function operatorHasMinimumWeight(
         address operator

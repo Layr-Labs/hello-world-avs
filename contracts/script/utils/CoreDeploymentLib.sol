@@ -78,7 +78,6 @@ library CoreDeploymentLib {
     struct DeploymentData {
         address delegationManager;
         address avsDirectory;
-        address wethStrategy;
         address strategyManager;
         address eigenPodManager;
         address rewardsCoordinator;
@@ -174,7 +173,7 @@ library CoreDeploymentLib {
         );
         address eigenPodBeaconImpl = address(new UpgradeableBeacon(eigenPodImpl));
         address baseStrategyImpl =
-            address(new StrategyBaseTVLLimits(IStrategyManager(result.strategyManager)));
+            address(new StrategyBase(IStrategyManager(result.strategyManager)));
         /// TODO: PauserRegistry isn't upgradeable
         address pauserRegistryImpl = address(
             new PauserRegistry(
