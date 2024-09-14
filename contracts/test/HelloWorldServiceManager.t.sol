@@ -59,9 +59,8 @@ contract HelloWorldTaskManagerSetup is Test {
 
         mockToken = new ERC20Mock();
 
-        quorum.strategies.push(
-            StrategyParams({strategy: IStrategy(address(mockToken)), multiplier: 10_000})
-        );
+        IStrategy strategy = addStrategy(address(mockToken));
+        quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
         helloWorldDeployment =
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
@@ -195,6 +194,19 @@ contract HelloWorldTaskManagerSetup is Test {
         return newOperator;
     }
 
+    function updateOperatorWeights(
+        Operator[] memory _operators
+    ) internal {
+        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+
+        address[] memory operatorAddresses = new address[](_operators.length);
+        for (uint256 i = 0; i < _operators.length; i++) {
+            operatorAddresses[i] = _operators[i].key.addr;
+        }
+
+        stakeRegistry.updateOperators(operatorAddresses);
+    }
+
     function getSortedOperatorSignatures(
         Operator[] memory _operators,
         bytes32 digest
@@ -230,6 +242,17 @@ contract HelloWorldTaskManagerSetup is Test {
 
 contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
     function testInitialization() public view {
+        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+
+        Quorum memory quorum = stakeRegistry.quorum();
+
+        assertGt(quorum.strategies.length, 0, "No strategies in quorum");
+        assertEq(
+            address(quorum.strategies[0].strategy),
+            address(tokenToStrategy[address(mockToken)]),
+            "First strategy doesn't match mock token strategy"
+        );
+
         assertTrue(helloWorldDeployment.stakeRegistry != address(0), "StakeRegistry not deployed");
         assertTrue(
             helloWorldDeployment.helloWorldServiceManager != address(0),
@@ -246,7 +269,7 @@ contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
 
 contract RegisterOperator is HelloWorldTaskManagerSetup {
     uint256 internal constant INITIAL_BALANCE = 100 ether;
-    uint256 internal constant DEPOSIT_AMOUNT = 1;
+    uint256 internal constant DEPOSIT_AMOUNT = 1 ether;
     uint256 internal constant OPERATOR_COUNT = 4;
 
     IDelegationManager internal delegationManager;
@@ -271,9 +294,9 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
         for (uint256 i = 0; i < OPERATOR_COUNT; i++) {
             mintMockTokens(operators[i], INITIAL_BALANCE);
 
-            registerAsOperator(operators[i]);
-
             depositTokenIntoStrategy(operators[i], address(mockToken), DEPOSIT_AMOUNT);
+
+            registerAsOperator(operators[i]);
 
             registerOperatorToAVS(operators[i]);
         }
