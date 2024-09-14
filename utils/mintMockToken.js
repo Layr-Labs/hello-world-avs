@@ -4,22 +4,17 @@ const path = require('path');
 require('dotenv').config();
 
 async function mintMockToken() {
-  // Setup provider and wallet
   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-  // Load deployment data
   const chainId = 31337; // TODO: Make this dynamic
   const helloWorldDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/hello-world/${chainId}.json`), 'utf8'));
 
-  // Get MockERC20 address and ABI
   const mockERC20Address = helloWorldDeploymentData.addresses.mockERC20;
   const mockERC20ABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/ERC20Mock.json'), 'utf8'));
 
-  // Initialize MockERC20 contract
   const mockERC20 = new ethers.Contract(mockERC20Address, mockERC20ABI, wallet);
 
-  // Amount to mint (e.g., 1000 tokens with 18 decimals)
   const amountToMint = ethers.parseUnits("1000", 18);
 
   try {
