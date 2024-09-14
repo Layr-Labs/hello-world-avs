@@ -104,6 +104,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     function operatorHasMinimumWeight(
         address operator
     ) public view returns (bool) {
-        return ECDSAStakeRegistry(stakeRegistry).operatorRegistered(operator);
+        return ECDSAStakeRegistry(stakeRegistry).getLastCheckpointOperatorWeight(operator)
+            >= ECDSAStakeRegistry(stakeRegistry).getLastCheckpointThresholdWeight();
     }
 }
