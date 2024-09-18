@@ -22,4 +22,6 @@ dist/*.d.ts
 oldUtils
 
 target/
+yarn.lock
 debug/
+contracts/deployments/
