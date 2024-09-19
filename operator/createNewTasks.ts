@@ -1,22 +1,21 @@
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
+import * as dotenv from "dotenv";
+const fs = require('fs');
+const path = require('path');
+dotenv.config();
 
-// Connect to the Ethereum network
-const provider = new ethers.JsonRpcProvider(`http://127.0.0.1:8545`);
+// Setup env variables
+const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
+/// TODO: Hack
+let chainId = 31337;
 
-// Replace with your own private key (ensure this is kept secret in real applications)
-const privateKey = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
-const wallet = new ethers.Wallet(privateKey, provider);
+const avsDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/hello-world/${chainId}.json`), 'utf8'));
+const helloWorldServiceManagerAddress = avsDeploymentData.addresses.helloWorldServiceManager;
+const helloWorldServiceManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/HelloWorldServiceManager.json'), 'utf8'));
+// Initialize contract objects from ABIs
+const helloWorldServiceManager = new ethers.Contract(helloWorldServiceManagerAddress, helloWorldServiceManagerABI, wallet);
 
-// Replace with the address of your smart contract
-const contractAddress = '0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB';
-
-// The ABI provided
-const contractABI = [
-  {"type":"function","name":"createNewTask","inputs":[{"name":"name","type":"string","internalType":"string"}],"outputs":[],"stateMutability":"nonpayable"}
-];
-
-// Create a contract instance
-const contract = new ethers.Contract(contractAddress, contractABI, wallet);
 
 // Function to generate random names
 function generateRandomName(): string {
@@ -31,7 +30,7 @@ function generateRandomName(): string {
 async function createNewTask(taskName: string) {
   try {
     // Send a transaction to the createNewTask function
-    const tx = await contract.createNewTask(taskName);
+    const tx = await helloWorldServiceManager.createNewTask(taskName);
     
     // Wait for the transaction to be mined
     const receipt = await tx.wait();
@@ -48,7 +47,7 @@ function startCreatingTasks() {
     const randomName = generateRandomName();
     console.log(`Creating new task with name: ${randomName}`);
     createNewTask(randomName);
-  }, 15000);
+  }, 5000);
 }
 
 // Start the process
