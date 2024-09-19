@@ -10,13 +10,13 @@ async function registerOperatorWithAVS() {
 
   const chainId = 31337; // TODO: Make this dynamic
   const coreDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/core/${chainId}.json`), 'utf8'));
-  const helloWorldDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/hello_world/${chainId}.json`), 'utf8'));
+  const helloWorldDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/hello-world/${chainId}.json`), 'utf8'));
 
   const avsDirectoryAddress = coreDeploymentData.addresses.avsDirectory;
   const stakeRegistryAddress = helloWorldDeploymentData.addresses.stakeRegistry;
   const serviceManagerAddress = helloWorldDeploymentData.addresses.helloWorldServiceManager;
 
-  const avsDirectoryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/AVSDirectory.json'), 'utf8'));
+  const avsDirectoryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/IAVSDirectory.json'), 'utf8'));
   const stakeRegistryABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/ECDSAStakeRegistry.json'), 'utf8'));
 
   const avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, wallet);

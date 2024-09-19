@@ -48,6 +48,7 @@ Open a separate terminal window #2, execute the following commands
 ```sh
 # Setup .env file
 cp .env.example contracts/.env
+cp .env.example .env
 
 # Updates dependencies if necessary and builds the contracts 
 npm run build
@@ -58,7 +59,7 @@ npm run deploy:core
 # Deploy the Hello World AVS contracts
 npm run deploy:hello-world
 
-# (Optional) Update ABIs
+# (Optional) Update ABIs if your smart contract code has changed.
 npm run extract:abis
 
 # Start the Operator application

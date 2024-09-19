@@ -4,6 +4,12 @@ const fs = require('fs');
 const path = require('path');
 dotenv.config();
 
+// Import util modules
+const registerAsOperator = require('../utils/registerAsOperator');
+const registerOperatorWithAVS = require('../utils/registerOperatorWithAVS');
+const mintMockToken = require('../utils/mintMockToken');
+const depositTokenIntoStrategy = require('../utils/depositTokenIntoStrategy');
+
 // Check if the process.env object is empty
 if (!Object.keys(process.env).length) {
     throw new Error("process.env object is empty");
@@ -11,6 +17,7 @@ if (!Object.keys(process.env).length) {
 
 // Setup env variables
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
 /// TODO: Hack
 let chainId = 31337;
@@ -59,69 +66,6 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
     console.log(`Responded to task.`);
 };
 
-const registerOperator = async () => {
-    
-    // Registers as an Operator in EigenLayer.
-    try {
-        const tx1 = await delegationManager.registerAsOperator({
-            __deprecated_earningsReceiver: await wallet.address,
-            delegationApprover: "0x0000000000000000000000000000000000000000",
-            stakerOptOutWindowBlocks: 0
-        }, "");
-        await tx1.wait();
-        console.log("Operator registered to Core EigenLayer contracts");
-    } catch (error) {
-        console.error("Error in registering as operator:", error);
-    }
-    
-    const salt = ethers.hexlify(ethers.randomBytes(32));
-    const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
-
-    // Define the output structure
-    let operatorSignatureWithSaltAndExpiry = {
-        signature: "",
-        salt: salt,
-        expiry: expiry
-    };
-
-    // Calculate the digest hash, which is a unique value representing the operator, avs, unique value (salt) and expiration date.
-    console.log(wallet.address);
-    console.log(await helloWorldServiceManager.getAddress());
-    console.log(salt, "salt");
-    console.log(expiry, "expiry");
-
-    const operatorDigestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
-        wallet.address, 
-        await helloWorldServiceManager.getAddress(), 
-        salt, 
-        expiry
-    );
-    console.log(operatorDigestHash);
-    
-    // Sign the digest hash with the operator's private key
-    console.log("Signing digest hash with operator's private key");
-    const operatorSigningKey = new ethers.SigningKey(process.env.PRIVATE_KEY!);
-    const operatorSignedDigestHash = operatorSigningKey.sign(operatorDigestHash);
-
-    // Encode the signature in the required format
-    operatorSignatureWithSaltAndExpiry.signature = ethers.Signature.from(operatorSignedDigestHash).serialized;
-
-    console.log("Registering Operator to AVS Registry contract");
-    
-    //Debugging
-    console.log('operatorSignatureWithSaltAndExpiry before processing:', operatorSignatureWithSaltAndExpiry);
-    console.log('wallet.address before processing:', wallet.address);
-    
-    // Register Operator to AVS
-    // Per release here: https://github.com/Layr-Labs/eigenlayer-middleware/blob/v0.2.1-mainnet-rewards/src/unaudited/ECDSAStakeRegistry.sol#L49
-    const tx2 = await ecdsaRegistryContract.registerOperatorWithSignature(
-        operatorSignatureWithSaltAndExpiry,
-        wallet.address
-    );
-    await tx2.wait();
-    console.log("Operator registered on AVS successfully");
-};
-
 const monitorNewTasks = async () => {
     console.log(`Creating new task "EigenWorld"`);
     await helloWorldServiceManager.createNewTask("EigenWorld");
@@ -135,7 +79,13 @@ const monitorNewTasks = async () => {
 };
 
 const main = async () => {
-    await registerOperator();
+    
+    // Register as Operator in core EigenLayer contracts
+    await registerAsOperator();
+    
+    // Register Operator with AVS
+    await registerOperatorWithAVS();
+
     monitorNewTasks().catch((error) => {
         console.error("Error monitoring tasks:", error);
     });
