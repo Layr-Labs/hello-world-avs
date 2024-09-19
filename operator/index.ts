@@ -85,11 +85,6 @@ const registerOperator = async () => {
     };
 
     // Calculate the digest hash, which is a unique value representing the operator, avs, unique value (salt) and expiration date.
-    console.log(wallet.address);
-    console.log(await helloWorldServiceManager.getAddress());
-    console.log(salt, "salt");
-    console.log(expiry, "expiry");
-
     const operatorDigestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
         wallet.address, 
         await helloWorldServiceManager.getAddress(), 
@@ -107,10 +102,7 @@ const registerOperator = async () => {
     operatorSignatureWithSaltAndExpiry.signature = ethers.Signature.from(operatorSignedDigestHash).serialized;
 
     console.log("Registering Operator to AVS Registry contract");
-    
-    //Debugging
-    console.log('operatorSignatureWithSaltAndExpiry before processing:', operatorSignatureWithSaltAndExpiry);
-    console.log('wallet.address before processing:', wallet.address);
+
     
     // Register Operator to AVS
     // Per release here: https://github.com/Layr-Labs/eigenlayer-middleware/blob/v0.2.1-mainnet-rewards/src/unaudited/ECDSAStakeRegistry.sol#L49
@@ -123,8 +115,8 @@ const registerOperator = async () => {
 };
 
 const monitorNewTasks = async () => {
-    console.log(`Creating new task "EigenWorld"`);
-    await helloWorldServiceManager.createNewTask("EigenWorld");
+    //console.log(`Creating new task "EigenWorld"`);
+    //await helloWorldServiceManager.createNewTask("EigenWorld");
 
     helloWorldServiceManager.on("NewTaskCreated", async (taskIndex: number, task: any) => {
         console.log(`New task detected: Hello, ${task.name}`);

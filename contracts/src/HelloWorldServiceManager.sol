@@ -8,6 +8,7 @@ import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceMan
 import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
@@ -71,10 +72,20 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         uint32 referenceTaskIndex,
         bytes calldata signature
     ) external onlyOperator {
-        require(
-            operatorHasMinimumWeight(msg.sender),
-            "Operator does not have match the weight requirements"
-        );
+            
+            // TODO Temporarily disabling this until we add in staking & delegation to the Operator scripts.
+            /** require(
+                operatorHasMinimumWeight(msg.sender),
+                string(abi.encodePacked(
+                    "Operator does not have match the weight requirements. ",
+                    "Operator weight=", 
+                    Strings.toString(ECDSAStakeRegistry(stakeRegistry).getLastCheckpointOperatorWeight(msg.sender)),
+                    ", Threshold weight=", 
+                    Strings.toString(ECDSAStakeRegistry(stakeRegistry).getLastCheckpointThresholdWeight())
+                ))
+            );
+            */
+
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
             keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],

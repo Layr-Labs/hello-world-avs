@@ -23,3 +23,6 @@ oldUtils
 
 target/
 debug/
+
+yarn.lock
+contracts/deployments/

@@ -47,7 +47,8 @@ Open a separate terminal window #2, execute the following commands
 
 ```sh
 # Setup .env file
-cp .env.example contracts/.env
+cp .env.example .env
+cp contracts/.env.example contracts/.env
 
 # Updates dependencies if necessary and builds the contracts 
 npm run build
