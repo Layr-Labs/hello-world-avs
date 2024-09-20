@@ -6,11 +6,11 @@
     "start:operator": "ts-node operator/index.ts",
     "start:traffic": "ts-node operator/createNewTasks.ts",
     "start:anvil": "anvil",
-    "deploy:core": "cd contracts && forge script script/DeployEigenlayerCore.s.sol --rpc-url http://localhost:8545 --broadcast",
-    "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast",
-    "deploy:core-debug": "cd contracts && forge script script/DeployEigenlayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
-    "deploy:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
-    "build": "cd contracts && forge build",
+    "deploy:core": "npm run build && cd contracts && forge script script/DeployEigenlayerCore.s.sol:DeployEigenlayerCore --rpc-url http://localhost:8545 --broadcast",
+    "deploy:hello-world": "npm run build && cd contracts && forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url http://localhost:8545 --broadcast",
+    "deploy:core-debug": "npm run build && forge script script/DeployEigenlayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
+    "deploy:hello-world-debug": "npm run build && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
+    "build": "cd contracts && forge install && forge build",
     "extract:abis": "npm run build && node utils/abis.js"
   },
   "dependencies": {
