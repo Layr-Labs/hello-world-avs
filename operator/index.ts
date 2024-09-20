@@ -67,8 +67,8 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
 };
 
 const monitorNewTasks = async () => {
-    console.log(`Creating new task "EigenWorld"`);
-    await helloWorldServiceManager.createNewTask("EigenWorld");
+    //console.log(`Creating new task "EigenWorld"`);
+    //await helloWorldServiceManager.createNewTask("EigenWorld");
 
     helloWorldServiceManager.on("NewTaskCreated", async (taskIndex: number, task: any) => {
         console.log(`New task detected: Hello, ${task.name}`);

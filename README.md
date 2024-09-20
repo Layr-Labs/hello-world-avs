@@ -76,47 +76,29 @@ Open a separate terminal window #3, execute the following commands
 npm run start:traffic
 ```
 
+
+### Help and Support
+
+For help and support deploying and modifying this repo for your AVS, please:
+1. Open a ticket via the intercom link at [support.eigenlayer.xyz](https://support.eigenlayer.xyz).
+2. Include the necessary troubleshooting information for your environment:
+  * Local anvil testing:
+    * Recompile the contracts with the `--revert-strings debug` flag. Deploy the contracts again and retest.
+    * Include the full stacktrace from your error as a .txt file attachment.
+    * Create a minimal repo that demonstrates the behavior (fork or otherwise)
+    * Steps require to reproduce issue (compile and cause the error)
+  * Holesky testing:
+    * Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
+    * Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
+
+
+
 ### Disclaimers
 
 - This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
 - Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `HelloWorldServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
 
 # Appendix (Future Capabilities In Progress)
-
-## Deployment on Tenderly Virtual Testnet
-
-Follow the [Tenderly Virtual Testnet Setup Instructions](https://docs.tenderly.co/virtual-testnets/quickstart) to create a new virtual testnet.
-
-Run the following commands:
-
-```sh
-
-# todo: add instructions to create a wallet for testnet account and set private key in .env holesky vars
-
-# Set env vars
-cd contracts
-source ../.env
-
-# Fund account using the tenderly rpc
-curl $TENDERLY_RPC_ADMIN \
--X POST \
--H "Content-Type: application/json" \
--d '{
-    "jsonrpc": "2.0",
-    "method": "tenderly_setBalance",
-    "params": [
-      [
-        "'"${PUBLIC_KEY}"'"
-        ],
-      "0xDE0B6B3A7640000"
-      ],
-    "id": "1234"
-}'
-
-# Deploy AVS contracts to Tenderly Holesky using Foundry
-forge script script/HelloWorldDeployerHolesky.s.sol:HelloWorldDeployerHolesky \
-    --rpc-url $TENDERLY_RPC_ADMIN --private-key $TENDERLY_PRIVATE_KEY --broadcast -vvv debug
-```
 
 ## Adding a New Strategy
 
