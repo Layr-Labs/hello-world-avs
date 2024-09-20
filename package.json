@@ -6,19 +6,24 @@
     "start:operator": "ts-node operator/index.ts",
     "start:traffic": "ts-node operator/createNewTasks.ts",
     "start:anvil": "anvil",
-    "deploy:core": "cd contracts && forge clean && forge script script/DeployEigenlayerCore.s.sol --rpc-url http://localhost:8545 --broadcast",
-    "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast",
-    "deploy:core-debug": "cd contracts && forge script script/DeployEigenlayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
-    "deploy:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
+    "contracts:clean": "cd contracts && forge clean",
+    "deploy:core": "npm run build && cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast",
+    "deploy:hello-world": "npm run build && cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast",
+    "deploy:core-debug": "npm run contracts:clean && forge script script/DeployEigenlayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
+    "deploy:hello-world-debug": "npm run contracts:clean && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "build": "cd contracts && forge build",
-    "extract:abis": "npm run build && node utils/abis.js"
+    "extract:abis": "npm run build && node utils/abis.js",
+    "test": "jest tests"
   },
   "dependencies": {
+    "commander": "^12.1.0",
     "dotenv": "^10.0.0",
     "ethers": "^6.13.2"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
+    "cli-testing-library": "^2.0.2",
+    "jest": "^29.7.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }
