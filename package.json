@@ -25,6 +25,7 @@
     "ethers": "^6.13.2"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.13",
     "@types/node": "^20.16.5",
     "@typescript-eslint/parser": "^5.62.0",
     "eslint": "^8.57.1",
