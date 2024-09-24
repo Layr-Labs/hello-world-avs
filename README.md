@@ -6,11 +6,11 @@ Welcome to the Hello World AVS. This project shows you the simplest functionalit
 
 ## AVS User Flow
 
-1) AVS consumer requests a "Hello World" message to be generated and signed.
-2) HelloWorld contract receives the request and emits a NewTaskCreated event for the request.
-3) All Operators who are registered to the AVS and has staked, delegated assets takes this request. Operator generates the requested message, hashes it, and signs the hash with their private key.
-4) Each Operator submits their signed hash back to the HelloWorld AVS contract.
-5) If the Operator is registered to the AVS and has the minimum needed stake, the submission is accepted.
+1. AVS consumer requests a "Hello World" message to be generated and signed.
+2. HelloWorld contract receives the request and emits a NewTaskCreated event for the request.
+3. All Operators who are registered to the AVS and has staked, delegated assets takes this request. Operator generates the requested message, hashes it, and signs the hash with their private key.
+4. Each Operator submits their signed hash back to the HelloWorld AVS contract.
+5. If the Operator is registered to the AVS and has the minimum needed stake, the submission is accepted.
 
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
@@ -50,7 +50,7 @@ Open a separate terminal window #2, execute the following commands
 cp .env.example contracts/.env
 cp .env.example .env
 
-# Updates dependencies if necessary and builds the contracts 
+# Updates dependencies if necessary and builds the contracts
 npm run build
 
 # Deploy the EigenLayer contracts
@@ -72,26 +72,25 @@ npm run start:operator
 Open a separate terminal window #3, execute the following commands
 
 ```sh
-# Start the createNewTasks application 
+# Start the createNewTasks application
 npm run start:traffic
 ```
-
 
 ### Help and Support
 
 For help and support deploying and modifying this repo for your AVS, please:
+
 1. Open a ticket via the intercom link at [support.eigenlayer.xyz](https://support.eigenlayer.xyz).
 2. Include the necessary troubleshooting information for your environment:
-  * Local anvil testing:
-    * Recompile the contracts with the `--revert-strings debug` flag. Deploy the contracts again and retest.
-    * Include the full stacktrace from your error as a .txt file attachment.
-    * Create a minimal repo that demonstrates the behavior (fork or otherwise)
-    * Steps require to reproduce issue (compile and cause the error)
-  * Holesky testing:
-    * Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
-    * Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
 
-
+- Local anvil testing:
+  - Recompile the contracts with the `--revert-strings debug` flag. Deploy the contracts again and retest.
+  - Include the full stacktrace from your error as a .txt file attachment.
+  - Create a minimal repo that demonstrates the behavior (fork or otherwise)
+  - Steps require to reproduce issue (compile and cause the error)
+- Holesky testing:
+  - Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
+  - Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
 
 ### Disclaimers
 
@@ -116,13 +115,14 @@ The architecture can be further enhanced via:
 ### Automated deployment (uses existing state file)
 
 1. Run `make start-chain-with-contracts-deployed`
-    - This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+
+   - This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
 
 2. Run `make start-rust-operator`
 
 3. Run `make spam-rust-tasks`
 
-Tests are supported in anvil only . Make sure to run the 1st command before running the  tests:
+Tests are supported in anvil only . Make sure to run the 1st command before running the tests:
 
 ```
 cargo test --workspace
@@ -130,15 +130,15 @@ cargo test --workspace
 
 ## Existing Holesky Testnet Deployment
 
-| Contract Name               | Holesky Address                                   |
-| -------------               | -------------                                     |
-| Hello World Service Manager | [0x3361953F4a9628672dCBcDb29e91735fb1985390](https://holesky.etherscan.io/address/0x3361953F4a9628672dCBcDb29e91735fb1985390)    |
+| Contract Name               | Holesky Address                                                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Hello World Service Manager | [0x3361953F4a9628672dCBcDb29e91735fb1985390](https://holesky.etherscan.io/address/0x3361953F4a9628672dCBcDb29e91735fb1985390) |
 
 Please see [Current Testnet Deployment](https://github.com/Layr-Labs/eigenlayer-contracts?tab=readme-ov-file#current-testnet-deployment) for additional deployed addresses.
 
 You don't need to run a deployment script for holesky testnet, the contracts are already deployed.
 
-1. Use the HOLESKY_ namespace env parameters in the code , instead of normal parameters.
+1. Use the HOLESKY\_ namespace env parameters in the code , instead of normal parameters.
 
 2. Run `make start-rust-operator`
 

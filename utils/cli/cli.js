@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-const { program } = require('commander');
-const createStrategyCommand = require('./commands/createStrategyForToken');
+const { program } = require('commander')
+const createStrategyCommand = require('./commands/createStrategyForToken')
 
-program.addCommand(createStrategyCommand);
+program.addCommand(createStrategyCommand)
 
 if (!process.argv.slice(2).length) {
-  program.outputHelp();
+  program.outputHelp()
 }
 
-program.parse(process.argv);
+program.parse(process.argv)

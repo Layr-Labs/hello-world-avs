@@ -8,8 +8,5 @@
     "esModuleInterop": true,
     "types": ["node"]
   },
-  "exclude": [
-    "node_modules",
-    "contracts"
-  ]
+  "exclude": ["node_modules", "contracts"]
 }
