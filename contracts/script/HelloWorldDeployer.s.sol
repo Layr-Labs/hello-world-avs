@@ -6,6 +6,8 @@ import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
 import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
+import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
+import {ERC20Mock} from "../test/ERC20Mock.sol";
 
 import {
     Quorum,
@@ -19,18 +21,36 @@ contract HelloWorldDeployer is Script {
 
     address private deployer;
     address proxyAdmin;
+    StrategyBase helloWorldStrategy;
+    StrategyBase helloWorldStrategyImpl;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     Quorum internal quorum;
-
+    ERC20Mock token;
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
+       
+        token = new ERC20Mock();
+        helloWorldStrategyImpl = new StrategyBase(coreDeployment.strategyManager);
+        helloWorldStrategy = StrategyBase(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(helloWorldStrategyImpl),
+                    address(proxyAdmin),
+                    abi.encodeWithSelector(
+                        StrategyBase.initialize.selector,
+                        token,
+                        coreDeployment.pauserRegistry
+                    )
+                )
+            )
+        );
 
         quorum.strategies.push(
-            StrategyParams({strategy: IStrategy(address(420)), multiplier: 10_000})
+            StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
         );
     }
 

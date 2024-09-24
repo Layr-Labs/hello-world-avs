@@ -43,7 +43,7 @@ library HelloWorldDeploymentLib {
             address(new ECDSAStakeRegistry(IDelegationManager(core.delegationManager)));
         address helloWorldServiceManagerImpl = address(
             new HelloWorldServiceManager(
-                core.avsDirectory, result.stakeRegistry, core.delegationManager
+                core.avsDirectory, result.stakeRegistry, core.rewardsCoordinator, core.delegationManager
             )
         );
         // Upgrade contracts
