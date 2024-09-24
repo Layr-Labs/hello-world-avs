@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const { program } = require('commander');
-const createStrategyCommand = require('./createStrategyForToken');
+const createStrategyCommand = require('./commands/createStrategyForToken');
 
 program.addCommand(createStrategyCommand);
 

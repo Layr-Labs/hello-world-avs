@@ -9,16 +9,17 @@
     "contracts:clean": "cd contracts && forge clean",
     "deploy:core": "npm run build && cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast",
     "deploy:hello-world": "npm run build && cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast",
-    "deploy:core-debug": "npm run contracts:clean && forge script script/DeployEigenlayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
-    "deploy:hello-world-debug": "npm run contracts:clean && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
+    "deploy:core-debug": "npm run deploy:core -- --revert-strings debug",
+    "deploy:hello-world-debug": "npm run deploy:hello-world -- --revert-strings debug",
     "build": "cd contracts && forge build",
     "extract:abis": "npm run build && node utils/abis.js",
-    "test": "jest tests"
+    "test": "jest ./tests"
   },
   "dependencies": {
     "commander": "^12.1.0",
     "dotenv": "^10.0.0",
-    "ethers": "^6.13.2"
+    "ethers": "^6.13.2",
+    "viem": "^2.21.14"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
