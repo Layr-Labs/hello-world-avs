@@ -4,10 +4,12 @@ pragma solidity ^0.8.0;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
+import {CoreDeploymentLib, StrategyManager} from "./utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
 import {ERC20Mock} from "../test/ERC20Mock.sol";
+import {TransparentUpgradeableProxy} from
+    "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {
     Quorum,
@@ -34,7 +36,7 @@ contract HelloWorldDeployer is Script {
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
        
         token = new ERC20Mock();
-        helloWorldStrategyImpl = new StrategyBase(coreDeployment.strategyManager);
+        helloWorldStrategyImpl = new StrategyBase(StrategyManager(coreDeployment.strategyManager));
         helloWorldStrategy = StrategyBase(
             address(
                 new TransparentUpgradeableProxy(
