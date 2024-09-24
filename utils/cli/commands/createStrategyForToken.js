@@ -34,9 +34,9 @@ async function createStrategyForToken(config = {}) {
 
 const createStrategyCommand = new Command('create-strategy')
 	.description('Create a strategy for a token')
-	.option('-t, --token-address <address>', 'Token address to create strategy for')
-	.option('-r, --rpc-url <url>', 'Custom RPC URL')
-	.option('-p, --private-key <key>', 'Custom private key')
+	.option('-t, --token-address [address]', 'Token address to create strategy for')
+	.option('-r, --rpc-url [url]', 'Custom RPC URL')
+	.option('-p, --private-key [key]', 'Custom private key')
 	.action(async (options) => {
 		const config = {
 			tokenAddress: options.tokenAddress,
