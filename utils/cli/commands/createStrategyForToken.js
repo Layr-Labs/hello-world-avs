@@ -1,10 +1,9 @@
 const { Command } = require('commander');
 const { ethers } = require('ethers');
-const readJSONFile = require('../helpers/readJSONFile');
 const path = require('path');
+const readJSONFile = require('../helpers/readJSONFile');
+
 require('dotenv').config();
-
-
 
 async function createStrategyForToken() {
     const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
@@ -21,22 +20,22 @@ async function createStrategyForToken() {
     const [, helloWorldDeploymentData] = readJSONFile(helloWorldDeploymentFilePath);
     const [, strategyFactoryABI] = readJSONFile(strategyFactoryABIPath);
     const strategyFactoryAddress = coreDeploymentData.addresses.strategyFactory;
+    const mockERC20Address = helloWorldDeploymentData.addresses.mockERC20;
+    const strategyFactoryContract = new ethers.Contract(
+        strategyFactoryAddress,
+        strategyFactoryABI,
+        wallet
+    );
 
     try {
-        const mockERC20Address = helloWorldDeploymentData.addresses.mockERC20;
-        const strategyFactoryContract = new ethers.Contract(
-            strategyFactoryAddress,
-            strategyFactoryABI,
-            wallet
-        );
         const strategyAddress = await strategyFactoryContract.deployedStrategies(mockERC20Address);
         if (strategyAddress !== ethers.ZeroAddress) {
             return [null, strategyAddress];
         }
         const tx = await strategyFactoryContract.deployNewStrategy(mockERC20Address);
-        const receipt = await tx.wait();
+        await tx.wait();
+        const newStrategyAddress = await strategyFactoryContract.deployedStrategies(mockERC20Address);
 
-        const newStrategyAddress = receipt.logs[0].args[1]; // Assuming the strategy address is the second argument in the first event log
         return [null, newStrategyAddress];
     } catch (error) {
         return [error.message, null];
