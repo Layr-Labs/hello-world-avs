@@ -5,6 +5,7 @@ const {
   getWallet,
   getStrategyFactoryContract,
   getTokenAddress,
+  getChainId,
 } = require('../helpers/utils')
 
 require('dotenv').config()
@@ -31,7 +32,7 @@ async function deployOrGetStrategy(strategyFactory, tokenAddress) {
 async function createStrategyForToken(config = {}) {
   const provider = await getProvider(config.rpcUrl)
   const wallet = await getWallet(provider, config.privateKey)
-  const chainId = await provider.getNetwork().then((network) => network.chainId)
+  const chainId = await getChainId(provider)
 
   const strategyFactoryContract = await getStrategyFactoryContract(
     wallet,

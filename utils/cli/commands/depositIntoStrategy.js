@@ -7,6 +7,8 @@ const {
   getTokenAddress,
   getDeploymentData,
   getABI,
+  getChainId,
+  approveTokenIfNeeded,
 } = require('../helpers/utils')
 
 require('dotenv').config()
@@ -14,7 +16,7 @@ require('dotenv').config()
 async function depositIntoStrategy(config = {}) {
   const provider = await getProvider(config.rpcUrl)
   const wallet = await getWallet(provider, config.privateKey)
-  const chainId = await provider.getNetwork().then((network) => network.chainId)
+  const chainId = await getChainId(provider)
 
   const coreDeploymentData = await getDeploymentData('core', chainId)
   const strategyManagerABI = await getABI('StrategyManager')
@@ -44,8 +46,7 @@ async function depositIntoStrategy(config = {}) {
     }
 
     /// TODO: Only do this if needed
-    const approveTx = await token.approve(strategyManagerAddress, amount)
-    await approveTx.wait()
+    await approveTokenIfNeeded(token, wallet, strategyManagerAddress, amount)
 
     const tx = await strategyManager.depositIntoStrategy(
       strategy,
@@ -54,6 +55,7 @@ async function depositIntoStrategy(config = {}) {
     )
     return [null, tx]
   } catch (error) {
+    console.error(error)
     return [error, null]
   }
 }
