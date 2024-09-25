@@ -26,6 +26,7 @@ library HelloWorldDeploymentLib {
     struct DeploymentData {
         address helloWorldServiceManager;
         address stakeRegistry;
+        address strategy;
     }
 
     function deployContracts(
@@ -136,7 +137,9 @@ library HelloWorldDeploymentLib {
             data.stakeRegistry.toHexString(),
             '","stakeRegistryImpl":"',
             data.stakeRegistry.getImplementation().toHexString(),
-            '"}'
+            '","strategy":"',
+            data.strategy.toHexString(),
+             '"}'
         );
     }
 }

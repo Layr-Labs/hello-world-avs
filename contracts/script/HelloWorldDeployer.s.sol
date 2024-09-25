@@ -10,6 +10,8 @@ import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
 import {ERC20Mock} from "../test/ERC20Mock.sol";
 import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
+
 
 import {
     Quorum,
@@ -36,20 +38,7 @@ contract HelloWorldDeployer is Script {
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
        
         token = new ERC20Mock();
-        helloWorldStrategyImpl = new StrategyBase(StrategyManager(coreDeployment.strategyManager));
-        helloWorldStrategy = StrategyBase(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(helloWorldStrategyImpl),
-                    address(proxyAdmin),
-                    abi.encodeWithSelector(
-                        StrategyBase.initialize.selector,
-                        token,
-                        coreDeployment.pauserRegistry
-                    )
-                )
-            )
-        );
+        IStrategy helloWorldStrategy = StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token);
 
         quorum.strategies.push(
             StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
@@ -63,6 +52,7 @@ contract HelloWorldDeployer is Script {
         helloWorldDeployment =
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
 
+        helloWorldDeployment.strategy = address(helloWorldStrategy);
         vm.stopBroadcast();
 
         verifyDeployment();
@@ -77,6 +67,7 @@ contract HelloWorldDeployer is Script {
             helloWorldDeployment.helloWorldServiceManager != address(0),
             "HelloWorldServiceManager address cannot be zero"
         );
+        require(helloWorldDeployment.strategy != address(0), "Strategy address cannot be zero");
         require(proxyAdmin != address(0), "ProxyAdmin address cannot be zero");
         require(
             coreDeployment.delegationManager != address(0),
