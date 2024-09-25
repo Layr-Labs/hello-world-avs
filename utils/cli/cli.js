@@ -6,6 +6,7 @@ const {
 } = require('./commands/depositIntoStrategy');
 const { createStrategyCommand } = require('./commands/createStrategyForToken');
 const { registerAsOperatorCommand } = require('./commands/registerAsOperator');
+const { extractAbisCommand } = require('./commands/extractAbis');
 
 const program = new Command();
 
@@ -18,5 +19,6 @@ program.addCommand(mintMockTokensCommand);
 program.addCommand(depositIntoStrategyCommand);
 program.addCommand(createStrategyCommand);
 program.addCommand(registerAsOperatorCommand);
+program.addCommand(extractAbisCommand);
 
 program.parse(process.argv);
