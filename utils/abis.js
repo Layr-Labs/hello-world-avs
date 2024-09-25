@@ -13,6 +13,7 @@ const contractsToExtract = [
   'ERC20Mock',
   'StrategyFactory',
   'StrategyManager',
+  'DelegationManager',
 ]
 
 if (!fs.existsSync(abiDir)) {

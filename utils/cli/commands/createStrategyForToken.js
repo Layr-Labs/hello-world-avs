@@ -9,20 +9,20 @@ const {
 
 require('dotenv').config()
 
-async function deployOrGetStrategy(strategyFactoryContract, tokenAddress) {
-  const existingStrategyAddress =
-    await strategyFactoryContract.deployedStrategies(tokenAddress)
-
-  if (existingStrategyAddress !== ethers.ZeroAddress) {
-    return [null, existingStrategyAddress]
+async function deployOrGetStrategy(strategyFactory, tokenAddress) {
+  try {
+    const strategy = await strategyFactory.deployedStrategies(tokenAddress)
+    if (strategy !== ethers.ZeroAddress) {
+      return [null, strategy]
+    }
+  } catch (error) {
+    return [error.message, null]
   }
 
   try {
-    const tx = await strategyFactoryContract.deployNewStrategy(tokenAddress)
-    await tx.wait()
-    const newStrategyAddress =
-      await strategyFactoryContract.deployedStrategies(tokenAddress)
-    return [null, newStrategyAddress]
+    await strategyFactory.deployNewStrategy(tokenAddress)
+    const strategy = await strategyFactory.deployedStrategies(tokenAddress)
+    return [null, strategy]
   } catch (error) {
     return [error.message, null]
   }
