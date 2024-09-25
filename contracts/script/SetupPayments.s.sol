@@ -20,7 +20,11 @@ contract SetupPayments is Script {
     uint256 NUM_PAYMENTS = 8;
     uint256 NUM_TOKEN_EARNINGS = 1;
     uint256 TOKEN_EARNINGS = 100;
-
+    
+    struct PaymentLeaves{
+        bytes32[] leaves;
+        bytes32[] tokenLeaves;
+    }
 
     function setUp() public {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
@@ -62,22 +66,17 @@ contract SetupPayments is Script {
         IRewardsCoordinator(coreDeployment.rewardsCoordinator).createAVSRewardsSubmission(rewardsSubmissions);
     }
 
-    function processClaim(string memory filePath, uint256 indexToProve, address recipient) public {
-        []bytes32 memory leaves = new bytes32[](NUM_PAYMENTS);
-        leaves = readPaymentLeavesFromJson(filePath);
-        bytes memory proof = generateMerkleProof(leaves, indexToProve);
-
-        []bytes32 memory tokenLeaves = new bytes32[](NUM_TOKEN_EARNINGS);
-        tokenLeaves = readTokenLeavesFromJson(tokenLeavesFilePath);
+    function processClaim(string memory filePath, uint256 indexToProve, address recipient, IRewardsCoordinator.EarnerTreeMerkleLeaf earnerLeaf) public {
+        
+        PaymentLeaves memory paymentLeaves = parseLeavesFromJson(filePath);
+        
+        bytes memory proof = generateMerkleProof(paymentLeaves.leaves, indexToProve);
         //we assuming only 1 token for now, default index is 0
-        bytes memory tokenProof = generateMerkleProof(tokenLeaves, 0);
+        bytes memory tokenProof = generateMerkleProof(paymentLeaves.tokenLeaves, 0);
 
         uint32[] memory tokenIndices = new uint32[](NUM_TOKEN_EARNINGS);
         bytes[] memory tokenProofs = new bytes[](NUM_TOKEN_EARNINGS);
         tokenProofs[0] = tokenProof;
-
-
-        IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf =  readEarnerLeafFromJson(filePath);
 
 
         IRewardsCoordinator.RewardsClaim memory claim = IRewardsCoordinator.RewardsClaim({
@@ -104,18 +103,28 @@ contract SetupPayments is Script {
     function createPaymentRoot(address[] calldata earners) public returns(bytes32) {
         require(earners.length == NUM_PAYMENTS, "Number of earners must match number of payments");
         bytes32[] memory leaves = new bytes32[](NUM_PAYMENTS);
+        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves = new IRewardsCoordinator.EarnerTreeMerkleLeaf[](NUM_PAYMENTS);
+        
+        //every entry in the payment tree will have the same token leaves/token root in this example
+        bytes32[] memory tokenLeaves = createTokenLeaves();
         for (uint256 i = 0; i < NUM_PAYMENTS; i++) {
             IRewardsCoordinator.EarnerTreeMerkleLeaf memory leaf = IRewardsCoordinator.EarnerTreeMerkleLeaf({
                 earner: earners[i],
-                earnerTokenRoot: createTokenRoot()
+                earnerTokenRoot: createTokenRoot(tokenLeaves)
             });
+            leaves[i] = IRewardsCoordinator(coreDeployment.rewardsCoordinator).calculateEarnerLeafHash(leaf);
+            earnerLeaves[i] = leaf;
         }
-        // _writeLeavesToJson(leaves, "earner-leaves.json");
+        writeLeavesToJson(leaves, tokenLeaves);
         return merkleizeSha256(leaves);
     }
 
     //create individual payment leaves' token root that goes into earner leaf
-    function createTokenRoot() public returns(bytes32) {
+    function createTokenRoot(bytes32[] calldata tokenLeaves) public returns(bytes32) {
+        return merkleizeKeccak(tokenLeaves);   
+    }
+
+    function createTokenLeaves() public returns(bytes32[] memory) {
         bytes32[] memory leaves = new bytes32[](NUM_TOKEN_EARNINGS);
         for (uint256 i = 0; i < NUM_TOKEN_EARNINGS; i++) {
             IRewardsCoordinator.TokenTreeMerkleLeaf memory leaf = IRewardsCoordinator.TokenTreeMerkleLeaf({
@@ -124,21 +133,23 @@ contract SetupPayments is Script {
             });
             leaves[i] = IRewardsCoordinator(coreDeployment.rewardsCoordinator).calculateTokenLeafHash(leaf);
         }
-
-        return merkleizeKeccak(leaves);   
+        return leaves;
     }
 
-    function _writeLeavesToJson(bytes32[] memory leaves, string memory path) internal {
-        string memory leavesJson = "[";
-        for (uint256 i = 0; i < leaves.length; i++) {
-            leavesJson = string.concat(leavesJson, "\"", leaves[i].toHexString(), "\"");
-            if (i != leaves.length - 1) {
-                leavesJson = string.concat(leavesJson, ",");
-            }
-        }
-        leavesJson = string.concat(leavesJson, "]");
-        vm.writeFile(path, leavesJson);
+
+    function writeLeavesToJson(bytes32[] memory leaves, bytes32[] memory tokenLeaves) public {
+        string memory parent_object = "parent_object";
+        vm.serialize(parent_object, "leaves", leaves);
+        string memory finalJson = vm.serialize(parent_object, "tokenLeaves", tokenLeaves);
+        vm.writeJson(finalJson, "payments.json");
     }
+
+    function parseLeavesFromJson(string memory filePath) public returns(PaymentLeaves memory) {
+        string memory json = vm.readFile(filePath);
+        bytes memory data = vm.parseJson(json);
+        return abi.decode(data, (PaymentLeaves));
+    }
+
 
 
     function generateMerkleProof(bytes32[] memory leaves, uint256 index) internal pure returns (bytes memory) {
