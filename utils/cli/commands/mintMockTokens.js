@@ -16,7 +16,7 @@ async function mintMockTokens(config = {}) {
   const chainId = await getChainId(provider);
 
   const tokenAddress = config.tokenAddress || (await getTokenAddress(chainId));
-  const tokenABI = await getABI('ERC20Mock');
+  const [, tokenABI] = await getABI('ERC20Mock');
 
   const token = new ethers.Contract(tokenAddress, tokenABI, wallet);
 

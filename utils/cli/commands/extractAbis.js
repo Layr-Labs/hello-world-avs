@@ -80,7 +80,7 @@ async function extractAbi(contractName, artifactsDir, abiDir) {
 
   try {
     const contractData = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
-    const abi = JSON.stringify(contractData.abi, null, 2);
+    const abi = JSON.stringify(contractData.abi);
     fs.writeFileSync(abiOutputPath, abi);
     return [null, `Extracted ABI for ${contractName}`];
   } catch (error) {

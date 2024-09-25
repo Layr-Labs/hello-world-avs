@@ -15,8 +15,8 @@ async function registerAsOperator(config = {}) {
   const wallet = await getWallet(provider, config.privateKey);
   const chainId = await getChainId(provider);
 
-  const coreDeploymentData = await getDeploymentData('core', chainId);
-  const delegationManagerABI = await getABI('DelegationManager');
+  const [, coreDeploymentData] = await getDeploymentData('core', chainId);
+  const [, delegationManagerABI] = await getABI('DelegationManager');
   const delegationManagerAddress = coreDeploymentData.addresses.delegation;
 
   const delegationManager = new ethers.Contract(
@@ -26,14 +26,6 @@ async function registerAsOperator(config = {}) {
   );
 
   try {
-    // Check if the address is already registered as an operator
-    /// TODO: better handle this
-    const isOperator = await delegationManager.isOperator(wallet.address);
-    if (isOperator) {
-      console.log('Address is already registered as an operator');
-      return [null, { alreadyRegistered: true }];
-    }
-
     /// TODO: hack make better
     const delegatedAddress = await delegationManager.delegatedTo(
       wallet.address,
@@ -44,8 +36,8 @@ async function registerAsOperator(config = {}) {
 
     const operatorDetails = {
       __deprecated_earningsReceiver: ethers.ZeroAddress,
-      delegationApprover: config.delegationApprover,
-      stakerOptOutWindowBlocks: config.stakerOptOutWindowBlocks,
+      delegationApprover: config.delegationApprover || ethers.ZeroAddress,
+      stakerOptOutWindowBlocks: config.stakerOptOutWindowBlocks || 0,
     };
     const tx = await delegationManager.registerAsOperator(operatorDetails, '');
     return [null, tx];

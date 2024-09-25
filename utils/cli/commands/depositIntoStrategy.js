@@ -18,8 +18,8 @@ async function depositIntoStrategy(config = {}) {
   const wallet = await getWallet(provider, config.privateKey);
   const chainId = await getChainId(provider);
 
-  const coreDeploymentData = await getDeploymentData('core', chainId);
-  const strategyManagerABI = await getABI('StrategyManager');
+  const [, coreDeploymentData] = await getDeploymentData('core', chainId);
+  const [, strategyManagerABI] = await getABI('StrategyManager');
   const strategyManagerAddress = coreDeploymentData.addresses.strategyManager;
 
   const strategyManager = new ethers.Contract(
@@ -45,8 +45,8 @@ async function depositIntoStrategy(config = {}) {
       return [new Error('Strategy not deployed for this token'), null];
     }
 
-    /// TODO: Only do this if needed
-    await approveTokenIfNeeded(token, wallet, strategyManagerAddress, amount);
+    /// TODO: FIX THIS
+    // await approveTokenIfNeeded(token, wallet, strategyManagerAddress, amount);
 
     const tx = await strategyManager.depositIntoStrategy(
       strategy,

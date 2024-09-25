@@ -13,8 +13,8 @@ async function initializeChainContext(config = {}) {
 }
 
 async function getStrategyFactoryContract(wallet, chainId) {
-  const coreDeploymentData = await getDeploymentData('core', chainId);
-  const strategyFactoryABI = await getABI('StrategyFactory');
+  const [, coreDeploymentData] = await getDeploymentData('core', chainId);
+  const [, strategyFactoryABI] = await getABI('StrategyFactory');
   const strategyFactoryAddress = coreDeploymentData.addresses.strategyFactory;
 
   return new ethers.Contract(
@@ -25,7 +25,7 @@ async function getStrategyFactoryContract(wallet, chainId) {
 }
 
 async function getContractInstance(contractName, address, wallet) {
-  const abi = await getABI(contractName);
+  const [, abi] = await getABI(contractName);
   return new ethers.Contract(address, abi, wallet);
 }
 
@@ -54,7 +54,7 @@ function parseTokenAmount(amount, decimals = 18) {
 }
 
 async function getTokenAddress(chainId) {
-  const helloWorldDeploymentData = await getDeploymentData(
+  const [, helloWorldDeploymentData] = await getDeploymentData(
     'hello-world',
     chainId,
   );
