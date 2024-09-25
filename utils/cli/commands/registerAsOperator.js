@@ -26,7 +26,6 @@ async function registerAsOperator(config = {}) {
   );
 
   try {
-    /// TODO: hack make better
     const isOperator = await delegationManager.isOperator(wallet.address);
     if (isOperator) {
       return [null, true];
