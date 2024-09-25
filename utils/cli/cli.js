@@ -1,11 +1,22 @@
 #!/usr/bin/env node
-const { program } = require('commander');
-const createStrategyCommand = require('./commands/createStrategyForToken');
+const { Command } = require('commander');
+const { mintMockTokensCommand } = require('./commands/mintMockTokens');
+const {
+  depositIntoStrategyCommand,
+} = require('./commands/depositIntoStrategy');
+const { createStrategyCommand } = require('./commands/createStrategyForToken');
+const { registerAsOperatorCommand } = require('./commands/registerAsOperator');
 
+const program = new Command();
+
+program
+  .name('eigen-cli')
+  .description('CLI for interacting with Eigen contracts')
+  .version('1.0.0');
+
+program.addCommand(mintMockTokensCommand);
+program.addCommand(depositIntoStrategyCommand);
 program.addCommand(createStrategyCommand);
-
-if (!process.argv.slice(2).length) {
-  program.outputHelp();
-}
+program.addCommand(registerAsOperatorCommand);
 
 program.parse(process.argv);

@@ -60,18 +60,20 @@ async function getDeploymentData(deploymentType, chainId) {
   );
   const [error, data] = readJSONFile(filePath);
   if (error) {
-    throw new Error(`Failed to read deployment data: ${error}`);
+    return [error, null];
+  } else {
+    return [null, data];
   }
-  return data;
 }
 
 async function getABI(contractName) {
   const filePath = path.resolve(rootDir, `abis/${contractName}.json`);
   const [error, abi] = readJSONFile(filePath);
   if (error) {
-    throw new Error(`Failed to read ABI: ${error}`);
+    return [error, null];
+  } else {
+    return [null, abi];
   }
-  return abi;
 }
 
 async function getProvider(rpcUrl) {
