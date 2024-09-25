@@ -1,3 +1,4 @@
+const { describe, it, expect } = require('@jest/globals');
 const {
   createStrategyForToken,
 } = require('../utils/cli/commands/createStrategyForToken');
@@ -13,7 +14,7 @@ require('dotenv').config();
 
 describe('commands', () => {
   describe('createStrategyForToken', () => {
-    test('Successfully creates strategy for token', async () => {
+    it('Successfully creates strategy for token', async () => {
       const config = {
         rpcUrl: 'http://localhost:8545',
         privateKey: process.env.PRIVATE_KEY,
@@ -31,7 +32,7 @@ describe('commands', () => {
   });
 
   describe('mintMockTokens', () => {
-    test('Successfully mints mock tokens', async () => {
+    it('Successfully mints mock tokens', async () => {
       const config = {
         rpcUrl: 'http://localhost:8545',
         privateKey: process.env.PRIVATE_KEY,
@@ -47,7 +48,7 @@ describe('commands', () => {
   });
 
   describe('depositIntoStrategy', () => {
-    test('Successfully deposits tokens into strategy', async () => {
+    it('Successfully deposits tokens into strategy', async () => {
       const mintConfig = {
         rpcUrl: 'http://localhost:8545',
         privateKey: process.env.PRIVATE_KEY,
@@ -74,7 +75,7 @@ describe('commands', () => {
   });
 
   describe('registerAsOperator', () => {
-    test('Successfully registers as an operator', async () => {
+    it('Successfully registers as an operator', async () => {
       const config = {
         rpcUrl: 'http://localhost:8545',
         privateKey: process.env.PRIVATE_KEY,
