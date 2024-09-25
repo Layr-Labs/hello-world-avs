@@ -1,15 +1,15 @@
 const {
   createStrategyForToken,
-} = require('../utils/cli/commands/createStrategyForToken')
-const { mintMockTokens } = require('../utils/cli/commands/mintMockTokens')
+} = require('../utils/cli/commands/createStrategyForToken');
+const { mintMockTokens } = require('../utils/cli/commands/mintMockTokens');
 const {
   depositIntoStrategy,
-} = require('../utils/cli/commands/depositIntoStrategy')
+} = require('../utils/cli/commands/depositIntoStrategy');
 
 const {
   registerAsOperator,
-} = require('../utils/cli/commands/registerAsOperator')
-require('dotenv').config()
+} = require('../utils/cli/commands/registerAsOperator');
+require('dotenv').config();
 
 describe('commands', () => {
   describe('createStrategyForToken', () => {
@@ -18,17 +18,17 @@ describe('commands', () => {
         rpcUrl: 'http://localhost:8545',
         privateKey: process.env.PRIVATE_KEY,
         tokenAddress: '',
-      }
+      };
 
-      const [error, result] = await createStrategyForToken(config)
+      const [error, result] = await createStrategyForToken(config);
 
-      expect(error).toBeNull()
-      expect(result).not.toBeNull()
+      expect(error).toBeNull();
+      expect(result).not.toBeNull();
 
-      const zeroAddress = '0x0000000000000000000000000000000000000000'
-      expect(result).not.toBe(zeroAddress)
-    })
-  })
+      const zeroAddress = '0x0000000000000000000000000000000000000000';
+      expect(result).not.toBe(zeroAddress);
+    });
+  });
 
   describe('mintMockTokens', () => {
     test('Successfully mints mock tokens', async () => {
@@ -37,14 +37,14 @@ describe('commands', () => {
         privateKey: process.env.PRIVATE_KEY,
         tokenAddress: '',
         amount: '1000',
-      }
+      };
 
-      const [error, result] = await mintMockTokens(config)
+      const [error, result] = await mintMockTokens(config);
 
-      expect(error).toBeNull()
-      expect(result).not.toBeNull()
-    })
-  })
+      expect(error).toBeNull();
+      expect(result).not.toBeNull();
+    });
+  });
 
   describe('depositIntoStrategy', () => {
     test('Successfully deposits tokens into strategy', async () => {
@@ -52,26 +52,26 @@ describe('commands', () => {
         rpcUrl: 'http://localhost:8545',
         privateKey: process.env.PRIVATE_KEY,
         amount: '2000',
-      }
+      };
 
-      const [mintError, mintResult] = await mintMockTokens(mintConfig)
+      const [mintError, mintResult] = await mintMockTokens(mintConfig);
 
-      expect(mintError).toBeNull()
-      expect(mintResult).not.toBeNull()
+      expect(mintError).toBeNull();
+      expect(mintResult).not.toBeNull();
 
       const depositConfig = {
         rpcUrl: 'http://localhost:8545',
         privateKey: process.env.PRIVATE_KEY,
         amount: '1000',
-      }
+      };
 
       const [depositError, depositResult] =
-        await depositIntoStrategy(depositConfig)
+        await depositIntoStrategy(depositConfig);
 
-      expect(depositError).toBeNull()
-      expect(depositResult).not.toBeNull()
-    })
-  })
+      expect(depositError).toBeNull();
+      expect(depositResult).not.toBeNull();
+    });
+  });
 
   describe('registerAsOperator', () => {
     test('Successfully registers as an operator', async () => {
@@ -79,12 +79,12 @@ describe('commands', () => {
         rpcUrl: 'http://localhost:8545',
         privateKey: process.env.PRIVATE_KEY,
         operatorDetails: {},
-      }
+      };
 
-      const [error, result] = await registerAsOperator(config)
+      const [error, result] = await registerAsOperator(config);
 
-      expect(error).toBeNull()
-      expect(result).not.toBeNull()
-    })
-  })
-})
+      expect(error).toBeNull();
+      expect(result).not.toBeNull();
+    });
+  });
+});
