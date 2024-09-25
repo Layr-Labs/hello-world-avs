@@ -4,6 +4,14 @@ const readJSONFile = require('./readJSONFile');
 
 const rootDir = path.resolve(__dirname, '../../../');
 
+async function initializeChainContext(config = {}) {
+  const provider = await getProvider(config.rpcUrl);
+  const wallet = await getWallet(provider, config.rpcUrl);
+  const chainId = await getChainId(provider);
+
+  return { provider, wallet, chainId };
+}
+
 async function getStrategyFactoryContract(wallet, chainId) {
   const coreDeploymentData = await getDeploymentData('core', chainId);
   const strategyFactoryABI = await getABI('StrategyFactory');
