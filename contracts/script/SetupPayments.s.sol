@@ -38,7 +38,7 @@ contract SetupPayments is Script {
         vm.stopBroadcast();
     }
     //submits the payments on behalf of the AVS
-    function createPaymentSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 duration) internal {
+    function createPaymentSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 duration) public {
 
         IRewardsCoordinator.RewardsSubmission[] memory rewardsSubmissions = new IRewardsCoordinator.RewardsSubmission[](numPayments);
         for (uint256 i = 0; i < numPayments; i++) {
@@ -60,6 +60,38 @@ contract SetupPayments is Script {
         }
 
         IRewardsCoordinator(coreDeployment.rewardsCoordinator).createAVSRewardsSubmission(rewardsSubmissions);
+    }
+
+    function processClaim(string memory filePath, uint256 indexToProve, address recipient) public {
+        []bytes32 memory leaves = new bytes32[](NUM_PAYMENTS);
+        leaves = readPaymentLeavesFromJson(filePath);
+        bytes memory proof = generateMerkleProof(leaves, indexToProve);
+
+        []bytes32 memory tokenLeaves = new bytes32[](NUM_TOKEN_EARNINGS);
+        tokenLeaves = readTokenLeavesFromJson(tokenLeavesFilePath);
+        //we assuming only 1 token for now, default index is 0
+        bytes memory tokenProof = generateMerkleProof(tokenLeaves, 0);
+
+        uint32[] memory tokenIndices = new uint32[](NUM_TOKEN_EARNINGS);
+        bytes[] memory tokenProofs = new bytes[](NUM_TOKEN_EARNINGS);
+        tokenProofs[0] = tokenProof;
+
+
+        IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf =  readEarnerLeafFromJson(filePath);
+
+
+        IRewardsCoordinator.RewardsClaim memory claim = IRewardsCoordinator.RewardsClaim({
+            rootIndex: 0,
+            earnerIndex: indexToProve,
+            earnerTreeProof: proof,
+            earnerLeaf: earnerLeaf,
+            tokenIndices: tokenIndices,
+            tokenTreeProofs: tokenProofs,
+            tokenLeaves: tokenLeaves
+        });
+
+        IRewardsCoordinator(coreDeployment.rewardsCoordinator).processRewardsClaim(claim, recipient);
+
     }
 
     function submitPaymentRoot(address[] calldata earners) public {
@@ -106,6 +138,44 @@ contract SetupPayments is Script {
         }
         leavesJson = string.concat(leavesJson, "]");
         vm.writeFile(path, leavesJson);
+    }
+
+
+    function generateMerkleProof(bytes32[] memory leaves, uint256 index) internal pure returns (bytes memory) {
+        require(leaves.length > 0, "Leaves array cannot be empty");
+        require(index < leaves.length, "Index out of bounds");
+
+        uint256 n = leaves.length;
+        uint256 depth = 0;
+        while ((1 << depth) < n) {
+            depth++;
+        }
+
+        bytes32[] memory proof = new bytes32[](depth);
+        uint256 proofIndex = 0;
+
+        for (uint256 i = 0; i < depth; i++) {
+            uint256 levelSize = (n + 1) / 2;
+            uint256 siblingIndex = (index % 2 == 0) ? index + 1 : index - 1;
+
+            if (siblingIndex < n) {
+                proof[proofIndex] = leaves[siblingIndex];
+                proofIndex++;
+            }
+
+            for (uint256 j = 0; j < levelSize; j++) {
+                if (2 * j + 1 < n) {
+                    leaves[j] = keccak256(abi.encodePacked(leaves[2 * j], leaves[2 * j + 1]));
+                } else {
+                    leaves[j] = leaves[2 * j];
+                }
+            }
+
+            n = levelSize;
+            index /= 2;
+        }
+
+        return abi.encodePacked(proof);
     }
 
     function merkleizeKeccak(bytes32[] memory leaves) internal pure returns (bytes32) {
