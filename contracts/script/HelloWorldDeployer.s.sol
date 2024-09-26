@@ -54,6 +54,7 @@ contract HelloWorldDeployer is Script {
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
 
         helloWorldDeployment.strategy = address(helloWorldStrategy);
+        helloWorldDeployment.token = address(token);
         vm.stopBroadcast();
 
         verifyDeployment();

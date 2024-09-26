@@ -27,6 +27,7 @@ library HelloWorldDeploymentLib {
         address helloWorldServiceManager;
         address stakeRegistry;
         address strategy;
+        address token;
     }
 
     function deployContracts(
