@@ -2,9 +2,10 @@
   "name": "hello-world-avs",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start:operator": "ts-node operator/index.ts",
-    "start:traffic": "ts-node operator/createNewTasks.ts",
+    "start:operator": "tsx operator/index.ts",
+    "start:traffic": "tsx operator/createNewTasks.ts",
     "start:anvil": "anvil",
     "deploy:core": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast",
     "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast",
@@ -15,11 +16,15 @@
   },
   "dependencies": {
     "dotenv": "^10.0.0",
-    "ethers": "^6.13.2"
+    "ethers": "^6.13.2",
+    "wagmi": "^2.12.14"
   },
   "devDependencies": {
+    "@types/dotenv": "^6.1.1",
     "@types/node": "^20.12.12",
+    "@wagmi/cli": "^2.1.16",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.1",
     "typescript": "^5.4.5"
   }
 }
