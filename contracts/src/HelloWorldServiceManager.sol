@@ -7,6 +7,7 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
+import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -71,20 +72,12 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         Task calldata task,
         uint32 referenceTaskIndex,
         bytes calldata signature
-    ) external onlyOperator {
-            
-            // TODO Temporarily disabling this until we add in staking & delegation to the Operator scripts.
-            /** require(
-                operatorHasMinimumWeight(msg.sender),
-                string(abi.encodePacked(
-                    "Operator does not have match the weight requirements. ",
-                    "Operator weight=", 
-                    Strings.toString(ECDSAStakeRegistry(stakeRegistry).getLastCheckpointOperatorWeight(msg.sender)),
-                    ", Threshold weight=", 
-                    Strings.toString(ECDSAStakeRegistry(stakeRegistry).getLastCheckpointThresholdWeight())
-                ))
-            );
-            */
+    ) external {
+        bytes32 taskDigest;
+        bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
+        if (!(magicValue == ECDSAStakeRegistry(stakeRegistry).isValidSignature(taskDigest,signature))){
+            revert();
+        }
 
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
@@ -110,12 +103,5 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
-    }
-
-    function operatorHasMinimumWeight(
-        address operator
-    ) public view returns (bool) {
-        return ECDSAStakeRegistry(stakeRegistry).getLastCheckpointOperatorWeight(operator)
-            >= ECDSAStakeRegistry(stakeRegistry).getLastCheckpointThresholdWeight();
     }
 }

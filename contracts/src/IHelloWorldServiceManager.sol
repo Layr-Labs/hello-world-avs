@@ -22,10 +22,6 @@ interface IHelloWorldServiceManager {
         uint32 taskIndex
     ) external view returns (bytes memory);
 
-    function operatorHasMinimumWeight(
-        address operator
-    ) external view returns (bool);
-
     function createNewTask(
         string memory name
     ) external returns (Task memory);
