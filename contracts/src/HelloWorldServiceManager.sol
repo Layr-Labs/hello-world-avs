@@ -71,14 +71,8 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     function respondToTask(
         Task calldata task,
         uint32 referenceTaskIndex,
-        bytes calldata signature
+        bytes memory signature
     ) external {
-        bytes32 taskDigest;
-        bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
-        if (!(magicValue == ECDSAStakeRegistry(stakeRegistry).isValidSignature(taskDigest,signature))){
-            revert();
-        }
-
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
             keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
@@ -92,11 +86,10 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         // The message that was signed
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-
-        // Recover the signer address from the signature
-        address signer = ethSignedMessageHash.recover(signature);
-
-        require(signer == msg.sender, "Message signer is not operator");
+        bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
+        if (!(magicValue == ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash,signature))){
+            revert();
+        }
 
         // updating the storage with task responses
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
