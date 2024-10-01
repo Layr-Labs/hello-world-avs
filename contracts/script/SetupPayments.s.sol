@@ -66,7 +66,7 @@ contract SetupPayments is Script {
         IRewardsCoordinator(coreDeployment.rewardsCoordinator).createAVSRewardsSubmission(rewardsSubmissions);
     }
 
-    function processClaim(string memory filePath, uint256 indexToProve, address recipient, IRewardsCoordinator.EarnerTreeMerkleLeaf earnerLeaf) public {
+    function processClaim(string memory filePath, uint256 indexToProve, address recipient, IRewardsCoordinator.EarnerTreeMerkleLeaf calldata earnerLeaf) public {
         
         PaymentLeaves memory paymentLeaves = parseLeavesFromJson(filePath);
         
@@ -78,10 +78,15 @@ contract SetupPayments is Script {
         bytes[] memory tokenProofs = new bytes[](NUM_TOKEN_EARNINGS);
         tokenProofs[0] = tokenProof;
 
+        IRewardsCoordinator.TokenTreeMerkleLeaf[] memory tokenLeaves = new IRewardsCoordinator.TokenTreeMerkleLeaf[](NUM_TOKEN_EARNINGS);
+        tokenLeaves[0] = defaultTokenLeaf();
+        
 
-        IRewardsCoordinator.RewardsClaim memory claim = IRewardsCoordinator.RewardsClaim({
+
+
+        IRewardsCoordinator.RewardsMerkleClaim memory claim = IRewardsCoordinator.RewardsMerkleClaim({
             rootIndex: 0,
-            earnerIndex: indexToProve,
+            earnerIndex: uint32(indexToProve),
             earnerTreeProof: proof,
             earnerLeaf: earnerLeaf,
             tokenIndices: tokenIndices,
@@ -89,7 +94,7 @@ contract SetupPayments is Script {
             tokenLeaves: tokenLeaves
         });
 
-        IRewardsCoordinator(coreDeployment.rewardsCoordinator).processRewardsClaim(claim, recipient);
+        IRewardsCoordinator(coreDeployment.rewardsCoordinator).processClaim(claim, recipient);
 
     }
 
@@ -116,31 +121,36 @@ contract SetupPayments is Script {
             earnerLeaves[i] = leaf;
         }
         writeLeavesToJson(leaves, tokenLeaves);
-        return merkleizeSha256(leaves);
+        return merkleizeKeccak(leaves);
     }
 
     //create individual payment leaves' token root that goes into earner leaf
-    function createTokenRoot(bytes32[] calldata tokenLeaves) public returns(bytes32) {
+    function createTokenRoot(bytes32[] memory tokenLeaves) public returns(bytes32) {
         return merkleizeKeccak(tokenLeaves);   
     }
 
     function createTokenLeaves() public returns(bytes32[] memory) {
         bytes32[] memory leaves = new bytes32[](NUM_TOKEN_EARNINGS);
         for (uint256 i = 0; i < NUM_TOKEN_EARNINGS; i++) {
-            IRewardsCoordinator.TokenTreeMerkleLeaf memory leaf = IRewardsCoordinator.TokenTreeMerkleLeaf({
-                token: IStrategy(helloWorldDeployment.strategy).underlyingToken(),
-                cumulativeEarnings: TOKEN_EARNINGS
-            });
+            IRewardsCoordinator.TokenTreeMerkleLeaf memory leaf = defaultTokenLeaf();
             leaves[i] = IRewardsCoordinator(coreDeployment.rewardsCoordinator).calculateTokenLeafHash(leaf);
         }
         return leaves;
     }
 
+    function defaultTokenLeaf() public returns(IRewardsCoordinator.TokenTreeMerkleLeaf memory) {
+        IRewardsCoordinator.TokenTreeMerkleLeaf memory leaf = IRewardsCoordinator.TokenTreeMerkleLeaf({
+            token: IStrategy(helloWorldDeployment.strategy).underlyingToken(),
+            cumulativeEarnings: TOKEN_EARNINGS
+        });
+        return leaf;
+    }
+
 
     function writeLeavesToJson(bytes32[] memory leaves, bytes32[] memory tokenLeaves) public {
         string memory parent_object = "parent_object";
-        vm.serialize(parent_object, "leaves", leaves);
-        string memory finalJson = vm.serialize(parent_object, "tokenLeaves", tokenLeaves);
+        vm.serializeBytes32(parent_object, "leaves", leaves);
+        string memory finalJson = vm.serializeBytes32(parent_object, "tokenLeaves", tokenLeaves);
         vm.writeJson(finalJson, "payments.json");
     }
 

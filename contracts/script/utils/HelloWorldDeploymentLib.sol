@@ -140,6 +140,8 @@ library HelloWorldDeploymentLib {
             data.stakeRegistry.getImplementation().toHexString(),
             '","strategy":"',
             data.strategy.toHexString(),
+            '","token":"',
+            data.token.toHexString(),
              '"}'
         );
     }
