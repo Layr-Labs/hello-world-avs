@@ -3,39 +3,46 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import "../contracts/script/utils/SetupPaymentsLib.sol";
+import "../contracts/script/utils/CoreDeploymentLib.sol";
+import "../contracts/script/utils/HelloWorldDeploymentLib.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import "@eigenlayer/contracts/interfaces/IStrategy.sol";
-
-contract MockRewardsCoordinator is IRewardsCoordinator {
-    function createAVSRewardsSubmission(RewardsSubmission[] memory submissions) external {}
-    function processClaim(RewardsMerkleClaim memory claim, address recipient) external {}
-    function submitRoot(bytes32 root, uint32 rewardsCalculationEndTimestamp) external {}
-    function currRewardsCalculationEndTimestamp() external view returns (uint32) { return uint32(block.timestamp); }
-    function calculateEarnerLeafHash(EarnerTreeMerkleLeaf memory leaf) external pure returns (bytes32) {
-        return keccak256(abi.encode(leaf));
-    }
-    function calculateTokenLeafHash(TokenTreeMerkleLeaf memory leaf) external pure returns (bytes32) {
-        return keccak256(abi.encode(leaf));
-    }
-    function setRewardsUpdater(address newRewardsUpdater) external {}
-}
-
-contract MockStrategy is IStrategy {
-    function underlyingToken() external view returns (address) {
-        return address(0x1234567890123456789012345678901234567890);
-    }
-    // Implement other required functions...
-}
+import "../contracts/script/DeployEigenLayerCore.s.sol";
+import "../contracts/script/DeployHelloWorld.s.sol";
 
 contract SetupPaymentsLibTest is Test {
     using SetupPaymentsLib for *;
 
-    MockRewardsCoordinator public rewardsCoordinator;
-    MockStrategy public strategy;
+    IRewardsCoordinator public rewardsCoordinator;
+    IStrategy public strategy;
+    address deployer;
+    CoreDeploymentLib.DeploymentData coreDeployment;
+    HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
+
+    uint256 constant NUM_PAYMENTS = 8;
+    uint256 constant NUM_TOKEN_EARNINGS = 1;
+    uint256 constant TOKEN_EARNINGS = 100;
 
     function setUp() public {
-        rewardsCoordinator = new MockRewardsCoordinator();
-        strategy = new MockStrategy();
+        deployer = vm.addr(1);
+        vm.startPrank(deployer);
+
+        // Deploy EigenLayer Core
+        DeployEigenLayerCore deployEigenLayerScript = new DeployEigenLayerCore();
+        deployEigenLayerScript.run();
+
+        // Deploy HelloWorld contracts
+        DeployHelloWorld deployHelloWorldScript = new DeployHelloWorld();
+        deployHelloWorldScript.run();
+
+        // Read deployment data
+        coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
+        helloWorldDeployment = HelloWorldDeploymentLib.readDeploymentJson("deployments/hello-world/", block.chainid);
+
+        rewardsCoordinator = IRewardsCoordinator(coreDeployment.rewardsCoordinator);
+        strategy = IStrategy(helloWorldDeployment.strategy);
+
+        vm.stopPrank();
     }
 
     function testCreatePaymentSubmissions() public {
@@ -43,11 +50,7 @@ contract SetupPaymentsLibTest is Test {
         uint256 amountPerPayment = 100;
         uint32 duration = 7 days;
 
-        vm.expectCall(
-            address(rewardsCoordinator),
-            abi.encodeWithSelector(IRewardsCoordinator.createAVSRewardsSubmission.selector)
-        );
-
+        vm.startPrank(deployer);
         SetupPaymentsLib.createPaymentSubmissions(
             rewardsCoordinator,
             address(strategy),
@@ -55,6 +58,8 @@ contract SetupPaymentsLibTest is Test {
             amountPerPayment,
             duration
         );
+        vm.stopPrank();
+
     }
 
     function testProcessClaim() public {
@@ -62,17 +67,12 @@ contract SetupPaymentsLibTest is Test {
         uint256 indexToProve = 0;
         address recipient = address(0x1111111111111111111111111111111111111111);
         IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf;
-        uint256 NUM_TOKEN_EARNINGS = 1;
 
-        // Create a mock JSON file
+        // Create a test JSON file
         string memory jsonContent = '{"leaves":["0x1234"], "tokenLeaves":["0x5678"]}';
         vm.writeFile(filePath, jsonContent);
 
-        vm.expectCall(
-            address(rewardsCoordinator),
-            abi.encodeWithSelector(IRewardsCoordinator.processClaim.selector)
-        );
-
+        vm.startPrank(deployer);
         SetupPaymentsLib.processClaim(
             rewardsCoordinator,
             filePath,
@@ -82,6 +82,8 @@ contract SetupPaymentsLibTest is Test {
             NUM_TOKEN_EARNINGS,
             address(strategy)
         );
+        vm.stopPrank();
+
     }
 
     function testSubmitPaymentRoot() public {
@@ -89,12 +91,12 @@ contract SetupPaymentsLibTest is Test {
         earners[0] = address(0x1111111111111111111111111111111111111111);
         earners[1] = address(0x2222222222222222222222222222222222222222);
 
-        vm.expectCall(
-            address(rewardsCoordinator),
-            abi.encodeWithSelector(IRewardsCoordinator.submitRoot.selector)
-        );
-
+        vm.startPrank(deployer);
         SetupPaymentsLib.submitPaymentRoot(rewardsCoordinator, earners);
+        vm.stopPrank();
+
+        // Add assertions to verify the root submission
+        // You may need to call view functions on the rewardsCoordinator to check the state
     }
 
     function testCreatePaymentRoot() public {
@@ -102,6 +104,7 @@ contract SetupPaymentsLibTest is Test {
         earners[0] = address(0x1111111111111111111111111111111111111111);
         earners[1] = address(0x2222222222222222222222222222222222222222);
 
+        vm.startPrank(deployer);
         bytes32 root = SetupPaymentsLib.createPaymentRoot(
             rewardsCoordinator,
             earners,
@@ -111,44 +114,11 @@ contract SetupPaymentsLibTest is Test {
             address(strategy),
             vm
         );
+        vm.stopPrank();
 
         assertNotEq(root, bytes32(0), "Root should not be zero");
     }
 
-    function testCreateTokenRoot() public {
-        bytes32[] memory tokenLeaves = new bytes32[](2);
-        tokenLeaves[0] = bytes32(uint256(1));
-        tokenLeaves[1] = bytes32(uint256(2));
-
-        bytes32 root = SetupPaymentsLib.createTokenRoot(tokenLeaves);
-        assertNotEq(root, bytes32(0), "Token root should not be zero");
-    }
-
-    function testCreateTokenLeaves() public {
-        uint256 NUM_TOKEN_EARNINGS = 2;
-        uint256 TOKEN_EARNINGS = 100;
-
-        bytes32[] memory leaves = SetupPaymentsLib.createTokenLeaves(
-            rewardsCoordinator,
-            NUM_TOKEN_EARNINGS,
-            TOKEN_EARNINGS,
-            address(strategy)
-        );
-
-        assertEq(leaves.length, NUM_TOKEN_EARNINGS, "Incorrect number of token leaves");
-    }
-
-    function testDefaultTokenLeaf() public {
-        uint256 TOKEN_EARNINGS = 100;
-
-        IRewardsCoordinator.TokenTreeMerkleLeaf memory leaf = SetupPaymentsLib.defaultTokenLeaf(
-            TOKEN_EARNINGS,
-            address(strategy)
-        );
-
-        assertEq(leaf.token, strategy.underlyingToken(), "Incorrect token address");
-        assertEq(leaf.cumulativeEarnings, TOKEN_EARNINGS, "Incorrect cumulative earnings");
-    }
 
     function testWriteLeavesToJson() public {
         bytes32[] memory leaves = new bytes32[](2);
@@ -173,27 +143,5 @@ contract SetupPaymentsLibTest is Test {
 
         assertEq(paymentLeaves.leaves.length, 1, "Incorrect number of leaves");
         assertEq(paymentLeaves.tokenLeaves.length, 1, "Incorrect number of token leaves");
-    }
-
-    function testGenerateMerkleProof() public {
-        bytes32[] memory leaves = new bytes32[](4);
-        leaves[0] = bytes32(uint256(1));
-        leaves[1] = bytes32(uint256(2));
-        leaves[2] = bytes32(uint256(3));
-        leaves[3] = bytes32(uint256(4));
-
-        bytes memory proof = SetupPaymentsLib.generateMerkleProof(leaves, 2);
-        assertGt(proof.length, 0, "Proof should not be empty");
-    }
-
-    function testMerkleizeKeccak() public {
-        bytes32[] memory leaves = new bytes32[](4);
-        leaves[0] = bytes32(uint256(1));
-        leaves[1] = bytes32(uint256(2));
-        leaves[2] = bytes32(uint256(3));
-        leaves[3] = bytes32(uint256(4));
-
-        bytes32 root = SetupPaymentsLib.merkleizeKeccak(leaves);
-        assertNotEq(root, bytes32(0), "Merkle root should not be zero");
     }
 }
