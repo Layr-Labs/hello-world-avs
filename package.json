@@ -11,7 +11,7 @@
     "deploy:core-debug": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "deploy:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "build": "cd contracts && forge build",
-    "extract:abis": "npm run build && node utils/abis.js"
+    "extract:abis": "node utils/abis.js"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
