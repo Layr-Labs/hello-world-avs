@@ -18,7 +18,26 @@ library SetupPaymentsLib {
         uint256 amountPerPayment,
         uint32 duration
     ) public {
-        // ... (copy the function body from SetupPayments.s.sol)
+        IRewardsCoordinator.RewardsSubmission[] memory rewardsSubmissions = new IRewardsCoordinator.RewardsSubmission[](numPayments);
+        for (uint256 i = 0; i < numPayments; i++) {
+            IRewardsCoordinator.StrategyAndMultiplier[] memory strategiesAndMultipliers = new IRewardsCoordinator.StrategyAndMultiplier[](1);
+            strategiesAndMultipliers[0] = IRewardsCoordinator.StrategyAndMultiplier({
+                strategy: IStrategy(strategy),
+                multiplier: 10000
+            });
+
+            IRewardsCoordinator.RewardsSubmission memory rewardsSubmission = IRewardsCoordinator.RewardsSubmission({
+                strategiesAndMultipliers: strategiesAndMultipliers,
+                token: IStrategy(strategy).underlyingToken(),
+                amount: amountPerPayment,
+                startTimestamp: uint32(block.timestamp),
+                duration: duration
+            });
+
+            rewardsSubmissions[i] = rewardsSubmission;
+        }
+
+        rewardsCoordinator.createAVSRewardsSubmission(rewardsSubmissions);
     }
 
     function processClaim(
@@ -30,14 +49,38 @@ library SetupPaymentsLib {
         uint256 NUM_TOKEN_EARNINGS,
         address strategy
     ) public {
-        // ... (copy the function body from SetupPayments.s.sol)
+        PaymentLeaves memory paymentLeaves = parseLeavesFromJson(filePath, Vm(address(0)));
+        
+        bytes memory proof = generateMerkleProof(paymentLeaves.leaves, indexToProve);
+        bytes memory tokenProof = generateMerkleProof(paymentLeaves.tokenLeaves, 0);
+
+        uint32[] memory tokenIndices = new uint32[](NUM_TOKEN_EARNINGS);
+        bytes[] memory tokenProofs = new bytes[](NUM_TOKEN_EARNINGS);
+        tokenProofs[0] = tokenProof;
+
+        IRewardsCoordinator.TokenTreeMerkleLeaf[] memory tokenLeaves = new IRewardsCoordinator.TokenTreeMerkleLeaf[](NUM_TOKEN_EARNINGS);
+        tokenLeaves[0] = defaultTokenLeaf(100, strategy);
+
+        IRewardsCoordinator.RewardsMerkleClaim memory claim = IRewardsCoordinator.RewardsMerkleClaim({
+            rootIndex: 0,
+            earnerIndex: uint32(indexToProve),
+            earnerTreeProof: proof,
+            earnerLeaf: earnerLeaf,
+            tokenIndices: tokenIndices,
+            tokenTreeProofs: tokenProofs,
+            tokenLeaves: tokenLeaves
+        });
+
+        rewardsCoordinator.processClaim(claim, recipient);
     }
 
     function submitPaymentRoot(
         IRewardsCoordinator rewardsCoordinator,
         address[] calldata earners
     ) public {
-        // ... (copy the function body from SetupPayments.s.sol)
+        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, earners, earners.length, 1, 100, address(0), Vm(address(0)));
+        uint32 rewardsCalculationEndTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() + 1 weeks;
+        rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
 
     function createPaymentRoot(
@@ -49,11 +92,25 @@ library SetupPaymentsLib {
         address strategy,
         Vm vm
     ) public returns (bytes32) {
-        // ... (copy the function body from SetupPayments.s.sol)
+        require(earners.length == NUM_PAYMENTS, "Number of earners must match number of payments");
+        bytes32[] memory leaves = new bytes32[](NUM_PAYMENTS);
+        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves = new IRewardsCoordinator.EarnerTreeMerkleLeaf[](NUM_PAYMENTS);
+        
+        bytes32[] memory tokenLeaves = createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
+        for (uint256 i = 0; i < NUM_PAYMENTS; i++) {
+            IRewardsCoordinator.EarnerTreeMerkleLeaf memory leaf = IRewardsCoordinator.EarnerTreeMerkleLeaf({
+                earner: earners[i],
+                earnerTokenRoot: createTokenRoot(tokenLeaves)
+            });
+            leaves[i] = rewardsCoordinator.calculateEarnerLeafHash(leaf);
+            earnerLeaves[i] = leaf;
+        }
+        writeLeavesToJson(leaves, tokenLeaves, vm);
+        return merkleizeKeccak(leaves);
     }
 
     function createTokenRoot(bytes32[] memory tokenLeaves) public pure returns (bytes32) {
-        // ... (copy the function body from SetupPayments.s.sol)
+        return merkleizeKeccak(tokenLeaves);   
     }
 
     function createTokenLeaves(
@@ -62,14 +119,23 @@ library SetupPaymentsLib {
         uint256 TOKEN_EARNINGS,
         address strategy
     ) public returns (bytes32[] memory) {
-        // ... (copy the function body from SetupPayments.s.sol)
+        bytes32[] memory leaves = new bytes32[](NUM_TOKEN_EARNINGS);
+        for (uint256 i = 0; i < NUM_TOKEN_EARNINGS; i++) {
+            IRewardsCoordinator.TokenTreeMerkleLeaf memory leaf = defaultTokenLeaf(TOKEN_EARNINGS, strategy);
+            leaves[i] = rewardsCoordinator.calculateTokenLeafHash(leaf);
+        }
+        return leaves;
     }
 
     function defaultTokenLeaf(
         uint256 TOKEN_EARNINGS,
         address strategy
     ) public view returns (IRewardsCoordinator.TokenTreeMerkleLeaf memory) {
-        // ... (copy the function body from SetupPayments.s.sol)
+        IRewardsCoordinator.TokenTreeMerkleLeaf memory leaf = IRewardsCoordinator.TokenTreeMerkleLeaf({
+            token: IStrategy(strategy).underlyingToken(),
+            cumulativeEarnings: TOKEN_EARNINGS
+        });
+        return leaf;
     }
 
     function writeLeavesToJson(
@@ -77,18 +143,68 @@ library SetupPaymentsLib {
         bytes32[] memory tokenLeaves,
         Vm vm
     ) public {
-        // ... (copy the function body from SetupPayments.s.sol)
+        string memory parent_object = "parent_object";
+        vm.serializeBytes32(parent_object, "leaves", leaves);
+        string memory finalJson = vm.serializeBytes32(parent_object, "tokenLeaves", tokenLeaves);
+        vm.writeJson(finalJson, "payments.json");
     }
 
     function parseLeavesFromJson(string memory filePath, Vm vm) public returns (PaymentLeaves memory) {
-        // ... (copy the function body from SetupPayments.s.sol)
+        string memory json = vm.readFile(filePath);
+        bytes memory data = vm.parseJson(json);
+        return abi.decode(data, (PaymentLeaves));
     }
 
     function generateMerkleProof(bytes32[] memory leaves, uint256 index) internal pure returns (bytes memory) {
-        // ... (copy the function body from SetupPayments.s.sol)
+        require(leaves.length > 0, "Leaves array cannot be empty");
+        require(index < leaves.length, "Index out of bounds");
+
+        uint256 n = leaves.length;
+        uint256 depth = 0;
+        while ((1 << depth) < n) {
+            depth++;
+        }
+
+        bytes32[] memory proof = new bytes32[](depth);
+        uint256 proofIndex = 0;
+
+        for (uint256 i = 0; i < depth; i++) {
+            uint256 levelSize = (n + 1) / 2;
+            uint256 siblingIndex = (index % 2 == 0) ? index + 1 : index - 1;
+
+            if (siblingIndex < n) {
+                proof[proofIndex] = leaves[siblingIndex];
+                proofIndex++;
+            }
+
+            for (uint256 j = 0; j < levelSize; j++) {
+                if (2 * j + 1 < n) {
+                    leaves[j] = keccak256(abi.encodePacked(leaves[2 * j], leaves[2 * j + 1]));
+                } else {
+                    leaves[j] = leaves[2 * j];
+                }
+            }
+
+            n = levelSize;
+            index /= 2;
+        }
+
+        return abi.encodePacked(proof);
     }
 
     function merkleizeKeccak(bytes32[] memory leaves) internal pure returns (bytes32) {
-        // ... (copy the function body from SetupPayments.s.sol)
+        uint256 numNodesInLayer = leaves.length / 2;
+        bytes32[] memory layer = new bytes32[](numNodesInLayer);
+        for (uint256 i = 0; i < numNodesInLayer; i++) {
+            layer[i] = keccak256(abi.encodePacked(leaves[2 * i], leaves[2 * i + 1]));
+        }
+        numNodesInLayer /= 2;
+        while (numNodesInLayer != 0) {
+            for (uint256 i = 0; i < numNodesInLayer; i++) {
+                layer[i] = keccak256(abi.encodePacked(layer[2 * i], layer[2 * i + 1]));
+            }
+            numNodesInLayer /= 2;
+        }
+        return layer[0];
     }
 }
