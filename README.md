@@ -1,10 +1,12 @@
 # Hello World AVS
 
-Welcome to the Hello World AVS. This project shows you the simplest functionality you can expect from an AVS. It will give you a concrete understanding of the basic components.
+Welcome to the Hello World AVS. This project shows you the simplest functionality you can expect from an AVS. It will give you a concrete understanding of the basic components. For new users, please find [this video walkthrough](https://drive.google.com/file/d/1P6uA6kYWCbpeorTjADuoTlQ-q8uqwPZf/view?usp=sharing) of the hello world AVS repository.
+
+## Architecture
 
 ![hello-world-png](./assets/hello-world-diagramv2.png)
 
-## AVS User Flow
+### AVS User Flow
 
 1) AVS consumer requests a "Hello World" message to be generated and signed.
 2) HelloWorld contract receives the request and emits a NewTaskCreated event for the request.
