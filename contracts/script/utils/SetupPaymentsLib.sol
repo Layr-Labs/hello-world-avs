@@ -157,7 +157,7 @@ library SetupPaymentsLib {
         return abi.decode(data, (PaymentLeaves));
     }
 
-    function generateMerkleProof(bytes32[] memory leaves, uint256 index) internal pure returns (bytes memory) {
+    function generateMerkleProof(bytes32[] memory leaves, uint256 index) public pure returns (bytes memory) {
         require(leaves.length > 0, "Leaves array cannot be empty");
         require(index < leaves.length, "Index out of bounds");
 

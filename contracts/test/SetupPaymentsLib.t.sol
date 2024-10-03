@@ -72,30 +72,46 @@ contract SetupPaymentsLibTest is Test, TestConstants {
     // }
 
 
-    // function testWriteLeavesToJson() public {
-    //     bytes32[] memory leaves = new bytes32[](2);
-    //     leaves[0] = bytes32(uint256(1));
-    //     leaves[1] = bytes32(uint256(2));
+    function testWriteLeavesToJson() public {
+        bytes32[] memory leaves = new bytes32[](2);
+        leaves[0] = bytes32(uint256(1));
+        leaves[1] = bytes32(uint256(2));
 
-    //     bytes32[] memory tokenLeaves = new bytes32[](2);
-    //     tokenLeaves[0] = bytes32(uint256(3));
-    //     tokenLeaves[1] = bytes32(uint256(4));
+        bytes32[] memory tokenLeaves = new bytes32[](2);
+        tokenLeaves[0] = bytes32(uint256(3));
+        tokenLeaves[1] = bytes32(uint256(4));
 
-    //     SetupPaymentsLib.writeLeavesToJson(leaves, tokenLeaves, vm);
+        SetupPaymentsLib.writeLeavesToJson(leaves, tokenLeaves);
 
-    //     assertTrue(vm.exists("payments.json"), "JSON file should be created");
-    // }
+        assertTrue(vm.exists("payments.json"), "JSON file should be created");
+    }
 
-    // function testParseLeavesFromJson() public {
-    //     string memory filePath = "test_parse_payments.json";
-    //     string memory jsonContent = '{"leaves":["0x1234"], "tokenLeaves":["0x5678"]}';
-    //     vm.writeFile(filePath, jsonContent);
+    function testParseLeavesFromJson() public {
+        string memory filePath = "test_parse_payments.json";
+        string memory jsonContent = '{"leaves":["0x1234"], "tokenLeaves":["0x5678"]}';
+        vm.writeFile(filePath, jsonContent);
 
-    //     SetupPaymentsLib.PaymentLeaves memory paymentLeaves = SetupPaymentsLib.parseLeavesFromJson(filePath, vm);
+        SetupPaymentsLib.PaymentLeaves memory paymentLeaves = SetupPaymentsLib.parseLeavesFromJson(filePath);
 
-    //     assertEq(paymentLeaves.leaves.length, 1, "Incorrect number of leaves");
-    //     assertEq(paymentLeaves.tokenLeaves.length, 1, "Incorrect number of token leaves");
-    // }
+        assertEq(paymentLeaves.leaves.length, 1, "Incorrect number of leaves");
+        assertEq(paymentLeaves.tokenLeaves.length, 1, "Incorrect number of token leaves");
+    }
+
+    function testGenerateMerkleProof() public {
+        SetupPaymentsLib.PaymentLeaves memory paymentLeaves = SetupPaymentsLib.parseLeavesFromJson("test/mockData/scratch/payment_leaves.json");
+
+        bytes32[] memory leaves = paymentLeaves.leaves;
+        uint256 indexToProve = 0;
+
+        bytes32[] memory proof = new bytes32[](2);
+        proof[0] = leaves[1];
+        proof[1] = keccak256(abi.encodePacked(leaves[2], leaves[3]));
+        
+        bytes memory proofBytes1 = abi.encodePacked(proof);
+        bytes memory proofBytes2 = SetupPaymentsLib.generateMerkleProof(leaves, indexToProve);
+
+        require(keccak256(proofBytes1) == keccak256(proofBytes2), "Proofs do not match");
+    }
  
      function testProcessClaim() public {
         string memory filePath = "test/mockData/scratch/payment_leaves.json";
@@ -126,9 +142,6 @@ contract SetupPaymentsLibTest is Test, TestConstants {
             amountPerPayment,
             duration
         );
-
-        // The checks are performed inside the MockRewardsCoordinator
-        // If the function doesn't revert, it means all checks passed
     }
 }
 
