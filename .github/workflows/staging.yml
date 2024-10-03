@@ -1,4 +1,4 @@
-name: Daily Build And Test Staging
+name: Daily Build And Test Dev
 
 on:
   workflow_dispatch:
