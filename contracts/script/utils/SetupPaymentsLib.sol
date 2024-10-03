@@ -6,6 +6,10 @@ import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategy
 import {Vm} from "forge-std/Vm.sol";
 
 library SetupPaymentsLib {
+
+    Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+
+
     struct PaymentLeaves {
         bytes32[] leaves;
         bytes32[] tokenLeaves;
@@ -49,7 +53,7 @@ library SetupPaymentsLib {
         uint256 NUM_TOKEN_EARNINGS,
         address strategy
     ) public {
-        PaymentLeaves memory paymentLeaves = parseLeavesFromJson(filePath, Vm(address(0)));
+        PaymentLeaves memory paymentLeaves = parseLeavesFromJson(filePath);
         
         bytes memory proof = generateMerkleProof(paymentLeaves.leaves, indexToProve);
         bytes memory tokenProof = generateMerkleProof(paymentLeaves.tokenLeaves, 0);
@@ -78,7 +82,7 @@ library SetupPaymentsLib {
         IRewardsCoordinator rewardsCoordinator,
         address[] calldata earners
     ) public {
-        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, earners, earners.length, 1, 100, address(0), Vm(address(0)));
+        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, earners, earners.length, 1, 100, address(0));
         uint32 rewardsCalculationEndTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() + 1 weeks;
         rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
@@ -89,8 +93,7 @@ library SetupPaymentsLib {
         uint256 NUM_PAYMENTS,
         uint256 NUM_TOKEN_EARNINGS,
         uint256 TOKEN_EARNINGS,
-        address strategy,
-        Vm vm
+        address strategy
     ) public returns (bytes32) {
         require(earners.length == NUM_PAYMENTS, "Number of earners must match number of payments");
         bytes32[] memory leaves = new bytes32[](NUM_PAYMENTS);
@@ -105,7 +108,7 @@ library SetupPaymentsLib {
             leaves[i] = rewardsCoordinator.calculateEarnerLeafHash(leaf);
             earnerLeaves[i] = leaf;
         }
-        writeLeavesToJson(leaves, tokenLeaves, vm);
+        writeLeavesToJson(leaves, tokenLeaves);
         return merkleizeKeccak(leaves);
     }
 
@@ -140,8 +143,7 @@ library SetupPaymentsLib {
 
     function writeLeavesToJson(
         bytes32[] memory leaves,
-        bytes32[] memory tokenLeaves,
-        Vm vm
+        bytes32[] memory tokenLeaves
     ) public {
         string memory parent_object = "parent_object";
         vm.serializeBytes32(parent_object, "leaves", leaves);
@@ -149,7 +151,7 @@ library SetupPaymentsLib {
         vm.writeJson(finalJson, "payments.json");
     }
 
-    function parseLeavesFromJson(string memory filePath, Vm vm) public returns (PaymentLeaves memory) {
+    function parseLeavesFromJson(string memory filePath) public returns (PaymentLeaves memory) {
         string memory json = vm.readFile(filePath);
         bytes memory data = vm.parseJson(json);
         return abi.decode(data, (PaymentLeaves));

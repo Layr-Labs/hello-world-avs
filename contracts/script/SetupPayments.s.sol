@@ -66,8 +66,7 @@ contract SetupPayments is Script {
             NUM_PAYMENTS,
             NUM_TOKEN_EARNINGS,
             TOKEN_EARNINGS,
-            helloWorldDeployment.strategy,
-            vm
+            helloWorldDeployment.strategy
         );
     }
 }
