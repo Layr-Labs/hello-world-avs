@@ -85,7 +85,7 @@ For help and support deploying and modifying this repo for your AVS, please:
 1. Open a ticket via the intercom link at [support.eigenlayer.xyz](https://support.eigenlayer.xyz).
 2. Include the necessary troubleshooting information for your environment:
   * Local anvil testing:
-    * Recompile the contracts with the `--revert-strings debug` flag. Deploy the contracts again and retest.
+    * Redeploy your local test using `--revert-strings debug` flag via the following commands and retest: `npm run deploy:core-debug && npm run deploy:hello-world-debug`
     * Include the full stacktrace from your error as a .txt file attachment.
     * Create a minimal repo that demonstrates the behavior (fork or otherwise)
     * Steps require to reproduce issue (compile and cause the error)
