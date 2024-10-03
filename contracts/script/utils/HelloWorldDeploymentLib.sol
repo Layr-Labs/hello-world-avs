@@ -15,6 +15,7 @@ import {Quorum} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryE
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
 import {CoreDeploymentLib} from "./CoreDeploymentLib.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {ERC20Mock} from "../../test/ERC20Mock.sol";
 
 library HelloWorldDeploymentLib {
     using stdJson for *;
@@ -26,6 +27,7 @@ library HelloWorldDeploymentLib {
     struct DeploymentData {
         address helloWorldServiceManager;
         address stakeRegistry;
+        address token;
     }
 
     function deployContracts(
@@ -53,6 +55,9 @@ library HelloWorldDeploymentLib {
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
         UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
 
+        // Deploy ERC20Mock
+        result.token = address(new ERC20Mock());
+
         return result;
     }
 
@@ -76,6 +81,7 @@ library HelloWorldDeploymentLib {
         /// TODO: 2 Step for reading deployment json.  Read to the core and the AVS data
         data.helloWorldServiceManager = json.readAddress(".contracts.helloWorldServiceManager");
         data.stakeRegistry = json.readAddress(".contracts.stakeRegistry");
+        data.token = json.readAddress(".contracts.mockERC20");
 
         return data;
     }
@@ -136,6 +142,8 @@ library HelloWorldDeploymentLib {
             data.stakeRegistry.toHexString(),
             '","stakeRegistryImpl":"',
             data.stakeRegistry.getImplementation().toHexString(),
+            '","mockERC20":"',
+            data.token.toHexString(),
             '"}'
         );
     }

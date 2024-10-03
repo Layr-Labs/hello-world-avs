@@ -138,7 +138,25 @@
         "internalType": "string"
       }
     ],
-    "outputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IHelloWorldServiceManager.Task",
+        "components": [
+          {
+            "name": "name",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "taskCreatedBlock",
+            "type": "uint32",
+            "internalType": "uint32"
+          }
+        ]
+      }
+    ],
     "stateMutability": "nonpayable"
   },
   {

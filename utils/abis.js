@@ -9,7 +9,11 @@ const contractsToExtract = [
   'IAVSDirectory',
   'IDelegationManager',
   'ECDSAStakeRegistry',
-  'HelloWorldServiceManager'
+  'HelloWorldServiceManager',
+  'ERC20Mock',
+  'StrategyFactory',
+  'StrategyManager',
+  'DelegationManager',
 ];
 
 if (!fs.existsSync(abiDir)) {
@@ -26,13 +30,19 @@ function checkArtifactsDirectory() {
   const files = fs.readdirSync(artifactsDir);
   if (files.length === 0) {
     console.error(`The artifacts directory '${artifactsDir}' is empty.`);
-    console.log('Please compile your contracts first using "forge build" or confirm the path is correct.');
+    console.log(
+      'Please compile your contracts first using "forge build" or confirm the path is correct.',
+    );
     process.exit(1);
   }
 }
 
 function extractAbi(contractName) {
-  const outputPath = path.join(artifactsDir, `${contractName}.sol`, `${contractName}.json`);
+  const outputPath = path.join(
+    artifactsDir,
+    `${contractName}.sol`,
+    `${contractName}.json`,
+  );
   const abiOutputPath = path.join(abiDir, `${contractName}.json`);
 
   try {
@@ -51,4 +61,6 @@ for (const contractName of contractsToExtract) {
   extractAbi(contractName);
 }
 
-console.log('ABI extraction complete. Check the "abis" directory for the output.');
+console.log(
+  'ABI extraction complete. Check the "abis" directory for the output.',
+);
