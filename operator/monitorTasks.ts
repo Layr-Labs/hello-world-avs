@@ -4,7 +4,7 @@ import { signAndRespondToTask } from "./signAndRespondToTask";
 
 
 export const monitorNewTasks = async () => {
-    const unwatch = watchHelloWorldServiceManagerNewTaskCreatedEvent(config, {
+    watchHelloWorldServiceManagerNewTaskCreatedEvent(config, {
         address: helloWorldServiceManagerAddress,
         onLogs: async (logs) => {
             for (const log of logs) {
