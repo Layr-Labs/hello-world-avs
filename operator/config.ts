@@ -1,6 +1,6 @@
 import { createConfig, http } from '@wagmi/core'
 import { anvil } from '@wagmi/core/chains'
-import { createClient } from 'viem'
+import { createClient, publicActions, walletActions } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as dotenv from "dotenv"
 import path from 'path'
@@ -19,9 +19,10 @@ const config = createConfig({
     chains: [anvil],
     client({ chain }) {
         return createClient({ 
+            account: account,
             chain, 
             transport: http() 
-        })
+        }).extend(publicActions).extend(walletActions)
     },
 })
 
