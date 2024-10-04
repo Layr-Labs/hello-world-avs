@@ -29,7 +29,7 @@ const chainId = 31337
 const __dirname = process.cwd();
 
 // Load core deployment data
-const avsDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/hello-world/${chainId}.json`), 'utf8'));
+const avsDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `./contracts/deployments/hello-world/${chainId}.json`), 'utf8'));
 
 const helloWorldServiceManagerAddress = avsDeploymentData.addresses.helloWorldServiceManager;
 

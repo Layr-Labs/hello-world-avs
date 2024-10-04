@@ -15,13 +15,12 @@
   },
   "dependencies": {
     "dotenv": "^10.0.0",
-    "ethers": "^6.13.2",
     "wagmi": "^2.12.14"
   },
   "devDependencies": {
     "@types/node": "^20.16.0",
+    "@wagmi/cli": "^2.1.16",
     "tsx": "^4.19.1",
-    "typescript": "^5.4.5",
-    "@wagmi/cli": "^2.1.16"
+    "typescript": "^5.4.5"
   }
 }
