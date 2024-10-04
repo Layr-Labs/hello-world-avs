@@ -1,21 +1,37 @@
-import { ethers } from "ethers";
+import { createConfig, http } from '@wagmi/core'
+import { anvil } from '@wagmi/core/chains'
+import { createClient } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import { writeHelloWorldServiceManager } from "../dist/generated";
+
 import * as dotenv from "dotenv";
-const fs = require('fs');
-const path = require('path');
+import path from 'path';
+import fs from 'fs';
 dotenv.config();
 
-// Setup env variables
-const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
-/// TODO: Hack
-let chainId = 31337;
+// Check if the process.env object is empty
+if (!Object.keys(process.env).length) {
+    throw new Error("process.env object is empty");
+}
 
+const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`)
+
+const config = createConfig({
+    chains: [anvil],
+    client({ chain }) {
+        return createClient({ 
+            chain, transport: http() })
+    },
+})
+
+const chainId = 31337
+
+const __dirname = process.cwd();
+
+// Load core deployment data
 const avsDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/hello-world/${chainId}.json`), 'utf8'));
-const helloWorldServiceManagerAddress = avsDeploymentData.addresses.helloWorldServiceManager;
-const helloWorldServiceManagerABI = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../abis/HelloWorldServiceManager.json'), 'utf8'));
-// Initialize contract objects from ABIs
-const helloWorldServiceManager = new ethers.Contract(helloWorldServiceManagerAddress, helloWorldServiceManagerABI, wallet);
 
+const helloWorldServiceManagerAddress = avsDeploymentData.addresses.helloWorldServiceManager;
 
 // Function to generate random names
 function generateRandomName(): string {
@@ -25,29 +41,30 @@ function generateRandomName(): string {
     const noun = nouns[Math.floor(Math.random() * nouns.length)];
     const randomName = `${adjective}${noun}${Math.floor(Math.random() * 1000)}`;
     return randomName;
-  }
+}
 
 async function createNewTask(taskName: string) {
-  try {
-    // Send a transaction to the createNewTask function
-    const tx = await helloWorldServiceManager.createNewTask(taskName);
-    
-    // Wait for the transaction to be mined
-    const receipt = await tx.wait();
-    
-    console.log(`Transaction successful with hash: ${receipt.hash}`);
-  } catch (error) {
-    console.error('Error sending transaction:', error);
-  }
+    try {
+        const result = await writeHelloWorldServiceManager(config, {
+            account: account,
+            address: helloWorldServiceManagerAddress,
+            functionName: "createNewTask",
+            args: [taskName]
+        });
+        
+        console.log(`Transaction successful with hash: ${result.hash}`);
+    } catch (error) {
+        console.error('Error sending transaction:', error);
+    }
 }
 
 // Function to create a new task with a random name every 15 seconds
 function startCreatingTasks() {
-  setInterval(() => {
-    const randomName = generateRandomName();
-    console.log(`Creating new task with name: ${randomName}`);
-    createNewTask(randomName);
-  }, 5000);
+    setInterval(() => {
+        const randomName = generateRandomName();
+        console.log(`Creating new task with name: ${randomName}`);
+        createNewTask(randomName);
+    }, 5000);
 }
 
 // Start the process

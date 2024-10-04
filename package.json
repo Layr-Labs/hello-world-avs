@@ -3,23 +3,25 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start:operator": "ts-node operator/index.ts",
-    "start:traffic": "ts-node operator/createNewTasks.ts",
+    "start:operator": "tsx operator/index.ts",
+    "start:traffic": "tsx operator/createNewTasks.ts",
     "start:anvil": "anvil",
     "deploy:core": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast",
     "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast",
     "deploy:core-debug": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "deploy:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "build": "cd contracts && forge build",
-    "extract:abis": "npm run build && node utils/abis.js"
+    "bindings": "wagmi generate"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
-    "ethers": "^6.13.2"
+    "ethers": "^6.13.2",
+    "wagmi": "^2.12.14"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "tsx": "^4.19.1",
+    "typescript": "^5.4.5",
+    "@wagmi/cli": "^2.1.16"
   }
 }
