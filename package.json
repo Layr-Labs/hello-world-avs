@@ -19,7 +19,7 @@
     "wagmi": "^2.12.14"
   },
   "devDependencies": {
-    "@types/node": "^20.12.12",
+    "@types/node": "^20.16.0",
     "tsx": "^4.19.1",
     "typescript": "^5.4.5",
     "@wagmi/cli": "^2.1.16"
