@@ -88,11 +88,16 @@ For help and support deploying and modifying this repo for your AVS, please:
 - Local anvil testing:
   - Recompile the contracts with the `--revert-strings debug` flag. Deploy the contracts again and retest.
   - Include the full stacktrace from your error as a .txt file attachment.
-  - Create a minimal repo that demonstrates the behavior (fork or otherwise)
-  - Steps require to reproduce issue (compile and cause the error)
+  - Create a minimal repo that demonstrates the behavior (fork or otherwise).
+  - Steps require to reproduce issue (compile and cause the error).
 - Holesky testing:
   - Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
   - Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
+
+### Contact Us
+
+If you're planning to build an AVS and would like to speak with a member of the EigenLayer DevRel team to discuss your ideas or architecture, please fill out this form and we'll be in touch shortly: [EigenLayer AVS Intro Call](https://share.hsforms.com/1BksFoaPjSk2l3pQ5J4EVCAein6l)
+
 
 ### Disclaimers
 
