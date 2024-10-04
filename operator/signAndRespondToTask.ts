@@ -16,10 +16,16 @@ export const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: 
 
         // Create the message to be signed
         const message = `Hello, ${taskName}`;
-        const messageHash = keccak256(toBytes(message));
 
-        // Sign the message
-        const signature = await account.sign({hash:messageHash});
+        // Create the Ethereum signed message hash
+        const ethSignedMessageHash = keccak256(
+            toBytes(`\x19Ethereum Signed Message:\n${message.length}${message}`)
+        );
+
+        // Sign the Ethereum signed message hash
+        const signature = await account.signMessage({
+            message: { raw: ethSignedMessageHash },
+        });
 
         // Call the respondToTask function on the HelloWorldServiceManager contract
         const result = await writeHelloWorldServiceManager(config, {
