@@ -55,7 +55,11 @@ contract SetupPayments is Script {
     function submitPaymentRoot(address[] calldata earners) public {
         SetupPaymentsLib.submitPaymentRoot(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
-            earners
+            earners,
+            helloWorldDeployment.strategy,
+            NUM_PAYMENTS, 
+            NUM_TOKEN_EARNINGS,
+            TOKEN_EARNINGS
         );
     }
 

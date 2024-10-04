@@ -80,9 +80,13 @@ library SetupPaymentsLib {
 
     function submitPaymentRoot(
         IRewardsCoordinator rewardsCoordinator,
-        address[] calldata earners
+        address[] calldata earners,
+        address strategy,
+         uint256 NUM_PAYMENTS,
+        uint256 NUM_TOKEN_EARNINGS,
+        uint256 TOKEN_EARNINGS
     ) public {
-        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, earners, earners.length, 1, 100, address(0));
+        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, earners, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
         uint32 rewardsCalculationEndTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() + 1 weeks;
         rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
@@ -100,7 +104,10 @@ library SetupPaymentsLib {
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves = new IRewardsCoordinator.EarnerTreeMerkleLeaf[](NUM_PAYMENTS);
         
         bytes32[] memory tokenLeaves = createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
+        require(tokenLeaves.length == NUM_TOKEN_EARNINGS, "Number of token leaves must match number of token earnings");
         for (uint256 i = 0; i < NUM_PAYMENTS; i++) {
+            address earner = earners[i];
+            bytes32 earnerTokenRoot = createTokenRoot(tokenLeaves);
             IRewardsCoordinator.EarnerTreeMerkleLeaf memory leaf = IRewardsCoordinator.EarnerTreeMerkleLeaf({
                 earner: earners[i],
                 earnerTokenRoot: createTokenRoot(tokenLeaves)
@@ -161,6 +168,8 @@ library SetupPaymentsLib {
         require(leaves.length > 0, "Leaves array cannot be empty");
         require(index < leaves.length, "Index out of bounds");
 
+        leaves = padLeaves(leaves);
+
         uint256 n = leaves.length;
         uint256 depth = 0;
         while ((1 << depth) < n) {
@@ -194,19 +203,57 @@ library SetupPaymentsLib {
         return abi.encodePacked(proof);
     }
 
+    /**
+     * @notice this function returns the merkle root of a tree created from a set of leaves using keccak256 as its hash function
+     *  @param leaves the leaves of the merkle tree
+     *  @return The computed Merkle root of the tree.
+     *  @dev This pads to the next power of 2. very inefficient! just for POC
+     */
     function merkleizeKeccak(bytes32[] memory leaves) internal pure returns (bytes32) {
+        // uint256 paddedLength = 2;
+        // while(paddedLength < leaves.length) {
+        //     paddedLength <<= 1;
+        // }
+
+        // bytes32[] memory paddedLeaves = new bytes32[](paddedLength);
+        // for (uint256 i = 0; i < leaves.length; i++) {
+        //     paddedLeaves[i] = leaves[i];
+        // }
+        leaves = padLeaves(leaves);
+
+        //there are half as many nodes in the layer above the leaves
         uint256 numNodesInLayer = leaves.length / 2;
+        //create a layer to store the internal nodes
         bytes32[] memory layer = new bytes32[](numNodesInLayer);
+        //fill the layer with the pairwise hashes of the leaves
         for (uint256 i = 0; i < numNodesInLayer; i++) {
             layer[i] = keccak256(abi.encodePacked(leaves[2 * i], leaves[2 * i + 1]));
         }
+        //the next layer above has half as many nodes
         numNodesInLayer /= 2;
+        //while we haven't computed the root
         while (numNodesInLayer != 0) {
+            //overwrite the first numNodesInLayer nodes in layer with the pairwise hashes of their children
             for (uint256 i = 0; i < numNodesInLayer; i++) {
                 layer[i] = keccak256(abi.encodePacked(layer[2 * i], layer[2 * i + 1]));
             }
+            //the next layer above has half as many nodes
             numNodesInLayer /= 2;
         }
+        //the first node in the layer is the root
         return layer[0];
+    }
+
+    function padLeaves(bytes32[] memory leaves) internal pure returns (bytes32[] memory) {
+        uint256 paddedLength = 2;
+        while(paddedLength < leaves.length) {
+            paddedLength <<= 1;
+        }
+
+        bytes32[] memory paddedLeaves = new bytes32[](paddedLength);
+        for (uint256 i = 0; i < leaves.length; i++) {
+            paddedLeaves[i] = leaves[i];
+        }
+        return paddedLeaves;
     }
 }
