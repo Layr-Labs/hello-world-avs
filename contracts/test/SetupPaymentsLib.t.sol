@@ -38,39 +38,16 @@ contract SetupPaymentsLibTest is Test, TestConstants {
     }
 
 
-    // function testSubmitPaymentRoot() public {
-    //     address[] memory earners = new address[](2);
-    //     earners[0] = address(0x1111111111111111111111111111111111111111);
-    //     earners[1] = address(0x2222222222222222222222222222222222222222);
+    function testSubmitPaymentRoot() public {
+        address[] memory earners = new address[](8);
+        for (uint256 i = 0; i < earners.length; i++) {
+            earners[i] = address(1);
+        }
 
-    //     vm.startPrank(deployer);
-    //     SetupPaymentsLib.submitPaymentRoot(rewardsCoordinator, earners);
-    //     vm.stopPrank();
 
-    //     // Add assertions to verify the root submission
-    //     // You may need to call view functions on the rewardsCoordinator to check the state
-    // }
-
-    // function testCreatePaymentRoot() public {
-    //     address[] memory earners = new address[](2);
-    //     earners[0] = address(0x1111111111111111111111111111111111111111);
-    //     earners[1] = address(0x2222222222222222222222222222222222222222);
-
-    //     vm.startPrank(deployer);
-    //     bytes32 root = SetupPaymentsLib.createPaymentRoot(
-    //         rewardsCoordinator,
-    //         earners,
-    //         2,
-    //         1,
-    //         100,
-    //         address(strategy),
-    //         vm
-    //     );
-    //     vm.stopPrank();
-
-    //     assertNotEq(root, bytes32(0), "Root should not be zero");
-    // }
-
+        // SetupPaymentsLib.submitPaymentRoot(rewardsCoordinator, earners, address(strategy));
+        SetupPaymentsLib.submitPaymentRoot(rewardsCoordinator, earners, address(strategy), 8, 1, 100);
+    }
 
     function testWriteLeavesToJson() public {
         bytes32[] memory leaves = new bytes32[](2);
@@ -211,7 +188,9 @@ contract MockRewardsCoordinator is IRewardsCoordinator, TestConstants {
 
     function calculateEarnerLeafHash(EarnerTreeMerkleLeaf calldata leaf) external pure returns (bytes32){}
 
-    function calculateTokenLeafHash(TokenTreeMerkleLeaf calldata leaf) external pure returns (bytes32){}
+    function calculateTokenLeafHash(TokenTreeMerkleLeaf calldata leaf) external pure returns (bytes32){
+        return keccak256(abi.encodePacked(leaf.cumulativeEarnings));
+    }
 
     function checkClaim(RewardsMerkleClaim calldata claim) external view returns (bool){}
 
