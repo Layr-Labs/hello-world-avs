@@ -52,7 +52,7 @@ async function createNewTask(taskName: string) {
             args: [taskName]
         });
         
-        console.log(`Transaction successful with hash: ${result.hash}`);
+        console.log(`Transaction successful with hash: ${result}`);
     } catch (error) {
         console.error('Error sending transaction:', error);
     }

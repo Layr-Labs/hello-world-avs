@@ -80,7 +80,7 @@ const registerOperator = async () => {
         args: [{signature: sig, salt: salt, expiry:expiry}, account.address]
     })
 
-    console.log("Operator registered on AVS successfully");
+    console.log("Operator registered to AVS");
 };
 
 const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number, taskName: string) => {
