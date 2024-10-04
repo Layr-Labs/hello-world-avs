@@ -259,9 +259,15 @@ contract HelloWorldTaskManagerSetup is Test {
 
         bytes memory signature = signWithSigningKey(operator, messageHash);
 
-        vm.prank(operator.key.addr);
+        address[] memory operators = new address[](1);
+        operators[0]=operator.key.addr;
+        bytes[] memory signatures = new bytes[](1);
+        signatures[0]= signature;
+
+        bytes memory signedTask = abi.encode(operators, signatures, uint32(block.number));
+
         IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager).respondToTask(
-            task, referenceTaskIndex, signature
+            task, referenceTaskIndex, signedTask
         );
     }
 }
@@ -415,9 +421,16 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
 
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", taskName));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-        bytes memory signature = signWithOperatorKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
+        bytes memory signature = signWithSigningKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
 
-        vm.prank(operators[0].key.addr);
-        sm.respondToTask(newTask, taskIndex, signature);
+        address[] memory operatorsMem = new address[](1);
+        operatorsMem[0]=operators[0].key.addr;
+        bytes[] memory signatures = new bytes[](1);
+        signatures[0]= signature;
+
+        bytes memory signedTask = abi.encode(operatorsMem, signatures, uint32(block.number));
+
+        vm.roll(block.number+1);
+        sm.respondToTask(newTask, taskIndex, signedTask);
     }
 }

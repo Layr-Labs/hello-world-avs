@@ -46,14 +46,19 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
     const messageBytes = ethers.getBytes(messageHash);
     const signature = await wallet.signMessage(messageBytes);
 
-    console.log(
-        `Signing and responding to task ${taskIndex}`
-    )
+    console.log(`Signing and responding to task ${taskIndex}`);
+
+    const operators = [await wallet.getAddress()];
+    const signatures = [signature];
+    const signedTask = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address[]", "bytes[]", "uint32"],
+        [operators, signatures, ethers.toBigInt(await provider.getBlockNumber())]
+    );
 
     const tx = await helloWorldServiceManager.respondToTask(
         { name: taskName, taskCreatedBlock: taskCreatedBlock },
         taskIndex,
-        signature
+        signedTask
     );
     await tx.wait();
     console.log(`Responded to task.`);

@@ -7,6 +7,7 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
+import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -70,22 +71,8 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     function respondToTask(
         Task calldata task,
         uint32 referenceTaskIndex,
-        bytes calldata signature
-    ) external onlyOperator {
-            
-            // TODO Temporarily disabling this until we add in staking & delegation to the Operator scripts.
-            /** require(
-                operatorHasMinimumWeight(msg.sender),
-                string(abi.encodePacked(
-                    "Operator does not have match the weight requirements. ",
-                    "Operator weight=", 
-                    Strings.toString(ECDSAStakeRegistry(stakeRegistry).getLastCheckpointOperatorWeight(msg.sender)),
-                    ", Threshold weight=", 
-                    Strings.toString(ECDSAStakeRegistry(stakeRegistry).getLastCheckpointThresholdWeight())
-                ))
-            );
-            */
-
+        bytes memory signature
+    ) external {
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
             keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
@@ -99,23 +86,15 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         // The message that was signed
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-
-        // Recover the signer address from the signature
-        address signer = ethSignedMessageHash.recover(signature);
-
-        require(signer == msg.sender, "Message signer is not operator");
+        bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
+        if (!(magicValue == ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash,signature))){
+            revert();
+        }
 
         // updating the storage with task responses
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
-    }
-
-    function operatorHasMinimumWeight(
-        address operator
-    ) public view returns (bool) {
-        return ECDSAStakeRegistry(stakeRegistry).getLastCheckpointOperatorWeight(operator)
-            >= ECDSAStakeRegistry(stakeRegistry).getLastCheckpointThresholdWeight();
     }
 }
