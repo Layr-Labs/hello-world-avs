@@ -24,6 +24,12 @@ jobs:
         with:
           version: nightly
 
+      - name: Target Operator Set Release 
+        run: |
+          cd lib/eigenlayer-middleware
+          git checkout feat/operate-set-release-branch
+        id: checkout-dependency
+
       - name: Run Forge build
         run: |
           forge --version
