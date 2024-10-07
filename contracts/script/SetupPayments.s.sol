@@ -27,8 +27,11 @@ contract SetupPayments is Script {
     function run() external {
         vm.startBroadcast(deployer);
         IRewardsCoordinator(coreDeployment.rewardsCoordinator).setRewardsUpdater(deployer);
+
+        
         vm.stopBroadcast();
     }
+
 
     function createPaymentSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 duration) public {
         SetupPaymentsLib.createPaymentSubmissions(
