@@ -10,6 +10,12 @@ import "@eigenlayer/contracts/interfaces/IStrategy.sol";
 import "../script/DeployEigenLayerCore.s.sol";
 import "../script/HelloWorldDeployer.s.sol";
 import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
+import {HelloWorldTaskManagerSetup} from "test/HelloWorldServiceManager.t.sol";
+import {
+    Quorum,
+    StrategyParams,
+    IStrategy
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 
 contract TestConstants {
     uint256 constant NUM_PAYMENTS = 8;
@@ -21,20 +27,27 @@ contract TestConstants {
     uint256 INDEX_TO_PROVE = 0;
 }
 
-contract SetupPaymentsLibTest is Test, TestConstants {
+contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup {
     using SetupPaymentsLib for *;
 
     IRewardsCoordinator public rewardsCoordinator;
     IStrategy public strategy;
-    ERC20Mock public token;
 
+    
+    function setUp() public override virtual {
+        address proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+        coreConfigData =
+           CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+        coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
 
-    function setUp() public {
-        rewardsCoordinator = new MockRewardsCoordinator();
-        token = new ERC20Mock();
-        strategy = new MockStrategy(token);
+        mockToken = new ERC20Mock();
 
+        IStrategy strategy = addStrategy(address(mockToken)); // Similar function to HW_SM test using strategy factory
+        quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
+        helloWorldDeployment =
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+        labelContracts(coreDeployment, helloWorldDeployment);
     }
 
 
@@ -104,6 +117,7 @@ contract SetupPaymentsLibTest is Test, TestConstants {
             NUM_TOKEN_EARNINGS,
             address(strategy)
         );
+
 
     }
 
