@@ -42,12 +42,14 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
         mockToken = new ERC20Mock();
 
-        IStrategy strategy = addStrategy(address(mockToken)); // Similar function to HW_SM test using strategy factory
+        strategy = addStrategy(address(mockToken)); // Similar function to HW_SM test using strategy factory
         quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
         helloWorldDeployment =
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
         labelContracts(coreDeployment, helloWorldDeployment);
+
+        rewardsCoordinator = IRewardsCoordinator(coreDeployment.rewardsCoordinator);
     }
 
 
