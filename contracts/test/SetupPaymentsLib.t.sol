@@ -132,6 +132,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint32 startTimestamp = 10 days;
         cheats.warp(startTimestamp + 1);
 
+        mockToken.mint(address(this), type(uint256).max);
+
         SetupPaymentsLib.createPaymentSubmissions(
             rewardsCoordinator,
             address(strategy),
