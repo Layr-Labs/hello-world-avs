@@ -29,6 +29,8 @@ contract TestConstants {
 
 contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup {
     using SetupPaymentsLib for *;
+    Vm cheats = Vm(VM_ADDRESS);
+
 
     IRewardsCoordinator public rewardsCoordinator;
     IStrategy public strategy;
@@ -126,14 +128,17 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     function testCreatePaymentSubmissions() public {
         uint256 numPayments = 5;
         uint256 amountPerPayment = 100;
-        uint32 duration = 7 days;
+        uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
+        uint32 startTimestamp = 10 days;
+        cheats.warp(startTimestamp + 1);
 
         SetupPaymentsLib.createPaymentSubmissions(
             rewardsCoordinator,
             address(strategy),
             numPayments,
             amountPerPayment,
-            duration
+            duration,
+            startTimestamp
         );
     }
 }
