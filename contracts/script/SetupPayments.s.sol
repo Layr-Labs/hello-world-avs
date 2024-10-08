@@ -28,18 +28,19 @@ contract SetupPayments is Script {
         vm.startBroadcast(deployer);
         IRewardsCoordinator(coreDeployment.rewardsCoordinator).setRewardsUpdater(deployer);
 
-        
+
         vm.stopBroadcast();
     }
 
 
-    function createPaymentSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 duration) public {
+    function createPaymentSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 duration, uint32 startTimestamp) public {
         SetupPaymentsLib.createPaymentSubmissions(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             helloWorldDeployment.strategy,
             numPayments,
             amountPerPayment,
-            duration
+            duration,
+            startTimestamp
         );
     }
 

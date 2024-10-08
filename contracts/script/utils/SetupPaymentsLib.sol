@@ -20,7 +20,8 @@ library SetupPaymentsLib {
         address strategy,
         uint256 numPayments,
         uint256 amountPerPayment,
-        uint32 duration
+        uint32 duration,
+        uint32 startTimestamp
     ) public {
         IRewardsCoordinator.RewardsSubmission[] memory rewardsSubmissions = new IRewardsCoordinator.RewardsSubmission[](numPayments);
         for (uint256 i = 0; i < numPayments; i++) {
@@ -34,7 +35,7 @@ library SetupPaymentsLib {
                 strategiesAndMultipliers: strategiesAndMultipliers,
                 token: IStrategy(strategy).underlyingToken(),
                 amount: amountPerPayment,
-                startTimestamp: uint32(block.timestamp),
+                startTimestamp: startTimestamp ,
                 duration: duration
             });
 
