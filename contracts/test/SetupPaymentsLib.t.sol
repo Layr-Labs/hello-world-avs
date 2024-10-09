@@ -72,8 +72,6 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
-
-        // SetupPaymentsLib.submitPaymentRoot(rewardsCoordinator, earners, address(strategy));
         cheats.startPrank(address(0), address(0));
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, 100);
         cheats.stopPrank();
