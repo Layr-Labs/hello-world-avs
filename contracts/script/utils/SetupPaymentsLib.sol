@@ -5,6 +5,7 @@ import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoor
 import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
 import {Vm} from "forge-std/Vm.sol";
 
+
 library SetupPaymentsLib {
 
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
@@ -79,45 +80,53 @@ library SetupPaymentsLib {
         rewardsCoordinator.processClaim(claim, recipient);
     }
 
-    function submitPaymentRoot(
+    function submitRoot(
         IRewardsCoordinator rewardsCoordinator,
-        address[] calldata earners,
+        bytes32[] memory tokenLeaves,
+        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves,
         address strategy,
+        uint32 rewardsCalculationEndTimestamp,
          uint256 NUM_PAYMENTS,
         uint256 NUM_TOKEN_EARNINGS,
         uint256 TOKEN_EARNINGS
     ) public {
-        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, earners, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
-        uint32 rewardsCalculationEndTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() + 1 weeks;
+        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
         rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
 
     function createPaymentRoot(
         IRewardsCoordinator rewardsCoordinator,
-        address[] calldata earners,
+        bytes32[] memory tokenLeaves,
+        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves,
         uint256 NUM_PAYMENTS,
         uint256 NUM_TOKEN_EARNINGS,
         uint256 TOKEN_EARNINGS,
         address strategy
     ) public returns (bytes32) {
-        require(earners.length == NUM_PAYMENTS, "Number of earners must match number of payments");
+        require(earnerLeaves.length == NUM_PAYMENTS, "Number of earners must match number of payments");
         bytes32[] memory leaves = new bytes32[](NUM_PAYMENTS);
-        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves = new IRewardsCoordinator.EarnerTreeMerkleLeaf[](NUM_PAYMENTS);
         
-        bytes32[] memory tokenLeaves = createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
         require(tokenLeaves.length == NUM_TOKEN_EARNINGS, "Number of token leaves must match number of token earnings");
         for (uint256 i = 0; i < NUM_PAYMENTS; i++) {
-            address earner = earners[i];
-            bytes32 earnerTokenRoot = createTokenRoot(tokenLeaves);
-            IRewardsCoordinator.EarnerTreeMerkleLeaf memory leaf = IRewardsCoordinator.EarnerTreeMerkleLeaf({
+            leaves[i] = rewardsCoordinator.calculateEarnerLeafHash(earnerLeaves[i]);
+        }
+
+        writeLeavesToJson(leaves, tokenLeaves);
+        return (merkleizeKeccak(leaves));
+    }
+
+    function createEarnerLeaves(
+        address[] calldata earners,
+        bytes32[] memory tokenLeaves
+    ) public returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
+        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory leaves = new IRewardsCoordinator.EarnerTreeMerkleLeaf[](earners.length);
+        for (uint256 i = 0; i < earners.length; i++) {
+            leaves[i] = IRewardsCoordinator.EarnerTreeMerkleLeaf({
                 earner: earners[i],
                 earnerTokenRoot: createTokenRoot(tokenLeaves)
             });
-            leaves[i] = rewardsCoordinator.calculateEarnerLeafHash(leaf);
-            earnerLeaves[i] = leaf;
         }
-        writeLeavesToJson(leaves, tokenLeaves);
-        return merkleizeKeccak(leaves);
+        return leaves;
     }
 
     function createTokenRoot(bytes32[] memory tokenLeaves) public pure returns (bytes32) {
@@ -156,7 +165,7 @@ library SetupPaymentsLib {
         string memory parent_object = "parent_object";
         vm.serializeBytes32(parent_object, "leaves", leaves);
         string memory finalJson = vm.serializeBytes32(parent_object, "tokenLeaves", tokenLeaves);
-        vm.writeJson(finalJson, "payments.json");
+        vm.writeJson(finalJson, "test/mockData/scratch/payments.json");
     }
 
     function parseLeavesFromJson(string memory filePath) public returns (PaymentLeaves memory) {
@@ -210,7 +219,7 @@ library SetupPaymentsLib {
      *  @return The computed Merkle root of the tree.
      *  @dev This pads to the next power of 2. very inefficient! just for POC
      */
-    function merkleizeKeccak(bytes32[] memory leaves) internal pure returns (bytes32) {
+    function merkleizeKeccak(bytes32[] memory leaves) public pure returns (bytes32) {
         // uint256 paddedLength = 2;
         // while(paddedLength < leaves.length) {
         //     paddedLength <<= 1;
