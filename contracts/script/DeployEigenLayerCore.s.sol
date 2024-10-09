@@ -16,7 +16,7 @@ contract DeployEigenlayerCore is Script {
     CoreDeploymentLib.DeploymentConfigData internal configData;
 
     function setUp() public virtual {
-        deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
+        deployer = vm.rememberKey(vm.envUint("DEPLOYER_PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
     }
 

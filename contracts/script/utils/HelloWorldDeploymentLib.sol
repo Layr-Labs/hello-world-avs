@@ -30,6 +30,7 @@ library HelloWorldDeploymentLib {
 
     function deployContracts(
         address proxyAdmin,
+        address aggregator,
         CoreDeploymentLib.DeploymentData memory core,
         Quorum memory quorum
     ) internal returns (DeploymentData memory) {
@@ -43,7 +44,7 @@ library HelloWorldDeploymentLib {
             address(new ECDSAStakeRegistry(IDelegationManager(core.delegationManager)));
         address helloWorldServiceManagerImpl = address(
             new HelloWorldServiceManager(
-                core.avsDirectory, result.stakeRegistry, core.delegationManager
+                core.avsDirectory, result.stakeRegistry, core.delegationManager, aggregator
             )
         );
         // Upgrade contracts
@@ -53,12 +54,17 @@ library HelloWorldDeploymentLib {
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
         UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
 
+        // Initialize HelloWorldServiceManager with aggregator
+        bytes memory helloWorldInitCall =
+            abi.encodeCall(HelloWorldServiceManager.initialize, (aggregator));
+        UpgradeableProxyLib.upgradeAndCall(
+            result.helloWorldServiceManager, helloWorldServiceManagerImpl, helloWorldInitCall
+        );
+
         return result;
     }
 
-    function readDeploymentJson(
-        uint256 chainId
-    ) internal returns (DeploymentData memory) {
+    function readDeploymentJson(uint256 chainId) internal returns (DeploymentData memory) {
         return readDeploymentJson("deployments/", chainId);
     }
 
@@ -81,9 +87,7 @@ library HelloWorldDeploymentLib {
     }
 
     /// write to default output path
-    function writeDeploymentJson(
-        DeploymentData memory data
-    ) internal {
+    function writeDeploymentJson(DeploymentData memory data) internal {
         writeDeploymentJson("deployments/hello-world/", block.chainid, data);
     }
 
@@ -95,7 +99,11 @@ library HelloWorldDeploymentLib {
         address proxyAdmin =
             address(UpgradeableProxyLib.getProxyAdmin(data.helloWorldServiceManager));
 
-        string memory deploymentData = _generateDeploymentJson(data, proxyAdmin);
+        address aggregator = HelloWorldServiceManager(data.helloWorldServiceManager).aggregator();
+
+        console2.log("aggregator2", aggregator);
+
+        string memory deploymentData = _generateDeploymentJson(data, proxyAdmin, aggregator);
 
         string memory fileName = string.concat(outputPath, vm.toString(chainId), ".json");
         if (!vm.exists(outputPath)) {
@@ -108,7 +116,8 @@ library HelloWorldDeploymentLib {
 
     function _generateDeploymentJson(
         DeploymentData memory data,
-        address proxyAdmin
+        address proxyAdmin,
+        address aggregator
     ) private view returns (string memory) {
         return string.concat(
             '{"lastUpdate":{"timestamp":"',
@@ -116,18 +125,21 @@ library HelloWorldDeploymentLib {
             '","block_number":"',
             vm.toString(block.number),
             '"},"addresses":',
-            _generateContractsJson(data, proxyAdmin),
+            _generateContractsJson(data, proxyAdmin, aggregator),
             "}"
         );
     }
 
     function _generateContractsJson(
         DeploymentData memory data,
-        address proxyAdmin
+        address proxyAdmin,
+        address aggregator
     ) private view returns (string memory) {
         return string.concat(
             '{"proxyAdmin":"',
             proxyAdmin.toHexString(),
+            '","aggregator":"',
+            aggregator.toHexString(),
             '","helloWorldServiceManager":"',
             data.helloWorldServiceManager.toHexString(),
             '","helloWorldServiceManagerImpl":"',

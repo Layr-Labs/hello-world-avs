@@ -378,9 +378,7 @@ library CoreDeploymentLib {
     }
 
     /// TODO: Need to be able to read json from eigenlayer-contracts repo for holesky/mainnet and output the json here
-    function writeDeploymentJson(
-        DeploymentData memory data
-    ) internal {
+    function writeDeploymentJson(DeploymentData memory data) internal {
         writeDeploymentJson("deployments/core/", block.chainid, data);
     }
 
