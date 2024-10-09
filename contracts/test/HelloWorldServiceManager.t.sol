@@ -508,7 +508,7 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
 
         address nonAggregator = address(0x1234);
         vm.startPrank(nonAggregator);
-        vm.expectRevert("Only aggregator can call this function");
+        vm.expectRevert("Aggregator must be the caller");
         sm.respondToTask(newTask, taskIndex, signedTask);
         vm.stopPrank();
     }
