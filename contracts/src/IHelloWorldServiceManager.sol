@@ -29,6 +29,6 @@ interface IHelloWorldServiceManager {
         bytes calldata signature
     ) external;
 
-     function updateAggregator() external;
+    function updateAggregator(address _newAggregator) external;
 
 }
