@@ -28,4 +28,7 @@ interface IHelloWorldServiceManager {
         uint32 referenceTaskIndex,
         bytes calldata signature
     ) external;
+
+     function updateAggregator() external;
+
 }
