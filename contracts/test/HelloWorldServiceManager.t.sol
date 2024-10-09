@@ -48,6 +48,8 @@ contract HelloWorldTaskManagerSetup is Test {
 
     ERC20Mock public mockToken;
 
+    address public aggregator;
+
     mapping(address => IStrategy) public tokenToStrategy;
 
     function setUp() public virtual {
@@ -61,17 +63,19 @@ contract HelloWorldTaskManagerSetup is Test {
 
         mockToken = new ERC20Mock();
 
+        aggregator = address(1337);
+
         IStrategy strategy = addStrategy(address(mockToken));
         quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, aggregator, coreDeployment, quorum);
         labelContracts(coreDeployment, helloWorldDeployment);
+
+        console.log("Aggregator address:", aggregator);
     }
 
-    function addStrategy(
-        address token
-    ) public returns (IStrategy) {
+    function addStrategy(address token) public returns (IStrategy) {
         if (tokenToStrategy[token] != IStrategy(address(0))) {
             return tokenToStrategy[token];
         }
@@ -136,9 +140,7 @@ contract HelloWorldTaskManagerSetup is Test {
         return shares;
     }
 
-    function registerAsOperator(
-        Operator memory operator
-    ) internal {
+    function registerAsOperator(Operator memory operator) internal {
         IDelegationManager delegationManager = IDelegationManager(coreDeployment.delegationManager);
 
         IDelegationManager.OperatorDetails memory operatorDetails = IDelegationManager
@@ -152,9 +154,7 @@ contract HelloWorldTaskManagerSetup is Test {
         delegationManager.registerAsOperator(operatorDetails, "");
     }
 
-    function registerOperatorToAVS(
-        Operator memory operator
-    ) internal {
+    function registerOperatorToAVS(Operator memory operator) internal {
         ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
         AVSDirectory avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
 
@@ -175,9 +175,7 @@ contract HelloWorldTaskManagerSetup is Test {
         stakeRegistry.registerOperatorWithSignature(operatorSignature, operator.signingKey.addr);
     }
 
-    function deregisterOperatorFromAVS(
-        Operator memory operator
-    ) internal {
+    function deregisterOperatorFromAVS(Operator memory operator) internal {
         ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
 
         vm.prank(operator.key.addr);
@@ -196,9 +194,7 @@ contract HelloWorldTaskManagerSetup is Test {
         return newOperator;
     }
 
-    function updateOperatorWeights(
-        Operator[] memory _operators
-    ) internal {
+    function updateOperatorWeights(Operator[] memory _operators) internal {
         ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
 
         address[] memory operatorAddresses = new address[](_operators.length);
@@ -209,17 +205,17 @@ contract HelloWorldTaskManagerSetup is Test {
         stakeRegistry.updateOperators(operatorAddresses);
     }
 
-    function getSortedOperatorSignatures(
+    function getSortedOperatorAddressesAndSignatures(
         Operator[] memory _operators,
         bytes32 digest
-    ) internal pure returns (bytes[] memory) {
+    ) internal pure returns (address[] memory, bytes[] memory) {
         uint256 length = _operators.length;
         bytes[] memory signatures = new bytes[](length);
         address[] memory addresses = new address[](length);
 
         for (uint256 i = 0; i < length; i++) {
             addresses[i] = _operators[i].key.addr;
-            signatures[i] = signWithOperatorKey(_operators[i], digest);
+            signatures[i] = signWithSigningKey(_operators[i], digest);
         }
 
         for (uint256 i = 0; i < length - 1; i++) {
@@ -238,7 +234,7 @@ contract HelloWorldTaskManagerSetup is Test {
             }
         }
 
-        return signatures;
+        return (addresses, signatures);
     }
 
     function createTask(TrafficGenerator memory generator, string memory taskName) internal {
@@ -260,9 +256,9 @@ contract HelloWorldTaskManagerSetup is Test {
         bytes memory signature = signWithSigningKey(operator, messageHash);
 
         address[] memory operators = new address[](1);
-        operators[0]=operator.key.addr;
+        operators[0] = operator.key.addr;
         bytes[] memory signatures = new bytes[](1);
-        signatures[0]= signature;
+        signatures[0] = signature;
 
         bytes memory signedTask = abi.encode(operators, signatures, uint32(block.number));
 
@@ -397,6 +393,8 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
         stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
 
+        aggregator = sm.aggregator();
+
         addStrategy(address(mockToken));
 
         while (operators.length < OPERATOR_COUNT) {
@@ -414,8 +412,8 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         }
     }
 
-    function testRespondToTask() public {
-        string memory taskName = "TestTask";
+    function testRespondToTask_singleOperator() public {
+        string memory taskName = "TestTask single operator";
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
         uint32 taskIndex = sm.latestTaskNum() - 1;
 
@@ -424,13 +422,94 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         bytes memory signature = signWithSigningKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
 
         address[] memory operatorsMem = new address[](1);
-        operatorsMem[0]=operators[0].key.addr;
+        operatorsMem[0] = operators[0].key.addr;
         bytes[] memory signatures = new bytes[](1);
-        signatures[0]= signature;
+        signatures[0] = signature;
 
         bytes memory signedTask = abi.encode(operatorsMem, signatures, uint32(block.number));
 
-        vm.roll(block.number+1);
+        vm.roll(block.number + 1);
+
+        vm.startPrank(aggregator);
         sm.respondToTask(newTask, taskIndex, signedTask);
+        vm.stopPrank();
+    }
+
+    function testRespondToTask_multipleOperators() public {
+        string memory taskName = "TestTask multiple operators";
+        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        uint32 taskIndex = sm.latestTaskNum() - 1;
+
+        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", taskName));
+        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+
+        (address[] memory operatorAddresses, bytes[] memory signatures) =
+            getSortedOperatorAddressesAndSignatures(operators, ethSignedMessageHash);
+
+        bytes memory signedTask = abi.encode(operatorAddresses, signatures, uint32(block.number));
+
+        vm.roll(block.number + 1);
+
+        vm.startPrank(aggregator);
+        sm.respondToTask(newTask, taskIndex, signedTask);
+        vm.stopPrank();
+    }
+
+    function testRespondToTask_failsWithUnregisteredOperator() public {
+        string memory taskName = "TestTask with unregistered operator";
+        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        uint32 taskIndex = sm.latestTaskNum() - 1;
+
+        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", taskName));
+        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+
+        // Create an unregistered operator
+        Operator memory unregisteredOperator = createAndAddOperator();
+
+        Operator[] memory allOperators = new Operator[](operators.length + 1);
+        for (uint256 i = 0; i < operators.length; i++) {
+            allOperators[i] = operators[i];
+        }
+        allOperators[operators.length] = unregisteredOperator;
+
+        (address[] memory operatorAddresses, bytes[] memory signatures) =
+            getSortedOperatorAddressesAndSignatures(allOperators, ethSignedMessageHash);
+
+        bytes memory signedTask = abi.encode(operatorAddresses, signatures, uint32(block.number));
+
+        vm.roll(block.number + 1);
+
+        vm.startPrank(aggregator);
+
+        // We expect this call to revert due to the unregistered operator being included in the aggregate signature
+        vm.expectRevert("Invalid signer: not registered as operator");
+        sm.respondToTask(newTask, taskIndex, signedTask);
+
+        vm.stopPrank();
+    }
+
+    function testRespondToTask_failsIfNotAggregator() public {
+        string memory taskName = "TestTask single operator";
+        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        uint32 taskIndex = sm.latestTaskNum() - 1;
+
+        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", taskName));
+        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+        bytes memory signature = signWithSigningKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
+
+        address[] memory operatorsMem = new address[](1);
+        operatorsMem[0] = operators[0].key.addr;
+        bytes[] memory signatures = new bytes[](1);
+        signatures[0] = signature;
+
+        bytes memory signedTask = abi.encode(operatorsMem, signatures, uint32(block.number));
+
+        vm.roll(block.number + 1);
+
+        address nonAggregator = address(0x1234);
+        vm.startPrank(nonAggregator);
+        vm.expectRevert("Only aggregator can call this function");
+        sm.respondToTask(newTask, taskIndex, signedTask);
+        vm.stopPrank();
     }
 }

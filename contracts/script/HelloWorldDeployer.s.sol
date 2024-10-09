@@ -19,12 +19,13 @@ contract HelloWorldDeployer is Script {
 
     address private deployer;
     address proxyAdmin;
+    address aggregator;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     Quorum internal quorum;
 
     function setUp() public virtual {
-        deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
+        deployer = vm.rememberKey(vm.envUint("DEPLOYER_PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
@@ -38,8 +39,12 @@ contract HelloWorldDeployer is Script {
         vm.startBroadcast(deployer);
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
+        aggregator = vm.addr(vm.envUint("AGGREGATOR_PRIVATE_KEY"));
+
+        console2.log("aggregator", aggregator);
+
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, aggregator, coreDeployment, quorum);
 
         vm.stopBroadcast();
 
@@ -56,6 +61,7 @@ contract HelloWorldDeployer is Script {
             "HelloWorldServiceManager address cannot be zero"
         );
         require(proxyAdmin != address(0), "ProxyAdmin address cannot be zero");
+        require(aggregator != address(0), "Aggregator address cannot be zero");
         require(
             coreDeployment.delegationManager != address(0),
             "DelegationManager address cannot be zero"
