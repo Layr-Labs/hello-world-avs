@@ -7,6 +7,11 @@ dist/
 # Ignore environment-specific files
 .env
 
+# Ignore nixos related environment-specific files
+.envrc
+.cargo/
+.direnv/
+
 # Ignore editor-specific files
 .vscode/
 .idea/
