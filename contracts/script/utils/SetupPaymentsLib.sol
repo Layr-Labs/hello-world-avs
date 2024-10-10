@@ -9,14 +9,14 @@ import {Vm} from "forge-std/Vm.sol";
 library SetupPaymentsLib {
 
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
-
+    string internal constant filePath = "test/mockData/payments/payments.json";
 
     struct PaymentLeaves {
         bytes32[] leaves;
         bytes32[] tokenLeaves;
     }
 
-    function createPaymentSubmissions(
+    function createAVSRewardsSubmissions(
         IRewardsCoordinator rewardsCoordinator,
         address strategy,
         uint256 numPayments,
@@ -163,7 +163,7 @@ library SetupPaymentsLib {
         string memory parent_object = "parent_object";
         vm.serializeBytes32(parent_object, "leaves", leaves);
         string memory finalJson = vm.serializeBytes32(parent_object, "tokenLeaves", tokenLeaves);
-        vm.writeJson(finalJson, "test/mockData/scratch/payments.json");
+        vm.writeJson(finalJson, filePath);
     }
 
     function parseLeavesFromJson(string memory filePath) internal returns (PaymentLeaves memory) {
@@ -263,5 +263,9 @@ library SetupPaymentsLib {
             paddedLeaves[i] = leaves[i];
         }
         return paddedLeaves;
+    }
+    
+    function getFilePath() public pure returns (string memory) {
+        return filePath;
     }
 }
