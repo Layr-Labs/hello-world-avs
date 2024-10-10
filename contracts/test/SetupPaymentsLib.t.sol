@@ -166,7 +166,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         cheats.stopPrank();
     }
 
-    function testCreatePaymentSubmissions() public {
+    function testCreateAVSRewardsSubmissions() public {
         uint256 numPayments = 5;
         uint256 amountPerPayment = 100;
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
@@ -174,7 +174,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         cheats.warp(startTimestamp + 1);
         mockToken.approve(address(rewardsCoordinator), amountPerPayment * numPayments);
 
-        SetupPaymentsLib.createPaymentSubmissions(
+        SetupPaymentsLib.createAVSRewardsSubmissions(
             rewardsCoordinator,
             address(strategy),
             numPayments,
