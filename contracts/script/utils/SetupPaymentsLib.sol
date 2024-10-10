@@ -87,10 +87,9 @@ library SetupPaymentsLib {
         address strategy,
         uint32 rewardsCalculationEndTimestamp,
          uint256 NUM_PAYMENTS,
-        uint256 NUM_TOKEN_EARNINGS,
-        uint256 TOKEN_EARNINGS
+        uint256 NUM_TOKEN_EARNINGS
     ) internal {
-        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
+        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, strategy);
         rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
 
@@ -100,7 +99,6 @@ library SetupPaymentsLib {
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves,
         uint256 NUM_PAYMENTS,
         uint256 NUM_TOKEN_EARNINGS,
-        uint256 TOKEN_EARNINGS,
         address strategy
     ) internal returns (bytes32) {
         require(earnerLeaves.length == NUM_PAYMENTS, "Number of earners must match number of payments");
