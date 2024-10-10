@@ -26,6 +26,8 @@ library HelloWorldDeploymentLib {
     struct DeploymentData {
         address helloWorldServiceManager;
         address stakeRegistry;
+        address strategy;
+        address token;
     }
 
     function deployContracts(
@@ -43,7 +45,7 @@ library HelloWorldDeploymentLib {
             address(new ECDSAStakeRegistry(IDelegationManager(core.delegationManager)));
         address helloWorldServiceManagerImpl = address(
             new HelloWorldServiceManager(
-                core.avsDirectory, result.stakeRegistry, core.delegationManager
+                core.avsDirectory, result.stakeRegistry, core.rewardsCoordinator, core.delegationManager
             )
         );
         // Upgrade contracts
@@ -136,7 +138,11 @@ library HelloWorldDeploymentLib {
             data.stakeRegistry.toHexString(),
             '","stakeRegistryImpl":"',
             data.stakeRegistry.getImplementation().toHexString(),
-            '"}'
+            '","strategy":"',
+            data.strategy.toHexString(),
+            '","token":"',
+            data.token.toHexString(),
+             '"}'
         );
     }
 }
