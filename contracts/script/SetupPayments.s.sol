@@ -10,7 +10,7 @@ import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoor
 contract SetupPayments is Script {
     struct PaymentInfo {
         address[] earners;
-        bytes32[] earnerTokenRoots,
+        bytes32[] earnerTokenRoots;
         address recipient;
         uint256 numPayments;
         uint256 amountPerPayment;
@@ -23,6 +23,7 @@ contract SetupPayments is Script {
     address private deployer;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
+    string private filePath;
 
     uint256 constant NUM_TOKEN_EARNINGS = 1;
     uint256 constant DURATION = 1 weeks;
@@ -33,28 +34,23 @@ contract SetupPayments is Script {
 
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
         helloWorldDeployment = HelloWorldDeploymentLib.readDeploymentJson("deployments/hello-world/", block.chainid);
+
+        // TODO: Get the filePath from config
     }
 
     function run() external {
         vm.startBroadcast(deployer);
         IRewardsCoordinator(coreDeployment.rewardsCoordinator).setRewardsUpdater(deployer);
-        PaymentInfo memory info =  abi.decode(vm.parseJson(vm.readFile(filePath)), (PaymentInfo));
+        PaymentInfo memory info = abi.decode(vm.parseJson(vm.readFile(filePath)), (PaymentInfo));
 
         createAVSRewardsSubmissions(info.numPayments, info.amountPerPayment, info.duration, info.startTimestamp);
-        submitPaymentRoot(info.earners, info.endTimestamp, info.numPayments, info.amountPerPayment);
+        submitPaymentRoot(info.earners, info.endTimestamp, uint32(info.numPayments), uint32(info.amountPerPayment));
 
         IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf = IRewardsCoordinator.EarnerTreeMerkleLeaf({
             earner: info.earners[info.indexToProve],
-            tokenRoot: info.earnerTokenRoots[info.indexToProve],
+            earnerTokenRoot: info.earnerTokenRoots[info.indexToProve]
         });
         processClaim(SetupPaymentsLib.getFilePath(), info.indexToProve, info.recipient, earnerLeaf);
-        
-
-
-
-
-
-
 
         vm.stopBroadcast();
     }
@@ -71,7 +67,7 @@ contract SetupPayments is Script {
         );
     }
 
-    function processClaim(string memory filePath, uint256 indexToProve, address recipient, IRewardsCoordinator.EarnerTreeMerkleLeaf calldata earnerLeaf) public {
+    function processClaim(string memory filePath, uint256 indexToProve, address recipient, IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf) public {
         SetupPaymentsLib.processClaim(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             filePath,
@@ -83,7 +79,7 @@ contract SetupPayments is Script {
         );
     }
 
-    function submitPaymentRoot(address[] calldata earners, uint32 endTimestamp, uint32 numPayments, uint32 amountPerPayment) public {
+    function submitPaymentRoot(address[] memory earners, uint32 endTimestamp, uint32 numPayments, uint32 amountPerPayment) public {
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator), 
             NUM_TOKEN_EARNINGS, 
