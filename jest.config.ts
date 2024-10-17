@@ -5,7 +5,7 @@ const config: Config.InitialOptions = {
   testEnvironment: 'node',
   testMatch: ['**/*.test.ts'],
   verbose: true,
-  testTimeout: 60000, // 30 seconds
+  testTimeout: 60000, // 60 seconds
   maxWorkers: 1, // Run tests sequentially
 };
 
