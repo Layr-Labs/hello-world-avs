@@ -19,9 +19,7 @@ library UpgradeableProxyLib {
         return address(new ProxyAdmin());
     }
 
-    function setUpEmptyProxy(
-        address admin
-    ) internal returns (address) {
+    function setUpEmptyProxy(address admin) internal returns (address) {
         address emptyContract = address(new EmptyContract());
         return address(new TransparentUpgradeableProxy(emptyContract, admin, ""));
     }
@@ -36,16 +34,12 @@ library UpgradeableProxyLib {
         admin.upgradeAndCall(TransparentUpgradeableProxy(payable(proxy)), impl, initData);
     }
 
-    function getImplementation(
-        address proxy
-    ) internal view returns (address) {
+    function getImplementation(address proxy) internal view returns (address) {
         bytes32 value = vm.load(proxy, IMPLEMENTATION_SLOT);
         return address(uint160(uint256(value)));
     }
 
-    function getProxyAdmin(
-        address proxy
-    ) internal view returns (ProxyAdmin) {
+    function getProxyAdmin(address proxy) internal view returns (ProxyAdmin) {
         bytes32 value = vm.load(proxy, ADMIN_SLOT);
         return ProxyAdmin(address(uint160(uint256(value))));
     }
