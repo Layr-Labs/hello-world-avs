@@ -11,14 +11,19 @@
     "deploy:core-debug": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "deploy:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "build": "cd contracts && forge build",
-    "extract:abis": "node utils/abis.js"
+    "extract:abis": "node utils/abis.js",
+    "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
     "ethers": "^6.13.2"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.13",
     "@types/node": "^20.12.12",
+    "@viem/anvil": "^0.0.10",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }
