@@ -31,7 +31,7 @@ jobs:
           version: nightly
 
       - name: Copy env
-        run: cp .env.example .env
+        run: cp ./contracts/.env.example ./contracts/.env
 
       - name: Run E2E tests
         run: npm test
