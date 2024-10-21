@@ -10,3 +10,9 @@ docs/
 
 # Dotenv file
 .env
+
+
+# DS_store files
+.DS_Store
+lib/.DS_Store
+

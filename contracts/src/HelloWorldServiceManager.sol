@@ -10,6 +10,8 @@ import {ECDSAUpgradeable} from
 import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
@@ -40,12 +42,14 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     constructor(
         address _avsDirectory,
         address _stakeRegistry,
+        address _rewardsCoordinator,
         address _delegationManager
+
     )
         ECDSAServiceManagerBase(
             _avsDirectory,
             _stakeRegistry,
-            address(0), // hello-world doesn't need to deal with payments
+            _rewardsCoordinator,
             _delegationManager
         )
     {}
