@@ -9,7 +9,7 @@ import {Vm} from "forge-std/Vm.sol";
 library SetupPaymentsLib {
 
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
-    string internal constant filePath = "test/mockData/payments/payments.json";
+    string internal constant filePath = "test/mockData/scratch/payments.json";
 
     struct PaymentLeaves {
         bytes32[] leaves;
