@@ -38,6 +38,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     IStrategy public strategy;
     address proxyAdmin;
 
+    string internal constant filePath = "test/mockData/scratch/payments.json";
+
     
     function setUp() public override virtual {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
@@ -73,7 +75,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
         cheats.startPrank(address(0), address(0));
-        SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1);
+        SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
         cheats.stopPrank();
     }
 
@@ -86,7 +88,9 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         tokenLeaves[0] = bytes32(uint256(3));
         tokenLeaves[1] = bytes32(uint256(4));
 
-        SetupPaymentsLib.writeLeavesToJson(leaves, tokenLeaves);
+        string memory filePath = ("payments.json");
+
+        SetupPaymentsLib.writeLeavesToJson(leaves, tokenLeaves, filePath);
 
         assertTrue(vm.exists("payments.json"), "JSON file should be created");
     }
@@ -146,7 +150,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
         cheats.startPrank(address(0));
-        SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1);
+        SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
         cheats.stopPrank();
 
 
