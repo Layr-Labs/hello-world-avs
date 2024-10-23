@@ -369,6 +369,7 @@ library CoreDeploymentLib {
         string memory json = vm.readFile(pathToFile);
 
         DeploymentData memory data;
+        data.strategyFactory = json.readAddress(".addresses.strategyFactory");
         data.strategyManager = json.readAddress(".addresses.strategyManager");
         data.eigenPodManager = json.readAddress(".addresses.eigenPodManager");
         data.delegationManager = json.readAddress(".addresses.delegation");
