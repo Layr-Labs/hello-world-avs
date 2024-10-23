@@ -23,7 +23,7 @@ contract SetupPayments is Script {
     address private deployer;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
-    string private filePath;
+    string internal constant filePath = "test/mockData/scratch/payments.json";
 
     uint256 constant NUM_TOKEN_EARNINGS = 1;
     uint256 constant DURATION = 1 weeks;
@@ -51,7 +51,7 @@ contract SetupPayments is Script {
             earnerTokenRoot: info.earnerTokenRoots[info.indexToProve]
         });
 
-        processClaim("test/mockData/scratch/payments.json", info.indexToProve, info.recipient, earnerLeaf);
+        processClaim(filePath, info.indexToProve, info.recipient, earnerLeaf);
 
         vm.stopBroadcast();
     }
@@ -97,7 +97,7 @@ contract SetupPayments is Script {
             endTimestamp,
             numPayments, 
             NUM_TOKEN_EARNINGS,
-            "test/mockData/scratch/payments.json"
+            filePath
         );
     }
 }
