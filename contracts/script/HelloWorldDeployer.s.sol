@@ -26,8 +26,7 @@ contract HelloWorldDeployer is Script {
 
     address private deployer;
     address proxyAdmin;
-    StrategyBase helloWorldStrategy;
-    StrategyBase helloWorldStrategyImpl;
+    IStrategy helloWorldStrategy;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     Quorum internal quorum;
@@ -39,7 +38,7 @@ contract HelloWorldDeployer is Script {
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
        
         token = new ERC20Mock();
-        IStrategy helloWorldStrategy = StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token);
+        helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
 
         quorum.strategies.push(
             StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
