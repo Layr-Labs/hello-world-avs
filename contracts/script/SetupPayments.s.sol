@@ -50,7 +50,8 @@ contract SetupPayments is Script {
             earner: info.earners[info.indexToProve],
             earnerTokenRoot: info.earnerTokenRoots[info.indexToProve]
         });
-        processClaim(SetupPaymentsLib.getFilePath(), info.indexToProve, info.recipient, earnerLeaf);
+
+        processClaim("test/mockData/scratch/payments.json", info.indexToProve, info.recipient, earnerLeaf);
 
         vm.stopBroadcast();
     }
@@ -95,7 +96,8 @@ contract SetupPayments is Script {
             helloWorldDeployment.strategy,
             endTimestamp,
             numPayments, 
-            NUM_TOKEN_EARNINGS
+            NUM_TOKEN_EARNINGS,
+            "test/mockData/scratch/payments.json"
         );
     }
 }
