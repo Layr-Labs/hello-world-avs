@@ -78,6 +78,8 @@ library HelloWorldDeploymentLib {
         /// TODO: 2 Step for reading deployment json.  Read to the core and the AVS data
         data.helloWorldServiceManager = json.readAddress(".contracts.helloWorldServiceManager");
         data.stakeRegistry = json.readAddress(".contracts.stakeRegistry");
+        data.strategy = json.readAddress(".contracts.strategy");
+        data.token = json.readAddress(".contracts.token");
 
         return data;
     }
