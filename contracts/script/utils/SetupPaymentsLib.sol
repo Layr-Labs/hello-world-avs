@@ -9,7 +9,6 @@ import {Vm} from "forge-std/Vm.sol";
 library SetupPaymentsLib {
 
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
-    string internal constant filePath = "test/mockData/scratch/payments.json";
 
     struct PaymentLeaves {
         bytes32[] leaves;
@@ -87,9 +86,10 @@ library SetupPaymentsLib {
         address strategy,
         uint32 rewardsCalculationEndTimestamp,
          uint256 NUM_PAYMENTS,
-        uint256 NUM_TOKEN_EARNINGS
+        uint256 NUM_TOKEN_EARNINGS,
+        string memory filePath
     ) internal {
-        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, strategy);
+        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, strategy, filePath);
         rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
 
@@ -99,7 +99,8 @@ library SetupPaymentsLib {
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves,
         uint256 NUM_PAYMENTS,
         uint256 NUM_TOKEN_EARNINGS,
-        address strategy
+        address strategy,
+        string memory filePath
     ) internal returns (bytes32) {
         require(earnerLeaves.length == NUM_PAYMENTS, "Number of earners must match number of payments");
         bytes32[] memory leaves = new bytes32[](NUM_PAYMENTS);
@@ -109,7 +110,7 @@ library SetupPaymentsLib {
             leaves[i] = rewardsCoordinator.calculateEarnerLeafHash(earnerLeaves[i]);
         }
 
-        writeLeavesToJson(leaves, tokenLeaves);
+        writeLeavesToJson(leaves, tokenLeaves, filePath);
         return (merkleizeKeccak(leaves));
     }
 
@@ -158,7 +159,8 @@ library SetupPaymentsLib {
 
     function writeLeavesToJson(
         bytes32[] memory leaves,
-        bytes32[] memory tokenLeaves
+        bytes32[] memory tokenLeaves,
+        string memory filePath
     ) internal {
         string memory parent_object = "parent_object";
         vm.serializeBytes32(parent_object, "leaves", leaves);
@@ -263,9 +265,5 @@ library SetupPaymentsLib {
             paddedLeaves[i] = leaves[i];
         }
         return paddedLeaves;
-    }
-    
-    function getFilePath() public pure returns (string memory) {
-        return filePath;
     }
 }
