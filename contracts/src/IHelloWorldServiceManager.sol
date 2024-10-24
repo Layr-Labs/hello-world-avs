@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
+import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+
 interface IHelloWorldServiceManager {
     event NewTaskCreated(uint32 indexed taskIndex, Task task);
 
@@ -31,4 +33,6 @@ interface IHelloWorldServiceManager {
         uint32 referenceTaskIndex,
         bytes calldata signature
     ) external;
+
+    // function createAVSRewardsSubmission(IRewardsCoordinator.RewardsSubmission[] calldata rewardsSubmissions) external;
 }

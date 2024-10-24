@@ -12,6 +12,7 @@ import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
@@ -101,4 +102,5 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }
+
 }
