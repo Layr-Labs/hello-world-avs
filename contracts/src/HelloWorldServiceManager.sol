@@ -101,4 +101,5 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }
+
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
+import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 
@@ -16,7 +17,7 @@ library SetupPaymentsLib {
     }
 
     function createAVSRewardsSubmissions(
-        IRewardsCoordinator rewardsCoordinator,
+        address helloWorldServiceManager,
         address strategy,
         uint256 numPayments,
         uint256 amountPerPayment,
@@ -35,14 +36,13 @@ library SetupPaymentsLib {
                 strategiesAndMultipliers: strategiesAndMultipliers,
                 token: IStrategy(strategy).underlyingToken(),
                 amount: amountPerPayment,
-                startTimestamp: startTimestamp ,
+                startTimestamp: startTimestamp,
                 duration: duration
             });
 
             rewardsSubmissions[i] = rewardsSubmission;
         }
-
-        rewardsCoordinator.createAVSRewardsSubmission(rewardsSubmissions);
+        ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
     }
 
     function processClaim(
