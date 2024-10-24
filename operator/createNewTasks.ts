@@ -23,7 +23,7 @@ function generateRandomName(): string {
     const nouns = ['Fox', 'Dog', 'Cat', 'Mouse', 'Bear'];
     const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
     const noun = nouns[Math.floor(Math.random() * nouns.length)];
-    const randomName = `${adjective}${noun}${Math.floor(Math.random() * 1000)}`;
+    const randomName = `${adjective}${noun}${Math.floor(Math.random() * 24000)}`;
     return randomName;
   }
 
