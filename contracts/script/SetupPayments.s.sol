@@ -6,7 +6,6 @@ import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
 import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
 import {SetupPaymentsLib} from "./utils/SetupPaymentsLib.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
-import {IHelloWorldServiceManager} from "../../src/IHelloWorldServiceManager.sol";
 
 contract SetupPayments is Script {
     struct PaymentInfo {
