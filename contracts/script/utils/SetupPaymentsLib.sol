@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
-import {IHelloWorldServiceManager} from "../../src/IHelloWorldServiceManager.sol";
-import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {Vm} from "forge-std/Vm.sol";
 
@@ -44,7 +42,6 @@ library SetupPaymentsLib {
 
             rewardsSubmissions[i] = rewardsSubmission;
         }
-        // emit log_named_uint("numPayments", numPayments);
         ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
     }
 
