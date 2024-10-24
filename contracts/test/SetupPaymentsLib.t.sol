@@ -185,13 +185,9 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
         uint32 startTimestamp = 10 days;
         cheats.warp(startTimestamp + 1);
-        mockToken.approve(address(rewardsCoordinator), amountPerPayment * numPayments);
+        
         cheats.prank(rewardsInitiator);
         mockToken.increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments);
-
-
-
-        emit log_named_address("helloWorldServiceManager", address(helloWorldDeployment.helloWorldServiceManager));
 
         cheats.startPrank(rewardsInitiator);
         SetupPaymentsLib.createAVSRewardsSubmissions(
