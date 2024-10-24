@@ -6,12 +6,14 @@ import "../script/utils/SetupPaymentsLib.sol";
 import "../script/utils/CoreDeploymentLib.sol";
 import "../script/utils/HelloWorldDeploymentLib.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import "../src/IHelloWorldServiceManager.sol";
 import "@eigenlayer/contracts/interfaces/IStrategy.sol";
 import "@eigenlayer/contracts/libraries/Merkle.sol";
 import "../script/DeployEigenLayerCore.s.sol";
 import "../script/HelloWorldDeployer.s.sol";
 import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 import {HelloWorldTaskManagerSetup} from "test/HelloWorldServiceManager.t.sol";
+import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {
     Quorum,
     StrategyParams,
@@ -35,10 +37,12 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
 
     IRewardsCoordinator public rewardsCoordinator;
+    IHelloWorldServiceManager public helloWorldServiceManager;
     IStrategy public strategy;
     address proxyAdmin;
 
     string internal constant filePath = "test/mockData/scratch/payments.json";
+    address rewardsInitiator = address(1);
 
     
     function setUp() public override virtual {
@@ -56,9 +60,14 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
         labelContracts(coreDeployment, helloWorldDeployment);
 
+        cheats.prank(address(0));
+        ECDSAServiceManagerBase(helloWorldDeployment.helloWorldServiceManager).setRewardsInitiator(rewardsInitiator);
+
         rewardsCoordinator = IRewardsCoordinator(coreDeployment.rewardsCoordinator);
+
         mockToken.mint(address(this), 100000);
         mockToken.mint(address(rewardsCoordinator), 100000);
+        mockToken.mint(rewardsInitiator, 100000);
     }
 
 
@@ -177,9 +186,16 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint32 startTimestamp = 10 days;
         cheats.warp(startTimestamp + 1);
         mockToken.approve(address(rewardsCoordinator), amountPerPayment * numPayments);
+        cheats.prank(rewardsInitiator);
+        mockToken.increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments);
 
+
+
+        emit log_named_address("helloWorldServiceManager", address(helloWorldDeployment.helloWorldServiceManager));
+
+        cheats.startPrank(rewardsInitiator);
         SetupPaymentsLib.createAVSRewardsSubmissions(
-            rewardsCoordinator,
+            address(helloWorldDeployment.helloWorldServiceManager),
             address(strategy),
             numPayments,
             amountPerPayment,

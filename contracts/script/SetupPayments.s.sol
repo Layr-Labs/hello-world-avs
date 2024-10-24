@@ -6,6 +6,7 @@ import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
 import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
 import {SetupPaymentsLib} from "./utils/SetupPaymentsLib.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {IHelloWorldServiceManager} from "../../src/IHelloWorldServiceManager.sol";
 
 contract SetupPayments is Script {
     struct PaymentInfo {
@@ -59,7 +60,7 @@ contract SetupPayments is Script {
 
     function createAVSRewardsSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 duration, uint32 startTimestamp) public {
         SetupPaymentsLib.createAVSRewardsSubmissions(
-            IRewardsCoordinator(coreDeployment.rewardsCoordinator),
+            helloWorldDeployment.helloWorldServiceManager,
             helloWorldDeployment.strategy,
             numPayments,
             amountPerPayment,
