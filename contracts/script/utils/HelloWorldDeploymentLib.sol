@@ -53,7 +53,9 @@ library HelloWorldDeploymentLib {
             ECDSAStakeRegistry.initialize, (result.helloWorldServiceManager, 0, quorum)
         );
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
-        UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
+        address owner = address(420);
+        upgradeCall = abi.encodeCall(HelloWorldServiceManager.initialize, (owner, owner));
+        UpgradeableProxyLib.upgradeAndCall(result.helloWorldServiceManager, helloWorldServiceManagerImpl, upgradeCall);
 
         return result;
     }

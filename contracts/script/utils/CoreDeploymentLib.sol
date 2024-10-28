@@ -252,11 +252,10 @@ library CoreDeploymentLib {
         upgradeCall = abi.encodeCall(
             RewardsCoordinator.initialize,
             (
-                proxyAdmin, // initialOwner
+                configData.rewardsCoordinator.owner,
                 IPauserRegistry(result.pauserRegistry), // _pauserRegistry
                 configData.rewardsCoordinator.initPausedStatus, // initialPausedStatus
-                /// TODO: is there a setter and is this expected?
-                address(0), // rewards updater
+                configData.rewardsCoordinator.updater,
                 uint32(configData.rewardsCoordinator.activationDelay), // _activationDelay
                 uint16(configData.rewardsCoordinator.globalOperatorCommissionBips) // _globalCommissionBips
             )

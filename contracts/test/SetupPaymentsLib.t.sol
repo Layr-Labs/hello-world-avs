@@ -60,7 +60,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
         labelContracts(coreDeployment, helloWorldDeployment);
 
-        cheats.prank(address(0));
+        cheats.prank(address(420)); //TODO: Need to make this the owner key
         ECDSAServiceManagerBase(helloWorldDeployment.helloWorldServiceManager).setRewardsInitiator(rewardsInitiator);
 
         rewardsCoordinator = IRewardsCoordinator(coreDeployment.rewardsCoordinator);
@@ -83,7 +83,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
-        cheats.startPrank(address(0), address(0));
+        cheats.startPrank(address(420), address(420));
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
         cheats.stopPrank();
     }
@@ -158,7 +158,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
-        cheats.startPrank(address(0));
+        cheats.startPrank(address(420));
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
         cheats.stopPrank();
 
