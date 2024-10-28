@@ -47,7 +47,7 @@ function startCreatingTasks() {
     const randomName = generateRandomName();
     console.log(`Creating new task with name: ${randomName}`);
     createNewTask(randomName);
-  }, 5000);
+  }, 24000);
 }
 
 // Start the process
