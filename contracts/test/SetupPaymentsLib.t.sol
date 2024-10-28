@@ -83,7 +83,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
-        cheats.startPrank(address(420), address(420));
+        cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
         cheats.stopPrank();
     }
@@ -158,7 +158,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
-        cheats.startPrank(address(420));
+
+        cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
         cheats.stopPrank();
 
