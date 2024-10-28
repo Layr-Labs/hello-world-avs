@@ -33,7 +33,9 @@ library HelloWorldDeploymentLib {
     function deployContracts(
         address proxyAdmin,
         CoreDeploymentLib.DeploymentData memory core,
-        Quorum memory quorum
+        Quorum memory quorum,
+        address rewardsInitiator,
+        address owner
     ) internal returns (DeploymentData memory) {
         DeploymentData memory result;
 
@@ -53,8 +55,7 @@ library HelloWorldDeploymentLib {
             ECDSAStakeRegistry.initialize, (result.helloWorldServiceManager, 0, quorum)
         );
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
-        address owner = address(420);
-        upgradeCall = abi.encodeCall(HelloWorldServiceManager.initialize, (owner, owner));
+        upgradeCall = abi.encodeCall(HelloWorldServiceManager.initialize, (owner, rewardsInitiator));
         UpgradeableProxyLib.upgradeAndCall(result.helloWorldServiceManager, helloWorldServiceManagerImpl, upgradeCall);
 
         return result;

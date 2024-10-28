@@ -252,7 +252,7 @@ library CoreDeploymentLib {
         upgradeCall = abi.encodeCall(
             RewardsCoordinator.initialize,
             (
-                configData.rewardsCoordinator.owner,
+                proxyAdmin, // initialOwner
                 IPauserRegistry(result.pauserRegistry), // _pauserRegistry
                 configData.rewardsCoordinator.initPausedStatus, // initialPausedStatus
                 configData.rewardsCoordinator.updater,

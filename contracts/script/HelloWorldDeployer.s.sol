@@ -26,6 +26,8 @@ contract HelloWorldDeployer is Script {
 
     address private deployer;
     address proxyAdmin;
+    address rewardsOwner;
+    address rewardsInitiator;
     IStrategy helloWorldStrategy;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
@@ -50,7 +52,7 @@ contract HelloWorldDeployer is Script {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
 
         helloWorldDeployment.strategy = address(helloWorldStrategy);
         helloWorldDeployment.token = address(token);

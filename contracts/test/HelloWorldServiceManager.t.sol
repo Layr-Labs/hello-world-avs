@@ -71,7 +71,7 @@ contract HelloWorldTaskManagerSetup is Test {
         quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr);
         labelContracts(coreDeployment, helloWorldDeployment);
     }
 
