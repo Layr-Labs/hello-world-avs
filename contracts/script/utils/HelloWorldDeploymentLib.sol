@@ -30,6 +30,11 @@ library HelloWorldDeploymentLib {
         address token;
     }
 
+    struct DeploymentConfigData {
+        address rewardsOwner;
+        address rewardsInitiator;
+    }
+
     function deployContracts(
         address proxyAdmin,
         CoreDeploymentLib.DeploymentData memory core,
@@ -86,6 +91,7 @@ library HelloWorldDeploymentLib {
 
         return data;
     }
+    
 
     /// write to default output path
     function writeDeploymentJson(
@@ -111,6 +117,32 @@ library HelloWorldDeploymentLib {
 
         vm.writeFile(fileName, deploymentData);
         console2.log("Deployment artifacts written to:", fileName);
+    }
+    
+
+    function readDeploymentConfigValues(
+        string memory directoryPath,
+        string memory fileName
+    ) internal returns (DeploymentConfigData memory) {
+        string memory pathToFile = string.concat(directoryPath, fileName);
+
+        require(vm.exists(pathToFile), "Deployment file does not exist");
+
+        string memory json = vm.readFile(pathToFile);
+
+        DeploymentConfigData memory data;
+
+        data.rewardsOwner = json.readAddress(".rewardsOwner");
+        data.rewardsInitiator = json.readAddress(".rewardsInitiator");
+        return data;
+    }
+
+    function readDeploymentConfigValues(
+        string memory directoryPath,
+        uint256 chainId
+    ) internal returns (DeploymentConfigData memory) {
+        return
+            readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
 
     function _generateDeploymentJson(
