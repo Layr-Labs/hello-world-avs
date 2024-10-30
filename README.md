@@ -20,6 +20,10 @@ That's it. This simple flow highlights some of the core mechanics of how AVSs wo
 
 The following instructions explain how to manually deploy the AVS from scratch including EigenLayer and AVS specific contracts using Foundry (forge) to a local anvil chain, and start Typescript Operator application and tasks.
 
+## Development Environment
+This section describes the tooling required for local development.
+
+### Non-Nix Environment
 Install dependencies:
 
 - [Node](https://nodejs.org/en/download/)
@@ -29,6 +33,15 @@ Install dependencies:
 - [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [Foundry](https://getfoundry.sh/)
 - [ethers](https://www.npmjs.com/package/ethers)
+
+### Nix Environment 
+On [Nix](https://nixos.org/) platforms, if you already have the proper Nix configuration, you can build the project’s artifacts inside a `nix develop` shell
+``` sh
+nix develop
+```
+Otherwise, please refer to [installed and configured](./docs/nix-setup-guide.md) section.
+
+## Quick start
 
 ### Start Anvil Chain
 
