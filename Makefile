@@ -25,9 +25,6 @@ ___CONTRACTS___: ##
 build-contracts: ## builds all contracts
 	cd contracts && forge build
 
-clean-deployments:
-	./utils/anvil/clean-deployments.sh
-
 __CLI__: ##
 
 send-fund: ## sends fund to the operator saved in tests/keys/test.ecdsa.key.json
