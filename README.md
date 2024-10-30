@@ -127,33 +127,57 @@ The architecture can be further enhanced via:
 
 ## Rust Operator instructions
 
-### Automated deployment (uses existing state file)
+### Anvil Deployment
 
-1. Run `make start-chain-with-contracts-deployed`
-    - This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
+1. Start Anvil Chain
 
-2. Run `make start-rust-operator`
-
-3. Run `make spam-rust-tasks`
-
-Tests are supported in anvil only . Make sure to run the 1st command before running the  tests:
-
+In terminal window #1, execute the following commands:
 ```sh
-cargo test --workspace
+anvil
 ```
 
-## Existing Holesky Testnet Deployment
+2. Deploy Contracts
 
-| Contract Name               | Holesky Address                                   |
-| -------------               | -------------                                     |
-| Hello World Service Manager | [0x3361953F4a9628672dCBcDb29e91735fb1985390](https://holesky.etherscan.io/address/0x3361953F4a9628672dCBcDb29e91735fb1985390)    |
+Open a separate terminal window #2, execute the following commands
 
-Please see [Current Testnet Deployment](https://github.com/Layr-Labs/eigenlayer-contracts?tab=readme-ov-file#current-testnet-deployment) for additional deployed addresses.
+```
+make deploy-eigenlayer-contracts
 
-You don't need to run a deployment script for holesky testnet, the contracts are already deployed.
+make deploy-helloworld-contracts
+```
 
-1. Use the HOLESKY_ namespace env parameters in the code , instead of normal parameters.
+3. Start Operator
 
-2. Run `make start-rust-operator`
+```sh
+make start-rust-operator
+```
+4. Spam Tasks
 
-3. Run `make spam-rust-tasks`
+```sh
+make spam-rust-tasks
+```
+
+### Testing
+
+1. Start Anvil Chain
+
+In terminal window #1, execute the following commands:
+```sh
+anvil
+```
+
+2. Deploy Contracts
+
+Open a separate terminal window #2, execute the following commands
+
+```
+make deploy-eigenlayer-contracts
+
+make deploy-helloworld-contracts
+```
+
+3. Run this command
+
+```
+cargo test --workspace
+```
