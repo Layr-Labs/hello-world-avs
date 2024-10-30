@@ -6,59 +6,12 @@ use alloy::{
 use dotenv::dotenv;
 use eigen_logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
-use hello_world_bindings::helloworldservicemanager::HelloWorldServiceManager;
+use hello_world_utils::{helloworldservicemanager::HelloWorldServiceManager, HelloWorldData};
 use once_cell::sync::Lazy;
 use rand::Rng;
 use reqwest::Url;
 use std::{env, str::FromStr};
 use tokio::time::{self, Duration};
-
-use serde::Deserialize;
-
-#[derive(Deserialize, Debug)]
-pub struct HelloWorldData {
-    lastUpdate: LastUpdate,
-    pub addresses: HelloWorldAddresses,
-}
-
-#[derive(Deserialize, Debug)]
-struct LastUpdate {
-    timestamp: String,
-    block_number: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct HelloWorldAddresses {
-    proxyAdmin: String,
-    pub helloWorldServiceManager: String,
-    helloWorldServiceManagerImpl: String,
-    pub stakeRegistry: String,
-    stakeRegistryImpl: String,
-    strategy: String,
-    token: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct EigenLayerData {
-    lastUpdate: LastUpdate,
-    pub addresses: EigenLayerAddresses,
-}
-
-#[derive(Deserialize, Debug)]
-struct EigenLayerAddresses {
-    proxyAdmin: String,
-    pub delegation: String,
-    delegationManagerImpl: String,
-    pub avsDirectory: String,
-    avsDirectoryImpl: String,
-    strategyManager: String,
-    strategyManagerImpl: String,
-    eigenPodManager: String,
-    eigenPodManagerImpl: String,
-    strategyFactory: String,
-    strategyFactoryImpl: String,
-    strategyBeacon: String,
-}
 
 pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 
@@ -87,7 +40,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
     let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
-        parsed.addresses.helloWorldServiceManager.parse()?;
+        parsed.addresses.hello_world_service_manager.parse()?;
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
     let wallet = EthereumWallet::from(signer);
     let pr = ProviderBuilder::new()

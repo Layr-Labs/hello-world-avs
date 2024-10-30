@@ -25,7 +25,7 @@ eigen-utils.workspace = true
 eigen-logging.workspace = true
 eigen-testing-utils.workspace = true
 
-hello-world-bindings.workspace = true
+hello-world-utils.workspace = true
 
 #misc 
 dotenv = "0.15.0"

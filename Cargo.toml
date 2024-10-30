@@ -1,6 +1,6 @@
 [workspace]
 members = ["operator/rust/crates/operator/",
-"operator/rust/crates/bindings/"
+"operator/rust/crates/utils/"
 ]
 
 resolver = "2"
@@ -28,8 +28,11 @@ rustdoc.all = "warn"
 
 #tokio
 tokio = {version = "1.37.0" , features = ["test-util", "full","sync","rt-multi-thread", "macros"] }
+
+serde = "1.0.214"
+
 hello-world-avs-operator = {path = "operator/rust/crates/operator"}
-hello-world-bindings = {path = "operator/rust/crates/bindings"}
+hello-world-utils = {path = "operator/rust/crates/utils"}
 #eigensdk-rs
 eigen-client-elcontracts = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32"}
 eigen-types = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32"}

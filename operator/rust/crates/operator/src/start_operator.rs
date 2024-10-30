@@ -1,12 +1,12 @@
 #![allow(missing_docs)]
-use alloy::dyn_abi::{DynSolType, DynSolValue};
+use alloy::dyn_abi::DynSolValue;
 use alloy::{network::EthereumWallet, providers::ProviderBuilder};
 use alloy::{
     primitives::{eip191_hash_message, keccak256, Address, FixedBytes, U256},
     providers::Provider,
     rpc::types::{BlockNumberOrTag, Filter},
     signers::{local::PrivateKeySigner, SignerSync},
-    sol_types::{sol, SolEvent, SolValue},
+    sol_types::{SolEvent, SolValue},
 };
 use chrono::Utc;
 use dotenv::dotenv;
@@ -17,61 +17,16 @@ use eigen_client_elcontracts::{
 use eigen_logging::{get_logger, init_logger, log_level::LogLevel};
 use eigen_utils::get_provider;
 use eyre::Result;
-use hello_world_bindings::ecdsastakeregistry::ECDSAStakeRegistry;
-use hello_world_bindings::{
+use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
+use hello_world_utils::{
     ecdsastakeregistry::ISignatureUtils::SignatureWithSaltAndExpiry,
-    helloworldservicemanager::{self, HelloWorldServiceManager, IHelloWorldServiceManager::Task},
+    helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
 };
+use hello_world_utils::{EigenLayerData, HelloWorldData};
 use once_cell::sync::Lazy;
 use rand::RngCore;
 use reqwest::Url;
-use serde::Deserialize;
 use std::{env, str::FromStr};
-
-#[derive(Deserialize, Debug)]
-pub struct HelloWorldData {
-    lastUpdate: LastUpdate,
-    pub addresses: HelloWorldAddresses,
-}
-
-#[derive(Deserialize, Debug)]
-struct LastUpdate {
-    timestamp: String,
-    block_number: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct HelloWorldAddresses {
-    proxyAdmin: String,
-    pub helloWorldServiceManager: String,
-    helloWorldServiceManagerImpl: String,
-    pub stakeRegistry: String,
-    stakeRegistryImpl: String,
-    strategy: String,
-    token: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct EigenLayerData {
-    lastUpdate: LastUpdate,
-    pub addresses: EigenLayerAddresses,
-}
-
-#[derive(Deserialize, Debug)]
-struct EigenLayerAddresses {
-    proxyAdmin: String,
-    pub delegation: String,
-    delegationManagerImpl: String,
-    pub avsDirectory: String,
-    avsDirectoryImpl: String,
-    strategyManager: String,
-    strategyManagerImpl: String,
-    eigenPodManager: String,
-    eigenPodManagerImpl: String,
-    strategyFactory: String,
-    strategyFactoryImpl: String,
-    strategyBeacon: String,
-}
 
 pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 
@@ -108,7 +63,7 @@ async fn sign_and_response_to_task(
     let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
     let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
-        parsed.addresses.helloWorldServiceManager.parse()?;
+        parsed.addresses.hello_world_service_manager.parse()?;
     println!("hello world address {:?}", hello_world_contract_address);
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
 
@@ -142,7 +97,7 @@ async fn monitor_new_tasks() -> Result<()> {
     let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
     let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
-        parsed.addresses.helloWorldServiceManager.parse()?;
+        parsed.addresses.hello_world_service_manager.parse()?;
 
     let mut latest_processed_block = pr.get_block_number().await?;
 
@@ -192,7 +147,7 @@ async fn register_operator() -> Result<()> {
     let data = std::fs::read_to_string("contracts/deployments/core/31337.json")?;
     let el_parsed: EigenLayerData = serde_json::from_str(&data)?;
     let delegation_manager_address: Address = el_parsed.addresses.delegation.parse()?;
-    let avs_directory_address: Address = el_parsed.addresses.avsDirectory.parse()?;
+    let avs_directory_address: Address = el_parsed.addresses.avs_directory.parse()?;
 
     let elcontracts_reader_instance = ELChainReader::new(
         get_logger().clone(),
@@ -223,7 +178,7 @@ async fn register_operator() -> Result<()> {
         .await
         .unwrap();
     get_logger().info(&format!("is registered {}", is_registered), &"");
-    #[allow(unused_doc_comments)]
+    #[allow(unused)]
     let tx_hash = elcontracts_writer_instance
         .register_as_operator(operator)
         .await?;
@@ -241,7 +196,7 @@ async fn register_operator() -> Result<()> {
     let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
     let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
-        parsed.addresses.helloWorldServiceManager.parse()?;
+        parsed.addresses.hello_world_service_manager.parse()?;
     let digest_hash = elcontracts_reader_instance
         .calculate_operator_avs_registration_digest_hash(
             signer.address(),
@@ -249,8 +204,8 @@ async fn register_operator() -> Result<()> {
             salt,
             expiry,
         )
-        .await
-        .expect("not able to calculate operator ");
+        .await?;
+       
 
     let signature = signer.sign_hash_sync(&digest_hash)?;
     let operator_signature = SignatureWithSaltAndExpiry {
@@ -258,7 +213,7 @@ async fn register_operator() -> Result<()> {
         salt,
         expiry: expiry,
     };
-    let stake_registry_address: Address = (&parsed.addresses.stakeRegistry).parse()?;
+    let stake_registry_address: Address = (&parsed.addresses.stake_registry).parse()?;
     let contract_ecdsa_stake_registry = ECDSAStakeRegistry::new(stake_registry_address, &pr);
     let registeroperator_details_call: alloy::contract::CallBuilder<
         _,
@@ -303,8 +258,4 @@ pub async fn main() {
         }
     });
 
-    // Keep the process running indefinitely
-    loop {
-        tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
-    }
 }

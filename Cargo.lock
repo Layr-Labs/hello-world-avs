@@ -2778,7 +2778,7 @@ dependencies = [
  "eyre",
  "futures",
  "futures-util",
- "hello-world-bindings",
+ "hello-world-utils",
  "hex",
  "num-bigint",
  "once_cell",
@@ -2791,10 +2791,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "hello-world-bindings"
+name = "hello-world-utils"
 version = "0.0.1-alpha"
 dependencies = [
  "alloy",
+ "serde",
 ]
 
 [[package]]

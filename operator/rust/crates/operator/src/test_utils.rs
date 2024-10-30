@@ -1,4 +1,4 @@
-// #![allow(missing_docs)]
+#![allow(missing_docs)]
 // use alloy_primitives::{eip191_hash_message, Address, FixedBytes, U256};
 // use alloy_provider::Provider;
 // use alloy_rpc_types::{BlockNumberOrTag, Filter};
