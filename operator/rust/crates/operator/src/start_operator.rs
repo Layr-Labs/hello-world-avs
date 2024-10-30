@@ -58,13 +58,15 @@ async fn sign_and_response_to_task(
     ])
     .abi_encode_params();
 
-    println!("Signing and responding to task : {:?}", task_index);
+    get_logger().info(
+        &format!("Signing and responding to task : {:?}", task_index),
+        "",
+    );
 
     let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
     let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
         parsed.addresses.hello_world_service_manager.parse()?;
-    println!("hello world address {:?}", hello_world_contract_address);
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
 
     let response_hash = hello_world_contract
@@ -82,7 +84,10 @@ async fn sign_and_response_to_task(
         .get_receipt()
         .await?
         .transaction_hash;
-    println!("Responded to task with tx hash {}", response_hash);
+    get_logger().info(
+        &format!("Responded to task with tx hash {}", response_hash),
+        "",
+    );
     Ok(())
 }
 
@@ -102,7 +107,7 @@ async fn monitor_new_tasks() -> Result<()> {
     let mut latest_processed_block = pr.get_block_number().await?;
 
     loop {
-        println!("Monitoring for new tasks...");
+        get_logger().info("Monitoring for new tasks...", "");
 
         let filter = Filter::new()
             .address(hello_world_contract_address)
@@ -118,7 +123,7 @@ async fn monitor_new_tasks() -> Result<()> {
                         .expect("Failed to decode log new task created")
                         .inner
                         .data;
-                    println!("New task detected :Hello{:?} ", task.name);
+                    get_logger().info(&format!("New task detected :Hello{:?} ", task.name), "");
 
                     let _ = sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name)
                         .await;
@@ -205,7 +210,6 @@ async fn register_operator() -> Result<()> {
             expiry,
         )
         .await?;
-       
 
     let signature = signer.sign_hash_sync(&digest_hash)?;
     let operator_signature = SignatureWithSaltAndExpiry {
@@ -257,5 +261,4 @@ pub async fn main() {
             eprintln!("Failed to monitor new tasks: {:?}", e);
         }
     });
-
 }

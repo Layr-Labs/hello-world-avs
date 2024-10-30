@@ -138,7 +138,7 @@ The architecture can be further enhanced via:
 
 Tests are supported in anvil only . Make sure to run the 1st command before running the  tests:
 
-```
+```sh
 cargo test --workspace
 ```
 

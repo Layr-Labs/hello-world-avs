@@ -1,7 +1,8 @@
-#[allow(clippy::all, clippy::pedantic,unused_imports)]
+#![cfg(not(doctest))]
+#[allow(clippy::all, clippy::pedantic, unused_imports)]
 pub mod helloworldservicemanager;
 
-#[allow(clippy::all, clippy::pedantic,unused_imports)]
+#[allow(clippy::all, clippy::pedantic, unused_imports)]
 pub mod ecdsastakeregistry;
 
 use serde::Deserialize;
