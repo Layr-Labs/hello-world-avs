@@ -21,6 +21,14 @@ ___CONTRACTS___: ##
 build-contracts: ## builds all contracts
 	cd contracts && forge build
 
+deploy-eigenlayer-contracts:
+						@chmod +x ./contracts/anvil/deploy-el.sh
+						./contracts/anvil/deploy-el.sh
+
+deploy-helloworld-contracts:
+						@chmod +x ./contracts/anvil/deploy-helloworld.sh
+						./contracts/anvil/deploy-helloworld.sh
+
 __CLI__: ##
 
 send-fund: ## sends fund to the operator saved in tests/keys/test.ecdsa.key.json
@@ -44,14 +52,6 @@ tests-contract: ## runs all forge tests
 ___RUST_OFFCHAIN_SOFTWARE___:
 start-rust-operator: ## start operator (part of quickstart) 
 	cargo run --bin start_operator
-
-deploy-eigenlayer-contracts:
-						@chmod +x ./contracts/anvil/deploy-el.sh
-						./contracts/anvil/deploy-el.sh
-
-make deploy-helloworld-contracts:
-							@chmod +x ./contracts/anvil/deploy-helloworld.sh
-							./contracts/anvil/deploy-helloworld.sh
 
 spam-rust-tasks:  ## start tasks spamming (part of quickstart)
 	cargo run --bin spam_tasks
