@@ -1,0 +1,12 @@
+[package]
+name = "hello-world-bindings"
+description = "Hello world avs operator start and spam utilities"
+
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license-file.workspace = true
+
+[dependencies]
+alloy = { version = "0.4.2", features = ["full"] }

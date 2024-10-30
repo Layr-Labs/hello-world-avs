@@ -25,19 +25,6 @@ ___CONTRACTS___: ##
 build-contracts: ## builds all contracts
 	cd contracts && forge build
 
-deploy-eigenlayer-contracts-to-anvil-and-save-state: reset-anvil ## Deploy eigenlayer
-	./utils/anvil/deploy-eigenlayer-save-anvil-state.sh
-
-deploy-hello-world-contracts-to-anvil-and-save-state: reset-anvil ## Deploy avs
-	./utils/anvil/deploy-avs-save-anvil-state.sh
-
-deploy-contracts-to-anvil-and-save-state: reset-anvil deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-hello-world-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts (part of quickstart)
-
-start-chain-with-contracts-deployed: reset-anvil  ## starts anvil from a saved state file (with el and avs contracts deployed)
-	./utils/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
-
-# start-chain-and-deploy-hello-world-avs: build-contracts deploy-contracts-to-anvil-and-save-state start-anvil-chain-with-el-and-avs-deployed
-
 clean-deployments:
 	./utils/anvil/clean-deployments.sh
 
@@ -64,5 +51,14 @@ tests-contract: ## runs all forge tests
 ___RUST_OFFCHAIN_SOFTWARE___:
 start-rust-operator: ## start operator (part of quickstart) 
 	cargo run --bin start_operator
+
+deploy-eigenlayer-contracts:
+						@chmod +x ./contracts/anvil/deploy-el.sh
+						./contracts/anvil/deploy-el.sh
+
+make deploy-helloworld-contracts:
+							@chmod +x ./contracts/anvil/deploy-helloworld.sh
+							./contracts/anvil/deploy-helloworld.sh
+
 spam-rust-tasks:  ## start tasks spamming (part of quickstart)
 	cargo run --bin spam_tasks
