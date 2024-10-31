@@ -26,14 +26,19 @@ contract HelloWorldDeployer is Script {
 
     address private deployer;
     address proxyAdmin;
+    address rewardsOwner;
+    address rewardsInitiator;
     IStrategy helloWorldStrategy;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
+    HelloWorldDeploymentLib.DeploymentConfigData helloWorldConfig;
     Quorum internal quorum;
     ERC20Mock token;
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
+
+        helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("deployments/hello-world/", block.chainid);
 
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
        
@@ -50,7 +55,7 @@ contract HelloWorldDeployer is Script {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
 
         helloWorldDeployment.strategy = address(helloWorldStrategy);
         helloWorldDeployment.token = address(token);

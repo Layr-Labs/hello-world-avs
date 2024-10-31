@@ -30,10 +30,17 @@ library HelloWorldDeploymentLib {
         address token;
     }
 
+    struct DeploymentConfigData {
+        address rewardsOwner;
+        address rewardsInitiator;
+    }
+
     function deployContracts(
         address proxyAdmin,
         CoreDeploymentLib.DeploymentData memory core,
-        Quorum memory quorum
+        Quorum memory quorum,
+        address rewardsInitiator,
+        address owner
     ) internal returns (DeploymentData memory) {
         DeploymentData memory result;
 
@@ -53,7 +60,8 @@ library HelloWorldDeploymentLib {
             ECDSAStakeRegistry.initialize, (result.helloWorldServiceManager, 0, quorum)
         );
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
-        UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
+        upgradeCall = abi.encodeCall(HelloWorldServiceManager.initialize, (owner, rewardsInitiator));
+        UpgradeableProxyLib.upgradeAndCall(result.helloWorldServiceManager, helloWorldServiceManagerImpl, upgradeCall);
 
         return result;
     }
@@ -83,6 +91,7 @@ library HelloWorldDeploymentLib {
 
         return data;
     }
+    
 
     /// write to default output path
     function writeDeploymentJson(
@@ -108,6 +117,32 @@ library HelloWorldDeploymentLib {
 
         vm.writeFile(fileName, deploymentData);
         console2.log("Deployment artifacts written to:", fileName);
+    }
+    
+
+    function readDeploymentConfigValues(
+        string memory directoryPath,
+        string memory fileName
+    ) internal returns (DeploymentConfigData memory) {
+        string memory pathToFile = string.concat(directoryPath, fileName);
+
+        require(vm.exists(pathToFile), "Deployment file does not exist");
+
+        string memory json = vm.readFile(pathToFile);
+
+        DeploymentConfigData memory data;
+
+        data.rewardsOwner = json.readAddress(".rewardsOwner");
+        data.rewardsInitiator = json.readAddress(".rewardsInitiator");
+        return data;
+    }
+
+    function readDeploymentConfigValues(
+        string memory directoryPath,
+        uint256 chainId
+    ) internal returns (DeploymentConfigData memory) {
+        return
+            readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
 
     function _generateDeploymentJson(

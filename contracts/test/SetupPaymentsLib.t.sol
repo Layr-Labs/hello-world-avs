@@ -19,6 +19,8 @@ import {
     StrategyParams,
     IStrategy
 } from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
+
 
 contract TestConstants {
     uint256 constant NUM_PAYMENTS = 8;
@@ -43,6 +45,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
     string internal constant filePath = "test/mockData/scratch/payments.json";
     address rewardsInitiator = address(1);
+    address rewardsOwner = address(2);
 
     
     function setUp() public override virtual {
@@ -57,10 +60,11 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
         labelContracts(coreDeployment, helloWorldDeployment);
 
-        cheats.prank(address(0));
+
+        cheats.prank(rewardsOwner);
         ECDSAServiceManagerBase(helloWorldDeployment.helloWorldServiceManager).setRewardsInitiator(rewardsInitiator);
 
         rewardsCoordinator = IRewardsCoordinator(coreDeployment.rewardsCoordinator);
@@ -82,7 +86,6 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
-
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
@@ -158,6 +161,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
+
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
