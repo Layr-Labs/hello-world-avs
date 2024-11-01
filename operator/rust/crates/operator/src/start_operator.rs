@@ -169,7 +169,10 @@ async fn register_operator() -> Result<()> {
         .register_as_operator(operator)
         .await?;
     get_logger().info(
-        "Operator registered on EL successfully tx_hash {tx_hash:?}",
+        &format!(
+            "Operator registered on EL successfully tx_hash {:?}",
+            tx_hash
+        ),
         &"",
     );
     let mut salt = [0u8; 32];
