@@ -1,30 +1,20 @@
 #![allow(missing_docs)]
-use alloy_primitives::Address;
-use alloy_sol_types::sol;
+use alloy::{primitives::Address, signers::local::PrivateKeySigner};
 use dotenv::dotenv;
-use eigen_logging::{get_logger, init_logger, log_level::LogLevel, logger::Logger};
+use eigen_logging::{get_logger, init_logger, log_level::LogLevel};
 use eigen_utils::get_signer;
 use eyre::Result;
+use hello_world_utils::{helloworldservicemanager::HelloWorldServiceManager, HelloWorldData};
 use once_cell::sync::Lazy;
 use rand::Rng;
 use std::{env, str::FromStr};
 use tokio::time::{self, Duration};
 
-pub static RPC_URL: Lazy<String> =
-    Lazy::new(|| env::var("RPC_URL").expect("failed to get rpc url from env"));
+pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 
-pub static HELLO_WORLD_CONTRACT_ADDRESS: Lazy<String> = Lazy::new(|| {
-    env::var("CONTRACT_ADDRESS").expect("failed to get hello world contract address from env")
-});
 #[allow(unused)]
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    HelloWorldServiceManager,
-    "json_abi/HelloWorldServiceManager.json"
-);
 
 #[allow(unused)]
 /// Generate random task names from the given adjectives and nouns
@@ -44,12 +34,13 @@ fn generate_random_name() -> String {
 #[allow(unused)]
 /// Calls CreateNewTask function of the Hello world service manager contract
 async fn create_new_task(task_name: &str) -> Result<()> {
-    let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
-        .expect("wrong hello world contract address");
-
-    let provider = get_signer(KEY.clone(), &RPC_URL);
-    let hello_world_contract =
-        HelloWorldServiceManager::new(hello_world_contract_address, provider);
+    let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
+    let parsed: HelloWorldData = serde_json::from_str(&data)?;
+    let hello_world_contract_address: Address =
+        parsed.addresses.hello_world_service_manager.parse()?;
+    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+    let signer = PrivateKeySigner::from_str(&KEY.clone())?;
+    let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, pr);
 
     let tx = hello_world_contract
         .createNewTask(task_name.to_string())
@@ -74,9 +65,9 @@ async fn start_creating_tasks() {
     loop {
         interval.tick().await;
         let random_name = generate_random_name();
-        get_logger().tracing_logger.unwrap().info(
+        get_logger().info(
             &format!("Creating new task with name: {} ", random_name),
-            &["start_creating_tasks"],
+            &"start_creating_tasks",
         );
         let _ = create_new_task(&random_name).await;
     }

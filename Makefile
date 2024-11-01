@@ -1,6 +1,5 @@
 ############################# HELP MESSAGE #############################
 # Make sure the help command stays first, so that it's printed by default when `make` is called without arguments
-PHONY: reset-anvil
 .PHONY: help tests
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -14,9 +13,6 @@ CHAINID=31337
 STRATEGY_ADDRESS=0x7a2088a1bFc9d81c55368AE168C2C02570cB814F
 DEPLOYMENT_FILES_DIR=contracts/script/output/${CHAINID}
 
-reset-anvil:
-	-docker stop anvil
-	-docker rm anvil
 
 -----------------------------: ##
 
@@ -25,21 +21,13 @@ ___CONTRACTS___: ##
 build-contracts: ## builds all contracts
 	cd contracts && forge build
 
-deploy-eigenlayer-contracts-to-anvil-and-save-state: reset-anvil ## Deploy eigenlayer
-	./utils/anvil/deploy-eigenlayer-save-anvil-state.sh
+deploy-eigenlayer-contracts:
+						@chmod +x ./contracts/anvil/deploy-el.sh
+						./contracts/anvil/deploy-el.sh
 
-deploy-hello-world-contracts-to-anvil-and-save-state: reset-anvil ## Deploy avs
-	./utils/anvil/deploy-avs-save-anvil-state.sh
-
-deploy-contracts-to-anvil-and-save-state: reset-anvil deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-hello-world-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts (part of quickstart)
-
-start-chain-with-contracts-deployed: reset-anvil  ## starts anvil from a saved state file (with el and avs contracts deployed)
-	./utils/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
-
-# start-chain-and-deploy-hello-world-avs: build-contracts deploy-contracts-to-anvil-and-save-state start-anvil-chain-with-el-and-avs-deployed
-
-clean-deployments:
-	./utils/anvil/clean-deployments.sh
+deploy-helloworld-contracts:
+						@chmod +x ./contracts/anvil/deploy-helloworld.sh
+						./contracts/anvil/deploy-helloworld.sh
 
 __CLI__: ##
 
@@ -64,5 +52,6 @@ tests-contract: ## runs all forge tests
 ___RUST_OFFCHAIN_SOFTWARE___:
 start-rust-operator: ## start operator (part of quickstart) 
 	cargo run --bin start_operator
+
 spam-rust-tasks:  ## start tasks spamming (part of quickstart)
 	cargo run --bin spam_tasks
