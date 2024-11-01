@@ -20,6 +20,10 @@ That's it. This simple flow highlights some of the core mechanics of how AVSs wo
 
 The following instructions explain how to manually deploy the AVS from scratch including EigenLayer and AVS specific contracts using Foundry (forge) to a local anvil chain, and start Typescript Operator application and tasks.
 
+## Development Environment
+This section describes the tooling required for local development.
+
+### Non-Nix Environment
 Install dependencies:
 
 - [Node](https://nodejs.org/en/download/)
@@ -29,6 +33,15 @@ Install dependencies:
 - [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [Foundry](https://getfoundry.sh/)
 - [ethers](https://www.npmjs.com/package/ethers)
+
+### Nix Environment 
+On [Nix](https://nixos.org/) platforms, if you already have the proper Nix configuration, you can build the project’s artifacts inside a `nix develop` shell
+``` sh
+nix develop
+```
+Otherwise, please refer to [installed and configured](./docs/nix-setup-guide.md) section.
+
+## Quick start
 
 ### Start Anvil Chain
 
@@ -93,14 +106,6 @@ For help and support deploying and modifying this repo for your AVS, please:
     * Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
     * Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
 
-- Local anvil testing:
-  - Recompile the contracts with the `--revert-strings debug` flag. Deploy the contracts again and retest.
-  - Include the full stacktrace from your error as a .txt file attachment.
-  - Create a minimal repo that demonstrates the behavior (fork or otherwise).
-  - Steps require to reproduce issue (compile and cause the error).
-- Holesky testing:
-  - Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
-  - Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
 
 ### Contact Us
 
