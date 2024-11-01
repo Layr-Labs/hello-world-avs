@@ -2796,7 +2796,9 @@ name = "hello-world-utils"
 version = "0.0.1-alpha"
 dependencies = [
  "alloy",
+ "eyre",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

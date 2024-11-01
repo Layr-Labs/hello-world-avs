@@ -14,12 +14,14 @@ use eigen_client_elcontracts::{
     writer::{ELChainWriter, Operator},
 };
 use eigen_logging::get_logger;
-use eigen_utils::get_provider;
+use eigen_utils::{get_provider, get_signer};
 use eyre::Result;
 use hello_world_utils::{
     ecdsastakeregistry::ISignatureUtils::SignatureWithSaltAndExpiry,
     helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
-    EigenLayerData, HelloWorldData,
+    parse_avs_directory_address, parse_delegation_manager_address,
+    parse_hello_world_service_manager, parse_stake_registry_address, EigenLayerData,
+    HelloWorldData,
 };
 use once_cell::sync::Lazy;
 use rand::Rng;
@@ -41,12 +43,8 @@ async fn sign_and_response_to_task(
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
+    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
-    let wallet = EthereumWallet::from(signer.clone());
-    let pr = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
 
     let message = format!("Hello, {}", name);
     let m_hash = eip191_hash_message(keccak256(message.abi_encode_packed()));
@@ -63,10 +61,8 @@ async fn sign_and_response_to_task(
 
     println!("Signing and responding to task : {:?}", task_index);
 
-    let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
-    let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
-        parsed.addresses.hello_world_service_manager.parse()?;
+        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
 
     let response_hash = hello_world_contract
@@ -91,16 +87,10 @@ async fn sign_and_response_to_task(
 /// Monitor new tasks
 #[allow(unused)]
 async fn monitor_new_tasks() -> Result<()> {
+    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
-    let wallet = EthereumWallet::from(signer);
-    let pr = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
-    let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
-    let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
-        parsed.addresses.hello_world_service_manager.parse()?;
+        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
 
     let mut latest_processed_block = pr.get_block_number().await?;
 
@@ -146,20 +136,11 @@ async fn register_operator() -> Result<()> {
 
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
-    let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
-    let mut path = Path::new(data);
-    for _ in 0..4 {
-        path = path
-            .parent()
-            .expect("Reached the filesystem root, no more parent directories");
-    }
 
-    let s = &format!("{}/contracts/deployments/core/31337.json", &path.display());
-
-    let data = std::fs::read_to_string(s)?;
-    let el_parsed: EigenLayerData = serde_json::from_str(&data)?;
-    let delegation_manager_address: Address = el_parsed.addresses.delegation.parse()?;
-    let avs_directory_address: Address = el_parsed.addresses.avs_directory.parse()?;
+    let delegation_manager_address =
+        parse_delegation_manager_address("contracts/deployments/core/31337.json")?;
+    let avs_directory_address: Address =
+        parse_avs_directory_address("contracts/deployments/core/31337.json")?;
 
     let elcontracts_reader_instance = ELChainReader::new(
         get_logger().clone(),
@@ -205,9 +186,8 @@ async fn register_operator() -> Result<()> {
     let now = Utc::now().timestamp();
     let expiry: U256 = U256::from(now + 3600);
 
-    let parsed: HelloWorldData = serde_json::from_str(&std::fs::read_to_string(s).unwrap())?;
     let hello_world_contract_address: Address =
-        parsed.addresses.hello_world_service_manager.parse()?;
+        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let digest_hash = elcontracts_reader_instance
         .calculate_operator_avs_registration_digest_hash(
             signer.address(),
@@ -223,7 +203,8 @@ async fn register_operator() -> Result<()> {
         salt,
         expiry: expiry,
     };
-    let stake_registry_address: Address = (&parsed.addresses.stake_registry).parse()?;
+    let stake_registry_address: Address =
+        parse_stake_registry_address("contracts/deployments/hello-world/31337.json")?;
     let contract_ecdsa_stake_registry = ECDSAStakeRegistry::new(stake_registry_address, &pr);
     let registeroperator_details_call: alloy::contract::CallBuilder<
         _,

@@ -1,15 +1,12 @@
 #![allow(missing_docs)]
-use alloy::{
-    network::EthereumWallet, primitives::Address, providers::ProviderBuilder,
-    signers::local::PrivateKeySigner,
-};
+use alloy::{primitives::Address, signers::local::PrivateKeySigner};
 use dotenv::dotenv;
 use eigen_logging::{get_logger, init_logger, log_level::LogLevel};
+use eigen_utils::get_signer;
 use eyre::Result;
 use hello_world_utils::{helloworldservicemanager::HelloWorldServiceManager, HelloWorldData};
 use once_cell::sync::Lazy;
 use rand::Rng;
-use reqwest::Url;
 use std::{env, str::FromStr};
 use tokio::time::{self, Duration};
 
@@ -41,12 +38,8 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
         parsed.addresses.hello_world_service_manager.parse()?;
+    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
-    let wallet = EthereumWallet::from(signer);
-    let pr = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, pr);
 
     let tx = hello_world_contract

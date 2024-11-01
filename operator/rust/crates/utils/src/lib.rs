@@ -5,6 +5,7 @@ pub mod helloworldservicemanager;
 #[allow(clippy::all, clippy::pedantic, unused_imports)]
 pub mod ecdsastakeregistry;
 
+use alloy::primitives::Address;
 use serde::Deserialize;
 
 #[allow(unused)]
@@ -73,4 +74,33 @@ pub struct EigenLayerAddresses {
     strategy_factory_impl: String,
     #[serde(rename = "strategyBeacon")]
     strategy_beacon: String,
+}
+
+pub fn parse_hello_world_service_manager(path: &str) -> eyre::Result<Address> {
+    let data = std::fs::read_to_string(path)?;
+    let parsed: HelloWorldData = serde_json::from_str(&data)?;
+    let hello_world_contract_address: Address =
+        parsed.addresses.hello_world_service_manager.parse()?;
+    Ok(hello_world_contract_address)
+}
+
+pub fn parse_stake_registry_address(path: &str) -> eyre::Result<Address> {
+    let data = std::fs::read_to_string(path)?;
+    let parsed: HelloWorldData = serde_json::from_str(&data)?;
+    let stake_registry_address: Address = parsed.addresses.stake_registry.parse()?;
+    Ok(stake_registry_address)
+}
+
+pub fn parse_delegation_manager_address(path: &str) -> eyre::Result<Address> {
+    let data = std::fs::read_to_string(path)?;
+    let parsed: EigenLayerData = serde_json::from_str(&data)?;
+    let delegation_manager_address: Address = parsed.addresses.delegation.parse()?;
+    Ok(delegation_manager_address)
+}
+
+pub fn parse_avs_directory_address(path: &str) -> eyre::Result<Address> {
+    let data = std::fs::read_to_string(path)?;
+    let parsed: EigenLayerData = serde_json::from_str(&data)?;
+    let avs_directory_address: Address = parsed.addresses.avs_directory.parse()?;
+    Ok(avs_directory_address)
 }

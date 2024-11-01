@@ -1,6 +1,5 @@
 #![allow(missing_docs)]
 use alloy::dyn_abi::DynSolValue;
-use alloy::{network::EthereumWallet, providers::ProviderBuilder};
 use alloy::{
     primitives::{eip191_hash_message, keccak256, Address, FixedBytes, U256},
     providers::Provider,
@@ -15,17 +14,18 @@ use eigen_client_elcontracts::{
     writer::{ELChainWriter, Operator},
 };
 use eigen_logging::{get_logger, init_logger, log_level::LogLevel};
-use eigen_utils::get_provider;
+use eigen_utils::{get_provider, get_signer};
 use eyre::Result;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{
     ecdsastakeregistry::ISignatureUtils::SignatureWithSaltAndExpiry,
     helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
 };
-use hello_world_utils::{EigenLayerData, HelloWorldData};
+use hello_world_utils::{
+    parse_hello_world_service_manager, parse_stake_registry_address, EigenLayerData,
+};
 use once_cell::sync::Lazy;
 use rand::RngCore;
-use reqwest::Url;
 use std::{env, str::FromStr};
 
 pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
@@ -38,12 +38,8 @@ async fn sign_and_response_to_task(
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
+    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
-    let wallet = EthereumWallet::from(signer.clone());
-    let pr = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
 
     let message = format!("Hello, {}", name);
     let m_hash = eip191_hash_message(keccak256(message.abi_encode_packed()));
@@ -62,11 +58,8 @@ async fn sign_and_response_to_task(
         &format!("Signing and responding to task : {:?}", task_index),
         "",
     );
-
-    let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
-    let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
-        parsed.addresses.hello_world_service_manager.parse()?;
+        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
 
     let response_hash = hello_world_contract
@@ -93,17 +86,9 @@ async fn sign_and_response_to_task(
 
 /// Monitor new tasks
 async fn monitor_new_tasks() -> Result<()> {
-    let signer = PrivateKeySigner::from_str(&KEY.clone())?;
-    let wallet = EthereumWallet::from(signer);
-    let pr = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
-    let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
-    let parsed: HelloWorldData = serde_json::from_str(&data)?;
+    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
     let hello_world_contract_address: Address =
-        parsed.addresses.hello_world_service_manager.parse()?;
-
+        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let mut latest_processed_block = pr.get_block_number().await?;
 
     loop {
@@ -139,12 +124,8 @@ async fn monitor_new_tasks() -> Result<()> {
 }
 
 async fn register_operator() -> Result<()> {
+    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
-    let wallet = EthereumWallet::from(signer.clone());
-    let pr = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
 
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
@@ -198,10 +179,8 @@ async fn register_operator() -> Result<()> {
     let now = Utc::now().timestamp();
     let expiry: U256 = U256::from(now + 3600);
 
-    let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
-    let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
-        parsed.addresses.hello_world_service_manager.parse()?;
+        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let digest_hash = elcontracts_reader_instance
         .calculate_operator_avs_registration_digest_hash(
             signer.address(),
@@ -217,7 +196,8 @@ async fn register_operator() -> Result<()> {
         salt,
         expiry: expiry,
     };
-    let stake_registry_address: Address = (&parsed.addresses.stake_registry).parse()?;
+    let stake_registry_address =
+        parse_stake_registry_address("contracts/deployments/hello-world/31337.json")?;
     let contract_ecdsa_stake_registry = ECDSAStakeRegistry::new(stake_registry_address, &pr);
     let registeroperator_details_call: alloy::contract::CallBuilder<
         _,
