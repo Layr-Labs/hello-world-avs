@@ -6,7 +6,7 @@ use alloy::{
     providers::{Provider, ProviderBuilder},
     rpc::types::{BlockNumberOrTag, Filter},
     signers::{local::PrivateKeySigner, SignerSync},
-    sol_types::{ SolEvent, SolValue},
+    sol_types::{SolEvent, SolValue},
 };
 use chrono::Utc;
 use eigen_client_elcontracts::{
@@ -377,7 +377,7 @@ mod tests {
     #[serial]
     async fn test_spam_tasks() {
         dotenv().ok();
-        init_logger(eigen_logging::log_level::LogLevel::Info);    
+        init_logger(eigen_logging::log_level::LogLevel::Info);
         let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
         let mut path = Path::new(data);
         for _ in 0..4 {

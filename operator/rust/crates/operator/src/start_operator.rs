@@ -248,6 +248,7 @@ async fn register_operator() -> Result<()> {
 
 #[tokio::main]
 pub async fn main() {
+    use tokio::signal;
     dotenv().ok();
     init_logger(LogLevel::Info);
     if let Err(e) = register_operator().await {
@@ -261,4 +262,8 @@ pub async fn main() {
             eprintln!("Failed to monitor new tasks: {:?}", e);
         }
     });
+
+    // Wait for a Ctrl+C signal to gracefully shut down
+    let _ = signal::ctrl_c().await;
+    get_logger().info("Received Ctrl+C, shutting down...", "");
 }
