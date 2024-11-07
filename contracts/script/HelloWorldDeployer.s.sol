@@ -45,22 +45,20 @@ contract HelloWorldDeployer is Script, Test {
         helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
-
-        emit log_named_address("THIS IS RewardsCoordinator updater", IRewardsCoordinator(coreDeployment.rewardsCoordinator).rewardsUpdater());
-        emit log_named_address("THIS IS RewardsCoordinator", coreDeployment.rewardsCoordinator);
-        emit log_named_bytes("rewardscoordinator bytecode", coreDeployment.rewardsCoordinator.code);    
-
-       
-        token = new ERC20Mock();
-        helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
-
-        quorum.strategies.push(
-            StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
-        );
     }
 
     function run() external {
         vm.startBroadcast(deployer);
+        rewardsOwner = helloWorldConfig.rewardsOwner;
+        rewardsInitiator = helloWorldConfig.rewardsInitiator;
+        token = new ERC20Mock();
+        helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
+
+
+        quorum.strategies.push(
+            StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
+        );
+
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         helloWorldDeployment =
@@ -68,6 +66,7 @@ contract HelloWorldDeployer is Script, Test {
 
         helloWorldDeployment.strategy = address(helloWorldStrategy);
         helloWorldDeployment.token = address(token);
+
         vm.stopBroadcast();
         verifyDeployment();
         HelloWorldDeploymentLib.writeDeploymentJson(helloWorldDeployment);

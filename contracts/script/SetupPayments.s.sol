@@ -6,6 +6,7 @@ import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
 import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
 import {SetupPaymentsLib} from "./utils/SetupPaymentsLib.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {IStrategy} from "@eigenlayer/contracts/interfaces/IStrategy.sol";
 
 import "forge-std/Test.sol";
 
@@ -42,15 +43,12 @@ contract SetupPayments is Script, Test {
     }
 
     function run() external {
-        vm.startBroadcast(deployer);
-        // emit log_named_address("RewardsCoordinator", coreDeployment.rewardsCoordinator);
-        // emit log_named_address("RewardsCoordinator", IRewardsCoordinator(coreDeployment.rewardsCoordinator).rewardsUpdater());
-        // IRewardsCoordinator(coreDeployment.rewardsCoordinator).setRewardsUpdater(deployer);
+        vm.startBroadcast(0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6);
         PaymentInfo memory info = abi.decode(vm.parseJson(vm.readFile(filePath)), (PaymentInfo));
         (address[] memory earners, IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves) = _getEarnerAndEarnerLeaves(helloWorldDeployment.strategy);
 
 
-        // createAVSRewardsSubmissions(info.numPayments, info.amountPerPayment, info.duration, info.startTimestamp);
+        createAVSRewardsSubmissions(info.numPayments, info.amountPerPayment, info.duration, info.startTimestamp);
         // submitPaymentRoot(earners, info.endTimestamp, uint32(info.numPayments), uint32(info.amountPerPayment));
 
         // processClaim(filePath, info.indexToProve, info.recipient, earnerLeaves[info.indexToProve]);
@@ -108,6 +106,10 @@ contract SetupPayments is Script, Test {
         for (uint256 i = 0; i < earners.length; i++) {
             earners[i] = address(1);
         }
+        emit log_named_bytes("Strategy", strategy.code);
+        emit log_named_address("Strategy", strategy);
+        emit log_named_address("token", address(IStrategy(strategy).underlyingToken()));
+
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(IRewardsCoordinator(coreDeployment.rewardsCoordinator), NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
