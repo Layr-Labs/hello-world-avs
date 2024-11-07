@@ -84,10 +84,10 @@ library HelloWorldDeploymentLib {
 
         DeploymentData memory data;
         /// TODO: 2 Step for reading deployment json.  Read to the core and the AVS data
-        data.helloWorldServiceManager = json.readAddress(".contracts.helloWorldServiceManager");
-        data.stakeRegistry = json.readAddress(".contracts.stakeRegistry");
-        data.strategy = json.readAddress(".contracts.strategy");
-        data.token = json.readAddress(".contracts.token");
+        data.helloWorldServiceManager = json.readAddress(".addresses.helloWorldServiceManager");
+        data.stakeRegistry = json.readAddress(".addresses.stakeRegistry");
+        data.strategy = json.readAddress(".addresses.strategy");
+        data.token = json.readAddress(".addresses.token");
 
         return data;
     }
@@ -131,9 +131,8 @@ library HelloWorldDeploymentLib {
         string memory json = vm.readFile(pathToFile);
 
         DeploymentConfigData memory data;
-
-        data.rewardsOwner = json.readAddress(".rewardsOwner");
-        data.rewardsInitiator = json.readAddress(".rewardsInitiator");
+        data.rewardsOwner = json.readAddress(".addresses.rewardsOwner");
+        data.rewardsInitiator = json.readAddress(".addresses.rewardsInitiator");
         return data;
     }
 

@@ -85,6 +85,7 @@ library CoreDeploymentLib {
         address pauserRegistry;
         address strategyFactory;
         address strategyBeacon;
+        address initialOwner;
     }
 
     function deployContracts(
@@ -373,6 +374,8 @@ library CoreDeploymentLib {
         data.eigenPodManager = json.readAddress(".addresses.eigenPodManager");
         data.delegationManager = json.readAddress(".addresses.delegation");
         data.avsDirectory = json.readAddress(".addresses.avsDirectory");
+        data.rewardsCoordinator = json.readAddress(".addresses.rewardsCoordinator");
+        data.initialOwner = json.readAddress(".addresses.proxyAdmin");
 
         return data;
     }
@@ -447,6 +450,8 @@ library CoreDeploymentLib {
             data.strategyFactory.getImplementation().toHexString(),
             '","strategyBeacon":"',
             data.strategyBeacon.toHexString(),
+            '","rewardsCoordinator":"',
+            data.rewardsCoordinator.toHexString(),
             '"}'
         );
     }

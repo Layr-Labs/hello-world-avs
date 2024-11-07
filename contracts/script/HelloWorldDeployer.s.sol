@@ -12,6 +12,8 @@ import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
+import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+
 
 
 import {
@@ -20,7 +22,9 @@ import {
     IStrategy
 } from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 
-contract HelloWorldDeployer is Script {
+import "forge-std/Test.sol";
+
+contract HelloWorldDeployer is Script, Test {
     using CoreDeploymentLib for *;
     using UpgradeableProxyLib for address;
 
@@ -38,9 +42,14 @@ contract HelloWorldDeployer is Script {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
-        helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("deployments/hello-world/", block.chainid);
+        helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
+
+        emit log_named_address("THIS IS RewardsCoordinator updater", IRewardsCoordinator(coreDeployment.rewardsCoordinator).rewardsUpdater());
+        emit log_named_address("THIS IS RewardsCoordinator", coreDeployment.rewardsCoordinator);
+        emit log_named_bytes("rewardscoordinator bytecode", coreDeployment.rewardsCoordinator.code);    
+
        
         token = new ERC20Mock();
         helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
@@ -60,7 +69,6 @@ contract HelloWorldDeployer is Script {
         helloWorldDeployment.strategy = address(helloWorldStrategy);
         helloWorldDeployment.token = address(token);
         vm.stopBroadcast();
-
         verifyDeployment();
         HelloWorldDeploymentLib.writeDeploymentJson(helloWorldDeployment);
     }
