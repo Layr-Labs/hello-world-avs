@@ -24,6 +24,7 @@ contract SetupPayments is Script, Test {
     address private deployer;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
+    HelloWorldDeploymentLib.DeploymentConfigData config;
     string internal constant filePath = "test/mockData/scratch/payment_info.json";
 
     uint256 constant NUM_TOKEN_EARNINGS = 1;
@@ -38,12 +39,13 @@ contract SetupPayments is Script, Test {
 
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
         helloWorldDeployment = HelloWorldDeploymentLib.readDeploymentJson("deployments/hello-world/", block.chainid);
+        config = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
         // TODO: Get the filePath from config
     }
 
     function run() external {
-        vm.startBroadcast(0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6);
+        vm.startBroadcast(config.rewardsInitiatorKey);
         PaymentInfo memory info = abi.decode(vm.parseJson(vm.readFile(filePath)), (PaymentInfo));
         (address[] memory earners, IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves) = _getEarnerAndEarnerLeaves(helloWorldDeployment.strategy);
 
