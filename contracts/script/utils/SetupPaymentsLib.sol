@@ -57,6 +57,7 @@ library SetupPaymentsLib {
         PaymentLeaves memory paymentLeaves = parseLeavesFromJson(filePath);
         
         bytes memory proof = generateMerkleProof(paymentLeaves.leaves, indexToProve);
+        //we only have one token leaf
         bytes memory tokenProof = generateMerkleProof(paymentLeaves.tokenLeaves, 0);
 
         uint32[] memory tokenIndices = new uint32[](NUM_TOKEN_EARNINGS);

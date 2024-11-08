@@ -21,7 +21,7 @@
       "GENESIS_REWARDS_TIMESTAMP": 1672531200,
       "rewards_updater_address": "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955",
       "rewards_updater_key": "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
-      "activation_delay": 604800,
+      "activation_delay": 0,
       "calculation_interval_seconds": 86400,
       "global_operator_commission_bips": 1000
     }

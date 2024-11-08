@@ -41,6 +41,16 @@ contract SetupPayments is Script, Test {
     uint256 constant NUM_EARNERS = 8;
     uint256 constant TOKEN_EARNINGS = 100;
 
+    uint32 numPayments = 8;
+    uint32 indexToProve = 0;
+    uint32 amountPerPayment = 100;
+
+    address recipient = address(1);
+    IRewardsCoordinator.EarnerTreeMerkleLeaf[] public earnerLeaves;
+    address[] public earners;
+    uint32 startTimestamp;
+    uint32 endTimestamp;
+
 
     function setUp() public {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
@@ -59,28 +69,24 @@ contract SetupPayments is Script, Test {
     function run() external {
         vm.startBroadcast(helloWorldConfig.rewardsInitiatorKey);
         PaymentInfo memory info = abi.decode(vm.parseJson(vm.readFile(paymentInfofilePath)), (PaymentInfo));
-        (address[] memory earners, IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves) = _getEarnerAndEarnerLeaves(helloWorldDeployment.strategy);
 
-    
-
-        uint32 startTimestamp = uint32(block.timestamp) - (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
-
-
-        emit log_named_uint("numPayments hello", info.numPayments);
+        startTimestamp = uint32(block.timestamp) - (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
+        endTimestamp = startTimestamp + 1;
         
-        uint32 numPayments = 8;
-        uint32 endTimestamp = startTimestamp + 1;
-        createAVSRewardsSubmissions(numPayments, info.amountPerPayment, startTimestamp);
+        createAVSRewardsSubmissions(numPayments, amountPerPayment, startTimestamp);
         vm.stopBroadcast();
-
         vm.startBroadcast(deployer);
-        submitPaymentRoot(earners, endTimestamp, numPayments, uint32(info.amountPerPayment));
-
-        // processClaim(filePath, info.indexToProve, info.recipient, earnerLeaves[info.indexToProve]);
-
+        earners = _getEarners();
+        submitPaymentRoot(earners, endTimestamp, numPayments, amountPerPayment);
         vm.stopBroadcast();
     }
 
+    function executeProcessClaim() public {
+        vm.startBroadcast(deployer);
+        earnerLeaves = _getEarnerLeaves(_getEarners(), helloWorldDeployment.strategy);
+        processClaim(filePath, indexToProve, recipient, earnerLeaves[indexToProve]);
+        vm.stopBroadcast();
+    }
 
     function createAVSRewardsSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 startTimestamp) public {
         ERC20Mock(helloWorldDeployment.token).mint(helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments);
@@ -131,14 +137,18 @@ contract SetupPayments is Script, Test {
         );
     }
 
-    function _getEarnerAndEarnerLeaves(address strategy) internal returns (address[] memory, IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
+    function _getEarnerLeaves(address[] memory earners, address strategy) internal returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
+        bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(IRewardsCoordinator(coreDeployment.rewardsCoordinator), NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
+        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves = SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
+
+        return earnerLeaves;
+    }
+
+    function _getEarners() internal returns (address[] memory) {
         address[] memory earners = new address[](NUM_EARNERS);
         for (uint256 i = 0; i < earners.length; i++) {
             earners[i] = address(1);
         }
-        bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(IRewardsCoordinator(coreDeployment.rewardsCoordinator), NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, strategy);
-        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
-
-        return (earners, earnerLeaves);
+        return earners;
     }
 }

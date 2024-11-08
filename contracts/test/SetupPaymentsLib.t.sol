@@ -136,10 +136,6 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
         bytes32 root = SetupPaymentsLib.merkleizeKeccak(leaves);
 
-        emit log_named_bytes("proof", proofBytesCalculated);
-        emit log_named_bytes32("root", root);
-        emit log_named_bytes32("leaf", leaves[indexToProve]);
-
         require(Merkle.verifyInclusionKeccak(
             proofBytesCalculated,
             root,
