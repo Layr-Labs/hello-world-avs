@@ -66,6 +66,7 @@ library CoreDeploymentLib {
         uint256 maxFutureLength;
         uint256 genesisRewardsTimestamp;
         address updater;
+        uint256 updaterKey;
         uint256 activationDelay;
         uint256 calculationIntervalSeconds;
         uint256 globalOperatorCommissionBips;
@@ -147,9 +148,9 @@ library CoreDeploymentLib {
         /// TODO: Get actual values
         uint32 CALCULATION_INTERVAL_SECONDS = 1 days;
         uint32 MAX_REWARDS_DURATION = 1 days;
-        uint32 MAX_RETROACTIVE_LENGTH = 1;
-        uint32 MAX_FUTURE_LENGTH = 1;
-        uint32 GENESIS_REWARDS_TIMESTAMP = 10 days;
+        uint32 MAX_RETROACTIVE_LENGTH = 1 days;
+        uint32 MAX_FUTURE_LENGTH = 2 days;
+        uint32 GENESIS_REWARDS_TIMESTAMP = 0;
         address rewardsCoordinatorImpl = address(
             new RewardsCoordinator(
                 IDelegationManager(result.delegationManager),
@@ -332,6 +333,8 @@ library CoreDeploymentLib {
             json.readUint(".rewardsCoordinator.GENESIS_REWARDS_TIMESTAMP");
         data.rewardsCoordinator.updater =
             json.readAddress(".rewardsCoordinator.rewards_updater_address");
+        data.rewardsCoordinator.updaterKey =
+            json.readUint(".rewardsCoordinator.rewards_updater_key");
         data.rewardsCoordinator.activationDelay =
             json.readUint(".rewardsCoordinator.activation_delay");
         data.rewardsCoordinator.calculationIntervalSeconds =

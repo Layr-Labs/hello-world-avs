@@ -27,6 +27,7 @@ contract DeployEigenlayerCore is Script, Test {
     function run() external {
         vm.startBroadcast(deployer);
         //set the rewards updater to the deployer address for payment flow
+        configData = CoreDeploymentLib.readDeploymentConfigValues("config/core/", block.chainid);
         configData.rewardsCoordinator.updater = deployer;
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
