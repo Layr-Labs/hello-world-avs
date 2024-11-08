@@ -293,7 +293,7 @@ library CoreDeploymentLib {
     ) internal returns (DeploymentConfigData memory) {
         string memory pathToFile = string.concat(directoryPath, fileName);
 
-        require(vm.exists(pathToFile), "Deployment file does not exist");
+        require(vm.exists(pathToFile), "CoreDeployment: Deployment config file does not exist");
 
         string memory json = vm.readFile(pathToFile);
 
@@ -367,7 +367,7 @@ library CoreDeploymentLib {
     ) internal returns (DeploymentData memory) {
         string memory pathToFile = string.concat(path, fileName);
 
-        require(vm.exists(pathToFile), "Deployment file does not exist");
+        require(vm.exists(pathToFile), "CoreDeployment: Deployment file does not exist");
 
         string memory json = vm.readFile(pathToFile);
 
