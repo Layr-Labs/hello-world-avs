@@ -83,19 +83,6 @@ npm run start:operator
 ```
 
 ### Create and Claim Payments
-```sh
-# Start local anvil chain
-npm run start:anvil
-```
-
-In another terminal, run:
-```sh
-# Deploy the EigenLayer contracts
-npm run deploy:core
-
-# Deploy the Hello World AVS contracts
-npm run deploy:hello-world
-```
 
 In another terminal, run:
 
