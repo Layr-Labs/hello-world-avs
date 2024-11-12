@@ -98,6 +98,7 @@ npm run deploy:hello-world
 ```
 
 In another terminal, run:
+
 ```sh
 # Create payment roots
 npm run:create-payments-root
@@ -105,6 +106,10 @@ npm run:create-payments-root
 # Claim created payment
 npm run:claim-payments
 ```
+
+In order to create and claim multiple payments (run the above two commands more than once), you must wait up to 2 minutes.  The current block time set with `npm run start:anvil` is 0.01 seconds.
+
+
 
 
 ### Create Hello-World-AVS Tasks
