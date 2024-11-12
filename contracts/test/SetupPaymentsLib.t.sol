@@ -174,7 +174,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
             RECIPIENT,
             earnerLeaves[INDEX_TO_PROVE],
             NUM_TOKEN_EARNINGS,
-            address(strategy)
+            address(strategy),
+            uint32(TOKEN_EARNINGS)
         );
 
         cheats.stopPrank();
