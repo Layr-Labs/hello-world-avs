@@ -6,6 +6,7 @@ import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
 import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
 import {SetupPaymentsLib} from "./utils/SetupPaymentsLib.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {RewardsCoordinator} from "@eigenlayer/contracts/core/RewardsCoordinator.sol";
 import {IStrategy} from "@eigenlayer/contracts/interfaces/IStrategy.sol";
 import {ERC20Mock} from "../test/ERC20Mock.sol";
 
@@ -29,7 +30,7 @@ contract SetupPayments is Script, Test {
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     HelloWorldDeploymentLib.DeploymentConfigData helloWorldConfig;
 
-    IRewardsCoordinator rewardsCoordinator;
+    RewardsCoordinator rewardsCoordinator;
     string internal constant paymentInfofilePath = "test/mockData/scratch/payment_info.json";
     string internal constant filePath = "test/mockData/scratch/payments.json";
 
@@ -39,19 +40,18 @@ contract SetupPayments is Script, Test {
     uint256 constant NUM_TOKEN_EARNINGS = 1;
     uint32 constant DURATION = 1;
     uint256 constant NUM_EARNERS = 8;
-    uint256 constant TOKEN_EARNINGS = 100;
 
     uint32 numPayments = 8;
     uint32 indexToProve = 0;
     uint32 amountPerPayment = 100;
-    //this is to track how many times we've run the script to set cumulative earnings properly
-    uint32 numPaymentClaimSessions = 1;
 
     address recipient = address(1);
     IRewardsCoordinator.EarnerTreeMerkleLeaf[] public earnerLeaves;
     address[] public earners;
     uint32 startTimestamp;
     uint32 endTimestamp;
+    uint256 cumumlativePaymentMultiplier;
+    address nonceSender = 0x998abeb3E57409262aE5b751f60747921B33613E;
 
 
     function setUp() public {
@@ -63,7 +63,7 @@ contract SetupPayments is Script, Test {
         helloWorldDeployment = HelloWorldDeploymentLib.readDeploymentJson("deployments/hello-world/", block.chainid);
         helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
-        rewardsCoordinator = IRewardsCoordinator(coreDeployment.rewardsCoordinator);
+        rewardsCoordinator = RewardsCoordinator(coreDeployment.rewardsCoordinator);
 
         // TODO: Get the filePath from config
     }
@@ -74,18 +74,20 @@ contract SetupPayments is Script, Test {
     
         if(rewardsCoordinator.currRewardsCalculationEndTimestamp() == 0) {
              startTimestamp = uint32(block.timestamp) - (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
-             emit log_named_uint("Start Timestamp", startTimestamp);
         } else {
-            emit log_named_uint("Rewards Calculation End Timestamp", rewardsCoordinator.currRewardsCalculationEndTimestamp());
-            emit log_named_uint("Calculation Interval Seconds", CALCULATION_INTERVAL_SECONDS);
             startTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() - DURATION + CALCULATION_INTERVAL_SECONDS;
         }
 
         endTimestamp = startTimestamp + 1;
 
+
         if (endTimestamp > block.timestamp) {
             revert("End timestamp must be in the future.  Please wait to generate new payments.");
         }
+
+        // sets a multiplier based on block number such that cumulativeEarnings increase accordingly for multiple runs of this script in the same session
+        uint256 nonce = rewardsCoordinator.getDistributionRootsLength();
+        amountPerPayment = uint32(amountPerPayment * (nonce + 1));
         
         createAVSRewardsSubmissions(numPayments, amountPerPayment, startTimestamp);
         vm.stopBroadcast();
@@ -93,13 +95,15 @@ contract SetupPayments is Script, Test {
         earners = _getEarners();
         submitPaymentRoot(earners, endTimestamp, numPayments, amountPerPayment);
         vm.stopBroadcast();
-        numPaymentClaimSessions++;
     }
 
     function executeProcessClaim() public {
+        uint256 nonce = rewardsCoordinator.getDistributionRootsLength();
+        amountPerPayment = uint32(amountPerPayment * nonce);
+
         vm.startBroadcast(deployer);
-        earnerLeaves = _getEarnerLeaves(_getEarners(), helloWorldDeployment.strategy);
-        processClaim(filePath, indexToProve, recipient, earnerLeaves[indexToProve]);
+        earnerLeaves = _getEarnerLeaves(_getEarners(), amountPerPayment, helloWorldDeployment.strategy);
+        processClaim(filePath, indexToProve, recipient, earnerLeaves[indexToProve], amountPerPayment);
         vm.stopBroadcast();
     }
 
@@ -117,7 +121,7 @@ contract SetupPayments is Script, Test {
         );
     }
 
-    function processClaim(string memory filePath, uint256 indexToProve, address recipient, IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf) public {
+    function processClaim(string memory filePath, uint256 indexToProve, address recipient, IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf, uint32 amountPerPayment) public {
         SetupPaymentsLib.processClaim(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             filePath,
@@ -125,15 +129,17 @@ contract SetupPayments is Script, Test {
             recipient,
             earnerLeaf,
             NUM_TOKEN_EARNINGS,
-            helloWorldDeployment.strategy
+            helloWorldDeployment.strategy,
+            amountPerPayment
         );
     }
 
     function submitPaymentRoot(address[] memory earners, uint32 endTimestamp, uint32 numPayments, uint32 amountPerPayment) public {
+        emit log_named_uint("cumumlativePaymentMultiplier", cumumlativePaymentMultiplier);
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator), 
             NUM_TOKEN_EARNINGS, 
-            amountPerPayment * numPaymentClaimSessions, 
+            amountPerPayment, 
             helloWorldDeployment.strategy
         );
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves = SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
@@ -152,15 +158,13 @@ contract SetupPayments is Script, Test {
         );
     }
 
-    function _getEarnerLeaves(address[] memory earners, address strategy) internal returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
+    function _getEarnerLeaves(address[] memory earners, uint32 amountPerPayment, address strategy) internal returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator), 
             NUM_TOKEN_EARNINGS, 
-            amountPerPayment * numPaymentClaimSessions, 
+            amountPerPayment, 
             strategy
         );
-
-        emit log_named_uint("PAYMENT SESSIONS", numPaymentClaimSessions);
 
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves = SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
