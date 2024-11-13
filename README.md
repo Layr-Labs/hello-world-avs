@@ -84,6 +84,18 @@ npm run start:operator
 
 ### Create and Claim Payments
 
+In a terminal, start a new instance of anvil and deploy the core and avs contracts
+```sh
+# Start anvil
+npm run start:anvil-quick
+# Deploy the EigenLayer contracts
+npm run deploy:core
+
+# Deploy the Hello World AVS contracts
+npm run deploy:hello-world
+
+```
+
 In another terminal, run:
 
 ```sh
