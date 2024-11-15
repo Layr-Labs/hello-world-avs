@@ -100,10 +100,10 @@ In another terminal, run:
 
 ```sh
 # Create payment roots
-npm run:create-payments-root
+npm run create-payments-root
 
 # Claim created payment
-npm run:claim-payments
+npm run claim-payments
 ```
 
 In order to create and claim multiple payments (run the above two commands more than once), you must wait up to 5 minutes.
