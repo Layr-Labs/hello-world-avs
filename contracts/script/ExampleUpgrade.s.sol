@@ -23,7 +23,7 @@ contract ExampleUpgrade is Script {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
-        // Read existing deployments
+        // Read existing deployments based on chain id
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
         helloWorldDeployment = HelloWorldDeploymentLib.readDeploymentJson(block.chainid);
         proxyAdmin = helloWorldDeployment.proxyAdmin;
