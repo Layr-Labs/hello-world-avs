@@ -92,7 +92,7 @@ contract SetupPayments is Script, Test {
         createAVSRewardsSubmissions(numPayments, amountPerPayment, startTimestamp);
         vm.stopBroadcast();
         vm.startBroadcast(deployer);
-        earners = _getEarners();
+        earners = _getEarners(deployer);
         submitPaymentRoot(earners, endTimestamp, numPayments, amountPerPayment);
         vm.stopBroadcast();
     }
@@ -102,7 +102,7 @@ contract SetupPayments is Script, Test {
         amountPerPayment = uint32(amountPerPayment * nonce);
 
         vm.startBroadcast(deployer);
-        earnerLeaves = _getEarnerLeaves(_getEarners(), amountPerPayment, helloWorldDeployment.strategy);
+        earnerLeaves = _getEarnerLeaves(_getEarners(deployer), amountPerPayment, helloWorldDeployment.strategy);
         processClaim(filePath, indexToProve, recipient, earnerLeaves[indexToProve], amountPerPayment);
         vm.stopBroadcast();
     }
@@ -171,10 +171,10 @@ contract SetupPayments is Script, Test {
         return earnerLeaves;
     }
 
-    function _getEarners() internal returns (address[] memory) {
+    function _getEarners(address deployer) internal returns (address[] memory) {
         address[] memory earners = new address[](NUM_EARNERS);
         for (uint256 i = 0; i < earners.length; i++) {
-            earners[i] = address(1);
+            earners[i] = deployer;
         }
         return earners;
     }
