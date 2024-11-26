@@ -120,7 +120,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     }
 
     function testGenerateMerkleProof() public {
-        SetupPaymentsLib.PaymentLeaves memory paymentLeaves = SetupPaymentsLib.parseLeavesFromJson("test/mockData/scratch/payments.json");
+        SetupPaymentsLib.PaymentLeaves memory paymentLeaves = SetupPaymentsLib.parseLeavesFromJson("test/mockData/scratch/payments_test.json");
 
         bytes32[] memory leaves = paymentLeaves.leaves;
         uint256 indexToProve = 0;
