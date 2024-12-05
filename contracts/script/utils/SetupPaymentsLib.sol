@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
+import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 
@@ -16,7 +17,7 @@ library SetupPaymentsLib {
     }
 
     function createAVSRewardsSubmissions(
-        IRewardsCoordinator rewardsCoordinator,
+        address helloWorldServiceManager,
         address strategy,
         uint256 numPayments,
         uint256 amountPerPayment,
@@ -35,14 +36,13 @@ library SetupPaymentsLib {
                 strategiesAndMultipliers: strategiesAndMultipliers,
                 token: IStrategy(strategy).underlyingToken(),
                 amount: amountPerPayment,
-                startTimestamp: startTimestamp ,
+                startTimestamp: startTimestamp,
                 duration: duration
             });
 
             rewardsSubmissions[i] = rewardsSubmission;
         }
-
-        rewardsCoordinator.createAVSRewardsSubmission(rewardsSubmissions);
+        ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
     }
 
     function processClaim(
@@ -52,11 +52,13 @@ library SetupPaymentsLib {
         address recipient,
         IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf,
         uint256 NUM_TOKEN_EARNINGS,
-        address strategy
+        address strategy,
+        uint32 amountPerPayment
     ) internal {
         PaymentLeaves memory paymentLeaves = parseLeavesFromJson(filePath);
         
         bytes memory proof = generateMerkleProof(paymentLeaves.leaves, indexToProve);
+        //we only have one token leaf
         bytes memory tokenProof = generateMerkleProof(paymentLeaves.tokenLeaves, 0);
 
         uint32[] memory tokenIndices = new uint32[](NUM_TOKEN_EARNINGS);
@@ -64,10 +66,14 @@ library SetupPaymentsLib {
         tokenProofs[0] = tokenProof;
 
         IRewardsCoordinator.TokenTreeMerkleLeaf[] memory tokenLeaves = new IRewardsCoordinator.TokenTreeMerkleLeaf[](NUM_TOKEN_EARNINGS);
-        tokenLeaves[0] = defaultTokenLeaf(100, strategy);
+        tokenLeaves[0] = defaultTokenLeaf(amountPerPayment, strategy);
+
+
+        // this workflow assumes a new root submitted for every payment claimed.  So we get the latest rood index to process a claim for
+        uint256 rootIndex = rewardsCoordinator.getDistributionRootsLength() - 1;
 
         IRewardsCoordinator.RewardsMerkleClaim memory claim = IRewardsCoordinator.RewardsMerkleClaim({
-            rootIndex: 0,
+            rootIndex: uint32(rootIndex),
             earnerIndex: uint32(indexToProve),
             earnerTreeProof: proof,
             earnerLeaf: earnerLeaf,

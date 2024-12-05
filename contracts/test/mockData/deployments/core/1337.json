@@ -13,6 +13,7 @@
     "strategyFactory": "0x7777777777777777777777777777777777777777",
     "strategyManagerImpl": "0x8888888888888888888888888888888888888888",
     "eigenPodManager": "0x9999999999999999999999999999999999999999",
-    "eigenPodManagerImpl": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "eigenPodManagerImpl": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "rewardsCoordinator": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   }
 }

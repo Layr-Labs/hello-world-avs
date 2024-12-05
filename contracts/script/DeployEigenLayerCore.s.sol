@@ -6,7 +6,11 @@ import {Script} from "forge-std/Script.sol";
 import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 
-contract DeployEigenLayerCore is Script {
+import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+
+import "forge-std/Test.sol";
+
+contract DeployEigenlayerCore is Script, Test {
     using CoreDeploymentLib for *;
     using UpgradeableProxyLib for address;
 
@@ -22,6 +26,9 @@ contract DeployEigenLayerCore is Script {
 
     function run() external {
         vm.startBroadcast(deployer);
+        //set the rewards updater to the deployer address for payment flow
+        configData = CoreDeploymentLib.readDeploymentConfigValues("config/core/", block.chainid);
+        configData.rewardsCoordinator.updater = deployer;
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
         vm.stopBroadcast();
