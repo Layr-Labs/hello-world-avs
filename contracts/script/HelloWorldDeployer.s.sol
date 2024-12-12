@@ -34,20 +34,19 @@ contract HelloWorldDeployer is Script {
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
-
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
-       
+    }
+
+    function run() external {
+        vm.startBroadcast(deployer);
+        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+
         token = new ERC20Mock();
         helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
 
         quorum.strategies.push(
             StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
         );
-    }
-
-    function run() external {
-        vm.startBroadcast(deployer);
-        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         helloWorldDeployment =
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
