@@ -43,16 +43,22 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _avsDirectory,
         address _stakeRegistry,
         address _rewardsCoordinator,
-        address _delegationManager
+        address _delegationManager,
+        address _allocationManager
 
     )
         ECDSAServiceManagerBase(
             _avsDirectory,
             _stakeRegistry,
             _rewardsCoordinator,
-            _delegationManager
+            _delegationManager,
+            _allocationManager
         )
-    {}
+    {
+        //  _initializePauser(_pauserRegistry, UNPAUSE_ALL);
+
+    }
+
 
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
