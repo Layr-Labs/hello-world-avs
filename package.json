@@ -10,6 +10,8 @@
     "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast",
     "deploy:core-debug": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "deploy:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
+    "upgrade:hello-world": "cd contracts && forge script script/ExampleUpgrade.s.sol --rpc-url http://localhost:8545 --broadcast",
+    "upgrade:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "build": "cd contracts && forge build",
     "extract:abis": "node utils/abis.js",
     "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest"
