@@ -65,7 +65,7 @@ library SetupPaymentsLib {
             });
         }
 
-        IRewardsCoordinator.RewardsSubmission[] memory rewardsSubmissions = new IRewardsCoordinator.RewardsSubmission[](numPayments);
+        IRewardsCoordinator.OperatorDirectedRewardsSubmission[] memory rewardsSubmissions = new IRewardsCoordinator.OperatorDirectedRewardsSubmission[](numPayments);
         for (uint256 i = 0; i < numPayments; i++) {
             IRewardsCoordinator.StrategyAndMultiplier[] memory strategiesAndMultipliers = new IRewardsCoordinator.StrategyAndMultiplier[](1);
             strategiesAndMultipliers[0] = IRewardsCoordinator.StrategyAndMultiplier({
@@ -77,14 +77,14 @@ library SetupPaymentsLib {
                 strategiesAndMultipliers: strategiesAndMultipliers,
                 token: IStrategy(strategy).underlyingToken(),
                 operatorRewards: operatorRewards,
-                amount: amountPerPayment,
                 startTimestamp: startTimestamp,
-                duration: duration
+                duration: duration,
+                description: "test"
             });
 
             rewardsSubmissions[i] = rewardsSubmission;
         }
-        ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
+        ECDSAServiceManagerBase(helloWorldServiceManager).createOperatorDirectedAVSRewardsSubmission(rewardsSubmissions);
     }
 
     function processClaim(
