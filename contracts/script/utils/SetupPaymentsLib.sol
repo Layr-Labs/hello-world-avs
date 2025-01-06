@@ -45,6 +45,48 @@ library SetupPaymentsLib {
         ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
     }
 
+    function createOperatorDirectedAVSRewardsSubmissions(
+        address helloWorldServiceManager,
+        address[] calldata operators,
+        address strategy,
+        uint256 numPayments,
+        uint256 amountPerPayment,
+        uint32 duration,
+        uint32 startTimestamp
+    ) internal {
+
+        uint256 operatorRewardAmount = amountPerPayment / 2;
+
+        IRewardsCoordinator.OperatorReward[] memory operatorRewards = new IRewardsCoordinator.OperatorReward[](2);
+        for (uint256 i = 0; i < 2; i++) {
+            operatorRewards[i] = IRewardsCoordinator.OperatorReward({
+                operator: operators[i],
+                amount: operatorRewardAmount
+            });
+        }
+
+        IRewardsCoordinator.RewardsSubmission[] memory rewardsSubmissions = new IRewardsCoordinator.RewardsSubmission[](numPayments);
+        for (uint256 i = 0; i < numPayments; i++) {
+            IRewardsCoordinator.StrategyAndMultiplier[] memory strategiesAndMultipliers = new IRewardsCoordinator.StrategyAndMultiplier[](1);
+            strategiesAndMultipliers[0] = IRewardsCoordinator.StrategyAndMultiplier({
+                strategy: IStrategy(strategy),
+                multiplier: 10000
+            });
+
+            IRewardsCoordinator.OperatorDirectedRewardsSubmission memory rewardsSubmission = IRewardsCoordinator.OperatorDirectedRewardsSubmission({
+                strategiesAndMultipliers: strategiesAndMultipliers,
+                token: IStrategy(strategy).underlyingToken(),
+                operatorRewards: operatorRewards,
+                amount: amountPerPayment,
+                startTimestamp: startTimestamp,
+                duration: duration
+            });
+
+            rewardsSubmissions[i] = rewardsSubmission;
+        }
+        ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
+    }
+
     function processClaim(
         IRewardsCoordinator rewardsCoordinator,
         string memory filePath,
