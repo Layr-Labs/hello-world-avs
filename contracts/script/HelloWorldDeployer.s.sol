@@ -44,6 +44,7 @@ contract HelloWorldDeployer is Script, Test {
 
         helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
+
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
     }
 
@@ -51,6 +52,7 @@ contract HelloWorldDeployer is Script, Test {
         vm.startBroadcast(deployer);
         rewardsOwner = helloWorldConfig.rewardsOwner;
         rewardsInitiator = helloWorldConfig.rewardsInitiator;
+
         token = new ERC20Mock();
         helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
 
@@ -59,7 +61,9 @@ contract HelloWorldDeployer is Script, Test {
             StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
         );
 
+
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+
 
         helloWorldDeployment =
             HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
