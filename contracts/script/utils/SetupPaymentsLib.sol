@@ -48,6 +48,7 @@ library SetupPaymentsLib {
     function createOperatorDirectedAVSRewardsSubmissions(
         address helloWorldServiceManager,
         address[] calldata operators,
+        uint256 numOperators,
         address strategy,
         uint256 numPayments,
         uint256 amountPerPayment,
@@ -55,7 +56,7 @@ library SetupPaymentsLib {
         uint32 startTimestamp
     ) internal {
 
-        uint256 operatorRewardAmount = amountPerPayment / 2;
+        uint256 operatorRewardAmount = amountPerPayment / numOperators;
 
         IRewardsCoordinator.OperatorReward[] memory operatorRewards = new IRewardsCoordinator.OperatorReward[](2);
         for (uint256 i = 0; i < 2; i++) {
