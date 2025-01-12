@@ -47,7 +47,7 @@ library SetupPaymentsLib {
 
     function createOperatorDirectedAVSRewardsSubmissions(
         address helloWorldServiceManager,
-        address[] calldata operators,
+        address[] memory operators,
         uint256 numOperators,
         address strategy,
         uint256 numPayments,
