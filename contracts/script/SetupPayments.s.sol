@@ -156,7 +156,7 @@ contract SetupPayments is Script, Test {
     function createOperatorDirectedAVSRewardsSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 startTimestamp) public {
         ERC20Mock(helloWorldDeployment.token).mint(helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments);
         ERC20Mock(helloWorldDeployment.token).increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments);
-        uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
+        uint32 duration = 0;
         address[] memory operators = new address[](2);
         operators[0] = operator1;
         operators[1] = operator2;
