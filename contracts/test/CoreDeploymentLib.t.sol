@@ -19,7 +19,7 @@ contract CoreDeploymentLibTest is Test {
     }
 
     /// won't test specific functionality/values. Testing behavior of the library
-    function test_ReadConfig() public {
+    function test_ReadConfig() view public {
         CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
     }
 
@@ -29,7 +29,7 @@ contract CoreDeploymentLibTest is Test {
         CoreDeploymentLib.readDeploymentConfigValues("test/mockData/deployments/core/", 1337);
     }
 
-    function test_ReadDeployment() public {
+    function test_ReadDeployment() public view {
         CoreDeploymentLib.readDeploymentJson("test/mockData/deployments/core/", 1337);
     }
 

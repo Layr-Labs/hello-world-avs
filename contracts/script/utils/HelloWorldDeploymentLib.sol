@@ -70,14 +70,14 @@ library HelloWorldDeploymentLib {
 
     function readDeploymentJson(
         uint256 chainId
-    ) internal returns (DeploymentData memory) {
+    ) internal view returns (DeploymentData memory) {
         return readDeploymentJson("deployments/", chainId);
     }
 
     function readDeploymentJson(
         string memory directoryPath,
         uint256 chainId
-    ) internal returns (DeploymentData memory) {
+    ) internal view returns (DeploymentData memory) {
         string memory fileName = string.concat(directoryPath, vm.toString(chainId), ".json");
 
         require(vm.exists(fileName), "HelloWorldDeployment: Deployment file does not exist");
@@ -125,7 +125,7 @@ library HelloWorldDeploymentLib {
     function readDeploymentConfigValues(
         string memory directoryPath,
         string memory fileName
-    ) internal returns (DeploymentConfigData memory) {
+    ) internal view returns (DeploymentConfigData memory) {
         string memory pathToFile = string.concat(directoryPath, fileName);
 
         require(vm.exists(pathToFile), "HelloWorldDeployment: Deployment Config file does not exist");
@@ -143,7 +143,7 @@ library HelloWorldDeploymentLib {
     function readDeploymentConfigValues(
         string memory directoryPath,
         uint256 chainId
-    ) internal returns (DeploymentConfigData memory) {
+    ) internal view returns (DeploymentConfigData memory) {
         return
             readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
