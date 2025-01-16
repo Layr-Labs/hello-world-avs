@@ -31,7 +31,7 @@ jobs:
       - name: Run Forge build
         run: |
           forge --version
-          forge b
+          forge build --optimize --optimizer-runs 200 --via-ir --sizes
         id: build
 
       - name: Run Forge tests
