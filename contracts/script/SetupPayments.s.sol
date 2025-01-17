@@ -73,7 +73,6 @@ contract SetupPayments is Script, Test {
 
     function run() external {
         vm.startBroadcast(helloWorldConfig.rewardsInitiatorKey);
-        PaymentInfo memory info = abi.decode(vm.parseJson(vm.readFile(paymentInfofilePath)), (PaymentInfo));
     
         if(rewardsCoordinator.currRewardsCalculationEndTimestamp() == 0) {
              startTimestamp = uint32(block.timestamp) - (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
@@ -212,7 +211,7 @@ contract SetupPayments is Script, Test {
         );
     }
 
-    function _getEarnerLeaves(address[] memory earners, uint32 amountPerPayment, address strategy) internal returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
+    function _getEarnerLeaves(address[] memory earners, uint32 amountPerPayment, address strategy) internal view returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator), 
             NUM_TOKEN_EARNINGS, 
@@ -225,7 +224,7 @@ contract SetupPayments is Script, Test {
         return earnerLeaves;
     }
 
-    function _getEarners(address deployer) internal returns (address[] memory) {
+    function _getEarners(address deployer) internal pure returns (address[] memory) {
         address[] memory earners = new address[](NUM_EARNERS);
         for (uint256 i = 0; i < earners.length; i++) {
             earners[i] = deployer;

@@ -380,6 +380,9 @@ contract CreateTask is HelloWorldTaskManagerSetup {
 
         vm.prank(generator.key.addr);
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+
+        require(sha256(abi.encodePacked(newTask.name)) == sha256(abi.encodePacked(taskName)), "Task name not set correctly");
+        require(newTask.taskCreatedBlock == uint32(block.number), "Task created block not set correctly");
     }
 }
 

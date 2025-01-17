@@ -290,7 +290,7 @@ library CoreDeploymentLib {
     function readDeploymentConfigValues(
         string memory directoryPath,
         string memory fileName
-    ) internal returns (DeploymentConfigData memory) {
+    ) internal view returns (DeploymentConfigData memory) {
         string memory pathToFile = string.concat(directoryPath, fileName);
 
         require(vm.exists(pathToFile), "CoreDeployment: Deployment config file does not exist");
@@ -349,7 +349,7 @@ library CoreDeploymentLib {
     function readDeploymentConfigValues(
         string memory directoryPath,
         uint256 chainId
-    ) internal returns (DeploymentConfigData memory) {
+    ) internal view returns (DeploymentConfigData memory) {
         return
             readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
@@ -357,14 +357,14 @@ library CoreDeploymentLib {
     function readDeploymentJson(
         string memory directoryPath,
         uint256 chainId
-    ) internal returns (DeploymentData memory) {
+    ) internal view returns (DeploymentData memory) {
         return readDeploymentJson(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
 
     function readDeploymentJson(
         string memory path,
         string memory fileName
-    ) internal returns (DeploymentData memory) {
+    ) internal view returns (DeploymentData memory) {
         string memory pathToFile = string.concat(path, fileName);
 
         require(vm.exists(pathToFile), "CoreDeployment: Deployment file does not exist");

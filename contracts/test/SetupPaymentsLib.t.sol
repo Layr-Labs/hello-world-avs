@@ -119,7 +119,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         assertEq(paymentLeaves.tokenLeaves.length, 1, "Incorrect number of token leaves");
     }
 
-    function testGenerateMerkleProof() public {
+    function testGenerateMerkleProof() public view {
         SetupPaymentsLib.PaymentLeaves memory paymentLeaves = SetupPaymentsLib.parseLeavesFromJson("test/mockData/scratch/payments_test.json");
 
         bytes32[] memory leaves = paymentLeaves.leaves;
