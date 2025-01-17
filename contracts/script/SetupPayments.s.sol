@@ -53,6 +53,9 @@ contract SetupPayments is Script, Test {
     uint256 cumumlativePaymentMultiplier;
     address nonceSender = 0x998abeb3E57409262aE5b751f60747921B33613E;
 
+    address operator1 = address(1);
+    address operator2 = address(2);
+
 
     function setUp() public {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
@@ -96,6 +99,34 @@ contract SetupPayments is Script, Test {
         vm.stopBroadcast();
     }
 
+    function runOperatorDirected() external {
+        vm.startBroadcast(helloWorldConfig.rewardsInitiatorKey);
+        if(rewardsCoordinator.currRewardsCalculationEndTimestamp() == 0) {
+             startTimestamp = uint32(block.timestamp) - (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
+        } else {
+            startTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() - DURATION + CALCULATION_INTERVAL_SECONDS;
+        }
+
+        endTimestamp = startTimestamp + 1;
+
+
+        if (endTimestamp > block.timestamp) {
+            revert("End timestamp must be in the future.  Please wait to generate new payments.");
+        }
+
+        // sets a multiplier based on block number such that cumulativeEarnings increase accordingly for multiple runs of this script in the same session
+        uint256 nonce = rewardsCoordinator.getDistributionRootsLength();
+        amountPerPayment = uint32(amountPerPayment * (nonce + 1));
+
+        createOperatorDirectedAVSRewardsSubmissions(numPayments, amountPerPayment, startTimestamp);
+        vm.stopBroadcast();
+        vm.startBroadcast(deployer);
+        earners = _getEarners(deployer);
+        submitPaymentRoot(earners, endTimestamp, numPayments, amountPerPayment);
+        vm.stopBroadcast();
+    }
+        
+
     function executeProcessClaim() public {
         uint256 nonce = rewardsCoordinator.getDistributionRootsLength();
         amountPerPayment = uint32(amountPerPayment * nonce);
@@ -112,6 +143,29 @@ contract SetupPayments is Script, Test {
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
         SetupPaymentsLib.createAVSRewardsSubmissions(
             helloWorldDeployment.helloWorldServiceManager,
+            helloWorldDeployment.strategy,
+            numPayments,
+            amountPerPayment,
+            duration,
+            startTimestamp
+        );
+    }
+
+
+    function createOperatorDirectedAVSRewardsSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 startTimestamp) public {
+        ERC20Mock(helloWorldDeployment.token).mint(helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments);
+        ERC20Mock(helloWorldDeployment.token).increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments);
+        uint32 duration = 0;
+        address[] memory operators = new address[](2);
+        operators[0] = operator1;
+        operators[1] = operator2;
+
+        uint256 numOperators = operators.length;
+
+        SetupPaymentsLib.createOperatorDirectedAVSRewardsSubmissions(
+            helloWorldDeployment.helloWorldServiceManager,
+            operators,
+            numOperators,
             helloWorldDeployment.strategy,
             numPayments,
             amountPerPayment,

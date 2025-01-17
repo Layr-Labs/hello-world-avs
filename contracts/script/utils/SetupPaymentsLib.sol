@@ -45,6 +45,49 @@ library SetupPaymentsLib {
         ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
     }
 
+    function createOperatorDirectedAVSRewardsSubmissions(
+        address helloWorldServiceManager,
+        address[] memory operators,
+        uint256 numOperators,
+        address strategy,
+        uint256 numPayments,
+        uint256 amountPerPayment,
+        uint32 duration,
+        uint32 startTimestamp
+    ) internal {
+
+        uint256 operatorRewardAmount = amountPerPayment / numOperators;
+
+        IRewardsCoordinator.OperatorReward[] memory operatorRewards = new IRewardsCoordinator.OperatorReward[](2);
+        for (uint256 i = 0; i < 2; i++) {
+            operatorRewards[i] = IRewardsCoordinator.OperatorReward({
+                operator: operators[i],
+                amount: operatorRewardAmount
+            });
+        }
+
+        IRewardsCoordinator.OperatorDirectedRewardsSubmission[] memory rewardsSubmissions = new IRewardsCoordinator.OperatorDirectedRewardsSubmission[](numPayments);
+        for (uint256 i = 0; i < numPayments; i++) {
+            IRewardsCoordinator.StrategyAndMultiplier[] memory strategiesAndMultipliers = new IRewardsCoordinator.StrategyAndMultiplier[](1);
+            strategiesAndMultipliers[0] = IRewardsCoordinator.StrategyAndMultiplier({
+                strategy: IStrategy(strategy),
+                multiplier: 10000
+            });
+
+            IRewardsCoordinator.OperatorDirectedRewardsSubmission memory rewardsSubmission = IRewardsCoordinator.OperatorDirectedRewardsSubmission({
+                strategiesAndMultipliers: strategiesAndMultipliers,
+                token: IStrategy(strategy).underlyingToken(),
+                operatorRewards: operatorRewards,
+                startTimestamp: startTimestamp,
+                duration: duration,
+                description: "test"
+            });
+
+            rewardsSubmissions[i] = rewardsSubmission;
+        }
+        ECDSAServiceManagerBase(helloWorldServiceManager).createOperatorDirectedAVSRewardsSubmission(rewardsSubmissions);
+    }
+
     function processClaim(
         IRewardsCoordinator rewardsCoordinator,
         string memory filePath,

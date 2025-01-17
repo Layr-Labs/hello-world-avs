@@ -9,10 +9,11 @@
     "start:anvil-quick": "anvil --block-time 0.01",
     "deploy:core": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --optimize --optimizer-runs 200 --via-ir",
     "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --optimize --optimizer-runs 200 --via-ir",
-    "deploy:core-debug": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
+    "deploy:core-debug": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug --optimize --optimizer-runs 200 --via-ir",
     "deploy:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "create-payments-root": "cd contracts && forge script script/SetupPayments.s.sol --rpc-url http://localhost:8545 --broadcast -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "claim-payments": "cd contracts && forge script script/SetupPayments.s.sol --rpc-url http://localhost:8545 --broadcast --sig \"executeProcessClaim()\" -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    "create-operator-directed-payments-root": "cd contracts && forge script script/SetupPayments.s.sol --rpc-url http://localhost:8545 --broadcast --sig \"runOperatorDirected()\" -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "build": "cd contracts && forge build",
     "extract:abis": "node utils/abis.js",
     "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest"
