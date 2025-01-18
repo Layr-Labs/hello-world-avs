@@ -12,6 +12,8 @@ import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
+import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+
 
 
 import {
@@ -20,41 +22,56 @@ import {
     IStrategy
 } from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 
-contract HelloWorldDeployer is Script {
+import "forge-std/Test.sol";
+
+contract HelloWorldDeployer is Script, Test {
     using CoreDeploymentLib for *;
     using UpgradeableProxyLib for address;
 
     address private deployer;
     address proxyAdmin;
+    address rewardsOwner;
+    address rewardsInitiator;
     IStrategy helloWorldStrategy;
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
+    HelloWorldDeploymentLib.DeploymentConfigData helloWorldConfig;
     Quorum internal quorum;
     ERC20Mock token;
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
+
+        helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
+
+
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
     }
 
     function run() external {
         vm.startBroadcast(deployer);
-        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+        rewardsOwner = helloWorldConfig.rewardsOwner;
+        rewardsInitiator = helloWorldConfig.rewardsInitiator;
 
         token = new ERC20Mock();
         helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
+
 
         quorum.strategies.push(
             StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
         );
 
+
+        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+
+
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
 
         helloWorldDeployment.strategy = address(helloWorldStrategy);
         helloWorldDeployment.token = address(token);
-        vm.stopBroadcast();
 
+        vm.stopBroadcast();
         verifyDeployment();
         HelloWorldDeploymentLib.writeDeploymentJson(helloWorldDeployment);
     }

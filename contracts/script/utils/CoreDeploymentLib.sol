@@ -66,6 +66,7 @@ library CoreDeploymentLib {
         uint256 maxFutureLength;
         uint256 genesisRewardsTimestamp;
         address updater;
+        uint256 updaterKey;
         uint256 activationDelay;
         uint256 calculationIntervalSeconds;
         uint256 globalOperatorCommissionBips;
@@ -85,6 +86,7 @@ library CoreDeploymentLib {
         address pauserRegistry;
         address strategyFactory;
         address strategyBeacon;
+        address initialOwner;
     }
 
     function deployContracts(
@@ -146,9 +148,9 @@ library CoreDeploymentLib {
         /// TODO: Get actual values
         uint32 CALCULATION_INTERVAL_SECONDS = 1 days;
         uint32 MAX_REWARDS_DURATION = 1 days;
-        uint32 MAX_RETROACTIVE_LENGTH = 1;
-        uint32 MAX_FUTURE_LENGTH = 1;
-        uint32 GENESIS_REWARDS_TIMESTAMP = 10 days;
+        uint32 MAX_RETROACTIVE_LENGTH = 1 days;
+        uint32 MAX_FUTURE_LENGTH = 2 days;
+        uint32 GENESIS_REWARDS_TIMESTAMP = 0;
         address rewardsCoordinatorImpl = address(
             new RewardsCoordinator(
                 IDelegationManager(result.delegationManager),
@@ -255,8 +257,7 @@ library CoreDeploymentLib {
                 proxyAdmin, // initialOwner
                 IPauserRegistry(result.pauserRegistry), // _pauserRegistry
                 configData.rewardsCoordinator.initPausedStatus, // initialPausedStatus
-                /// TODO: is there a setter and is this expected?
-                address(0), // rewards updater
+                configData.rewardsCoordinator.updater,
                 uint32(configData.rewardsCoordinator.activationDelay), // _activationDelay
                 uint16(configData.rewardsCoordinator.globalOperatorCommissionBips) // _globalCommissionBips
             )
@@ -289,10 +290,10 @@ library CoreDeploymentLib {
     function readDeploymentConfigValues(
         string memory directoryPath,
         string memory fileName
-    ) internal returns (DeploymentConfigData memory) {
+    ) internal view returns (DeploymentConfigData memory) {
         string memory pathToFile = string.concat(directoryPath, fileName);
 
-        require(vm.exists(pathToFile), "Deployment file does not exist");
+        require(vm.exists(pathToFile), "CoreDeployment: Deployment config file does not exist");
 
         string memory json = vm.readFile(pathToFile);
 
@@ -332,6 +333,8 @@ library CoreDeploymentLib {
             json.readUint(".rewardsCoordinator.GENESIS_REWARDS_TIMESTAMP");
         data.rewardsCoordinator.updater =
             json.readAddress(".rewardsCoordinator.rewards_updater_address");
+        data.rewardsCoordinator.updaterKey =
+            json.readUint(".rewardsCoordinator.rewards_updater_key");
         data.rewardsCoordinator.activationDelay =
             json.readUint(".rewardsCoordinator.activation_delay");
         data.rewardsCoordinator.calculationIntervalSeconds =
@@ -346,7 +349,7 @@ library CoreDeploymentLib {
     function readDeploymentConfigValues(
         string memory directoryPath,
         uint256 chainId
-    ) internal returns (DeploymentConfigData memory) {
+    ) internal view returns (DeploymentConfigData memory) {
         return
             readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
@@ -354,17 +357,17 @@ library CoreDeploymentLib {
     function readDeploymentJson(
         string memory directoryPath,
         uint256 chainId
-    ) internal returns (DeploymentData memory) {
+    ) internal view returns (DeploymentData memory) {
         return readDeploymentJson(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
 
     function readDeploymentJson(
         string memory path,
         string memory fileName
-    ) internal returns (DeploymentData memory) {
+    ) internal view returns (DeploymentData memory) {
         string memory pathToFile = string.concat(path, fileName);
 
-        require(vm.exists(pathToFile), "Deployment file does not exist");
+        require(vm.exists(pathToFile), "CoreDeployment: Deployment file does not exist");
 
         string memory json = vm.readFile(pathToFile);
 
@@ -374,6 +377,8 @@ library CoreDeploymentLib {
         data.eigenPodManager = json.readAddress(".addresses.eigenPodManager");
         data.delegationManager = json.readAddress(".addresses.delegation");
         data.avsDirectory = json.readAddress(".addresses.avsDirectory");
+        data.rewardsCoordinator = json.readAddress(".addresses.rewardsCoordinator");
+        data.initialOwner = json.readAddress(".addresses.proxyAdmin");
 
         return data;
     }
@@ -448,6 +453,8 @@ library CoreDeploymentLib {
             data.strategyFactory.getImplementation().toHexString(),
             '","strategyBeacon":"',
             data.strategyBeacon.toHexString(),
+            '","rewardsCoordinator":"',
+            data.rewardsCoordinator.toHexString(),
             '"}'
         );
     }

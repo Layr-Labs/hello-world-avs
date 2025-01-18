@@ -54,6 +54,13 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         )
     {}
 
+    function initialize(
+        address initialOwner,
+        address _rewardsInitiator
+    ) external initializer {
+        __ServiceManagerBase_init(initialOwner, _rewardsInitiator);
+    }
+
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(
@@ -101,4 +108,5 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }
+
 }

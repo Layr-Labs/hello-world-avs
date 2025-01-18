@@ -6,17 +6,21 @@ import "../script/utils/SetupPaymentsLib.sol";
 import "../script/utils/CoreDeploymentLib.sol";
 import "../script/utils/HelloWorldDeploymentLib.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import "../src/IHelloWorldServiceManager.sol";
 import "@eigenlayer/contracts/interfaces/IStrategy.sol";
 import "@eigenlayer/contracts/libraries/Merkle.sol";
 import "../script/DeployEigenLayerCore.s.sol";
 import "../script/HelloWorldDeployer.s.sol";
 import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 import {HelloWorldTaskManagerSetup} from "test/HelloWorldServiceManager.t.sol";
+import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {
     Quorum,
     StrategyParams,
     IStrategy
 } from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
+
 
 contract TestConstants {
     uint256 constant NUM_PAYMENTS = 8;
@@ -35,10 +39,13 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
 
     IRewardsCoordinator public rewardsCoordinator;
+    IHelloWorldServiceManager public helloWorldServiceManager;
     IStrategy public strategy;
     address proxyAdmin;
 
     string internal constant filePath = "test/mockData/scratch/payments.json";
+    address rewardsInitiator = address(1);
+    address rewardsOwner = address(2);
 
     
     function setUp() public override virtual {
@@ -53,12 +60,18 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
         labelContracts(coreDeployment, helloWorldDeployment);
 
+
+        cheats.prank(rewardsOwner);
+        ECDSAServiceManagerBase(helloWorldDeployment.helloWorldServiceManager).setRewardsInitiator(rewardsInitiator);
+
         rewardsCoordinator = IRewardsCoordinator(coreDeployment.rewardsCoordinator);
+
         mockToken.mint(address(this), 100000);
         mockToken.mint(address(rewardsCoordinator), 100000);
+        mockToken.mint(rewardsInitiator, 100000);
     }
 
 
@@ -74,7 +87,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
-        cheats.startPrank(address(0), address(0));
+        cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
         cheats.stopPrank();
     }
@@ -106,8 +119,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         assertEq(paymentLeaves.tokenLeaves.length, 1, "Incorrect number of token leaves");
     }
 
-    function testGenerateMerkleProof() public {
-        SetupPaymentsLib.PaymentLeaves memory paymentLeaves = SetupPaymentsLib.parseLeavesFromJson("test/mockData/scratch/payments.json");
+    function testGenerateMerkleProof() public view {
+        SetupPaymentsLib.PaymentLeaves memory paymentLeaves = SetupPaymentsLib.parseLeavesFromJson("test/mockData/scratch/payments_test.json");
 
         bytes32[] memory leaves = paymentLeaves.leaves;
         uint256 indexToProve = 0;
@@ -122,10 +135,6 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         require(keccak256(proofBytesConstructed) == keccak256(proofBytesCalculated), "Proofs do not match");
 
         bytes32 root = SetupPaymentsLib.merkleizeKeccak(leaves);
-
-        emit log_named_bytes("proof", proofBytesCalculated);
-        emit log_named_bytes32("root", root);
-        emit log_named_bytes32("leaf", leaves[indexToProve]);
 
         require(Merkle.verifyInclusionKeccak(
             proofBytesCalculated,
@@ -149,7 +158,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy));
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
-        cheats.startPrank(address(0));
+
+        cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupPaymentsLib.submitRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath);
         cheats.stopPrank();
 
@@ -164,7 +174,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
             RECIPIENT,
             earnerLeaves[INDEX_TO_PROVE],
             NUM_TOKEN_EARNINGS,
-            address(strategy)
+            address(strategy),
+            uint32(TOKEN_EARNINGS)
         );
 
         cheats.stopPrank();
@@ -176,10 +187,13 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
         uint32 startTimestamp = 10 days;
         cheats.warp(startTimestamp + 1);
-        mockToken.approve(address(rewardsCoordinator), amountPerPayment * numPayments);
+        
+        cheats.prank(rewardsInitiator);
+        mockToken.increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments);
 
+        cheats.startPrank(rewardsInitiator);
         SetupPaymentsLib.createAVSRewardsSubmissions(
-            rewardsCoordinator,
+            address(helloWorldDeployment.helloWorldServiceManager),
             address(strategy),
             numPayments,
             amountPerPayment,

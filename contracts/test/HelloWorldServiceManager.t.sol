@@ -39,8 +39,13 @@ contract HelloWorldTaskManagerSetup is Test {
         Vm.Wallet key;
     }
 
+    struct AVSOwner {
+        Vm.Wallet key;
+    }
+
     Operator[] internal operators;
     TrafficGenerator internal generator;
+    AVSOwner internal owner;
 
     HelloWorldDeploymentLib.DeploymentData internal helloWorldDeployment;
     CoreDeploymentLib.DeploymentData internal coreDeployment;
@@ -52,6 +57,7 @@ contract HelloWorldTaskManagerSetup is Test {
 
     function setUp() public virtual {
         generator = TrafficGenerator({key: vm.createWallet("generator_wallet")});
+        owner = AVSOwner({key: vm.createWallet("owner_wallet")});
 
         address proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
@@ -65,7 +71,7 @@ contract HelloWorldTaskManagerSetup is Test {
         quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
         helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr);
         labelContracts(coreDeployment, helloWorldDeployment);
     }
 
@@ -374,6 +380,9 @@ contract CreateTask is HelloWorldTaskManagerSetup {
 
         vm.prank(generator.key.addr);
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+
+        require(sha256(abi.encodePacked(newTask.name)) == sha256(abi.encodePacked(taskName)), "Task name not set correctly");
+        require(newTask.taskCreatedBlock == uint32(block.number), "Task created block not set correctly");
     }
 }
 

@@ -30,10 +30,19 @@ library HelloWorldDeploymentLib {
         address token;
     }
 
+    struct DeploymentConfigData {
+        address rewardsOwner;
+        address rewardsInitiator;
+        uint256 rewardsOwnerKey;
+        uint256 rewardsInitiatorKey;
+    }
+
     function deployContracts(
         address proxyAdmin,
         CoreDeploymentLib.DeploymentData memory core,
-        Quorum memory quorum
+        Quorum memory quorum,
+        address rewardsInitiator,
+        address owner
     ) internal returns (DeploymentData memory) {
         DeploymentData memory result;
 
@@ -53,36 +62,38 @@ library HelloWorldDeploymentLib {
             ECDSAStakeRegistry.initialize, (result.helloWorldServiceManager, 0, quorum)
         );
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
-        UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
+        upgradeCall = abi.encodeCall(HelloWorldServiceManager.initialize, (owner, rewardsInitiator));
+        UpgradeableProxyLib.upgradeAndCall(result.helloWorldServiceManager, helloWorldServiceManagerImpl, upgradeCall);
 
         return result;
     }
 
     function readDeploymentJson(
         uint256 chainId
-    ) internal returns (DeploymentData memory) {
+    ) internal view returns (DeploymentData memory) {
         return readDeploymentJson("deployments/", chainId);
     }
 
     function readDeploymentJson(
         string memory directoryPath,
         uint256 chainId
-    ) internal returns (DeploymentData memory) {
+    ) internal view returns (DeploymentData memory) {
         string memory fileName = string.concat(directoryPath, vm.toString(chainId), ".json");
 
-        require(vm.exists(fileName), "Deployment file does not exist");
+        require(vm.exists(fileName), "HelloWorldDeployment: Deployment file does not exist");
 
         string memory json = vm.readFile(fileName);
 
         DeploymentData memory data;
         /// TODO: 2 Step for reading deployment json.  Read to the core and the AVS data
-        data.helloWorldServiceManager = json.readAddress(".contracts.helloWorldServiceManager");
-        data.stakeRegistry = json.readAddress(".contracts.stakeRegistry");
-        data.strategy = json.readAddress(".contracts.strategy");
-        data.token = json.readAddress(".contracts.token");
+        data.helloWorldServiceManager = json.readAddress(".addresses.helloWorldServiceManager");
+        data.stakeRegistry = json.readAddress(".addresses.stakeRegistry");
+        data.strategy = json.readAddress(".addresses.strategy");
+        data.token = json.readAddress(".addresses.token");
 
         return data;
     }
+    
 
     /// write to default output path
     function writeDeploymentJson(
@@ -108,6 +119,33 @@ library HelloWorldDeploymentLib {
 
         vm.writeFile(fileName, deploymentData);
         console2.log("Deployment artifacts written to:", fileName);
+    }
+    
+
+    function readDeploymentConfigValues(
+        string memory directoryPath,
+        string memory fileName
+    ) internal view returns (DeploymentConfigData memory) {
+        string memory pathToFile = string.concat(directoryPath, fileName);
+
+        require(vm.exists(pathToFile), "HelloWorldDeployment: Deployment Config file does not exist");
+
+        string memory json = vm.readFile(pathToFile);
+
+        DeploymentConfigData memory data;
+        data.rewardsOwner = json.readAddress(".addresses.rewardsOwner");
+        data.rewardsInitiator = json.readAddress(".addresses.rewardsInitiator");
+        data.rewardsOwnerKey = json.readUint(".keys.rewardsOwner");
+        data.rewardsInitiatorKey = json.readUint(".keys.rewardsInitiator");
+        return data;
+    }
+
+    function readDeploymentConfigValues(
+        string memory directoryPath,
+        uint256 chainId
+    ) internal view returns (DeploymentConfigData memory) {
+        return
+            readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
 
     function _generateDeploymentJson(

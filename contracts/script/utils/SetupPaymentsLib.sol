@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
+import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 
@@ -16,7 +17,7 @@ library SetupPaymentsLib {
     }
 
     function createAVSRewardsSubmissions(
-        IRewardsCoordinator rewardsCoordinator,
+        address helloWorldServiceManager,
         address strategy,
         uint256 numPayments,
         uint256 amountPerPayment,
@@ -35,14 +36,56 @@ library SetupPaymentsLib {
                 strategiesAndMultipliers: strategiesAndMultipliers,
                 token: IStrategy(strategy).underlyingToken(),
                 amount: amountPerPayment,
-                startTimestamp: startTimestamp ,
+                startTimestamp: startTimestamp,
                 duration: duration
             });
 
             rewardsSubmissions[i] = rewardsSubmission;
         }
+        ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
+    }
 
-        rewardsCoordinator.createAVSRewardsSubmission(rewardsSubmissions);
+    function createOperatorDirectedAVSRewardsSubmissions(
+        address helloWorldServiceManager,
+        address[] memory operators,
+        uint256 numOperators,
+        address strategy,
+        uint256 numPayments,
+        uint256 amountPerPayment,
+        uint32 duration,
+        uint32 startTimestamp
+    ) internal {
+
+        uint256 operatorRewardAmount = amountPerPayment / numOperators;
+
+        IRewardsCoordinator.OperatorReward[] memory operatorRewards = new IRewardsCoordinator.OperatorReward[](2);
+        for (uint256 i = 0; i < 2; i++) {
+            operatorRewards[i] = IRewardsCoordinator.OperatorReward({
+                operator: operators[i],
+                amount: operatorRewardAmount
+            });
+        }
+
+        IRewardsCoordinator.OperatorDirectedRewardsSubmission[] memory rewardsSubmissions = new IRewardsCoordinator.OperatorDirectedRewardsSubmission[](numPayments);
+        for (uint256 i = 0; i < numPayments; i++) {
+            IRewardsCoordinator.StrategyAndMultiplier[] memory strategiesAndMultipliers = new IRewardsCoordinator.StrategyAndMultiplier[](1);
+            strategiesAndMultipliers[0] = IRewardsCoordinator.StrategyAndMultiplier({
+                strategy: IStrategy(strategy),
+                multiplier: 10000
+            });
+
+            IRewardsCoordinator.OperatorDirectedRewardsSubmission memory rewardsSubmission = IRewardsCoordinator.OperatorDirectedRewardsSubmission({
+                strategiesAndMultipliers: strategiesAndMultipliers,
+                token: IStrategy(strategy).underlyingToken(),
+                operatorRewards: operatorRewards,
+                startTimestamp: startTimestamp,
+                duration: duration,
+                description: "test"
+            });
+
+            rewardsSubmissions[i] = rewardsSubmission;
+        }
+        ECDSAServiceManagerBase(helloWorldServiceManager).createOperatorDirectedAVSRewardsSubmission(rewardsSubmissions);
     }
 
     function processClaim(
@@ -52,11 +95,13 @@ library SetupPaymentsLib {
         address recipient,
         IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf,
         uint256 NUM_TOKEN_EARNINGS,
-        address strategy
+        address strategy,
+        uint32 amountPerPayment
     ) internal {
         PaymentLeaves memory paymentLeaves = parseLeavesFromJson(filePath);
         
         bytes memory proof = generateMerkleProof(paymentLeaves.leaves, indexToProve);
+        //we only have one token leaf
         bytes memory tokenProof = generateMerkleProof(paymentLeaves.tokenLeaves, 0);
 
         uint32[] memory tokenIndices = new uint32[](NUM_TOKEN_EARNINGS);
@@ -64,10 +109,14 @@ library SetupPaymentsLib {
         tokenProofs[0] = tokenProof;
 
         IRewardsCoordinator.TokenTreeMerkleLeaf[] memory tokenLeaves = new IRewardsCoordinator.TokenTreeMerkleLeaf[](NUM_TOKEN_EARNINGS);
-        tokenLeaves[0] = defaultTokenLeaf(100, strategy);
+        tokenLeaves[0] = defaultTokenLeaf(amountPerPayment, strategy);
+
+
+        // this workflow assumes a new root submitted for every payment claimed.  So we get the latest rood index to process a claim for
+        uint256 rootIndex = rewardsCoordinator.getDistributionRootsLength() - 1;
 
         IRewardsCoordinator.RewardsMerkleClaim memory claim = IRewardsCoordinator.RewardsMerkleClaim({
-            rootIndex: 0,
+            rootIndex: uint32(rootIndex),
             earnerIndex: uint32(indexToProve),
             earnerTreeProof: proof,
             earnerLeaf: earnerLeaf,
@@ -89,7 +138,7 @@ library SetupPaymentsLib {
         uint256 NUM_TOKEN_EARNINGS,
         string memory filePath
     ) internal {
-        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, strategy, filePath);
+        bytes32 paymentRoot = createPaymentRoot(rewardsCoordinator, tokenLeaves, earnerLeaves, NUM_PAYMENTS, NUM_TOKEN_EARNINGS, filePath);
         rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
 
@@ -99,7 +148,6 @@ library SetupPaymentsLib {
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves,
         uint256 NUM_PAYMENTS,
         uint256 NUM_TOKEN_EARNINGS,
-        address strategy,
         string memory filePath
     ) internal returns (bytes32) {
         require(earnerLeaves.length == NUM_PAYMENTS, "Number of earners must match number of payments");
@@ -117,7 +165,7 @@ library SetupPaymentsLib {
     function createEarnerLeaves(
         address[] calldata earners,
         bytes32[] memory tokenLeaves
-    ) public returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
+    ) public pure returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory leaves = new IRewardsCoordinator.EarnerTreeMerkleLeaf[](earners.length);
         for (uint256 i = 0; i < earners.length; i++) {
             leaves[i] = IRewardsCoordinator.EarnerTreeMerkleLeaf({
@@ -137,7 +185,7 @@ library SetupPaymentsLib {
         uint256 NUM_TOKEN_EARNINGS,
         uint256 TOKEN_EARNINGS,
         address strategy
-    ) internal returns (bytes32[] memory) {
+    ) internal view returns (bytes32[] memory) {
         bytes32[] memory leaves = new bytes32[](NUM_TOKEN_EARNINGS);
         for (uint256 i = 0; i < NUM_TOKEN_EARNINGS; i++) {
             IRewardsCoordinator.TokenTreeMerkleLeaf memory leaf = defaultTokenLeaf(TOKEN_EARNINGS, strategy);
@@ -168,7 +216,7 @@ library SetupPaymentsLib {
         vm.writeJson(finalJson, filePath);
     }
 
-    function parseLeavesFromJson(string memory filePath) internal returns (PaymentLeaves memory) {
+    function parseLeavesFromJson(string memory filePath) internal view returns (PaymentLeaves memory) {
         string memory json = vm.readFile(filePath);
         bytes memory data = vm.parseJson(json);
         return abi.decode(data, (PaymentLeaves));
