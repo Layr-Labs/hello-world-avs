@@ -10,7 +10,7 @@ import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoor
 
 import "forge-std/Test.sol";
 
-contract DeployEigenlayerCore is Script, Test {
+contract DeployEigenLayerCore is Script, Test {
     using CoreDeploymentLib for *;
     using UpgradeableProxyLib for address;
 
