@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.27;
 
 import {ECDSAServiceManagerBase} from
     "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
@@ -55,7 +55,6 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             _allocationManager
         )
     {
-        //  _initializePauser(_pauserRegistry, UNPAUSE_ALL);
 
     }
 
