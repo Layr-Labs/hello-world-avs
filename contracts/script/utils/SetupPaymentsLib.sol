@@ -241,11 +241,7 @@ library SetupPaymentsLib {
      * @dev This is a helper function used to create token leaves for testing.
      *      In production, token leaves are managed by an off-chain data pipeline.
      *      See: https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/docs/core/RewardsCoordinator.md#off-chain-calculation
-     * @param rewardsCoordinator The RewardsCoordinator contract interface
-     * @param numTokenEarnings The number of token earnings to create leaves for
-     * @param amountPerPayment The amount of tokens per payment
-     * @param strategy The strategy contract address
-     * @return Array of token leaf hashes
+     
      */
     function createPaymentRoot(
         IRewardsCoordinator rewardsCoordinator,
