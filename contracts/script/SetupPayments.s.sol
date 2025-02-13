@@ -177,6 +177,14 @@ contract SetupPayments is Script, Test {
         vm.stopBroadcast();
     }
 
+
+    /**
+     * @notice Creates AVS rewards submissions
+     * @dev Helper function that mints tokens, approves spending, and creates AVS rewards submissions
+     * @param numPayments The number of payment submissions to create
+     * @param amountPerPayment The amount of tokens per payment
+     * @param startTimestamp The timestamp when the rewards period starts
+     */
     function createAVSRewardsSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 startTimestamp) public {
         ERC20Mock(helloWorldDeployment.token).mint(helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments);
         ERC20Mock(helloWorldDeployment.token).increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments);
@@ -191,7 +199,13 @@ contract SetupPayments is Script, Test {
         );
     }
 
-
+    /**
+     * @notice Creates operator-directed AVS rewards submissions
+     * @dev Helper function that mints tokens, approves spending, and creates operator-directed rewards submissions
+     * @param numPayments The number of payment submissions to create
+     * @param amountPerPayment The amount of tokens per payment
+     * @param startTimestamp The timestamp when the rewards period starts
+     */
     function createOperatorDirectedAVSRewardsSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 startTimestamp) public {
         ERC20Mock(helloWorldDeployment.token).mint(helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments);
         ERC20Mock(helloWorldDeployment.token).increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments);
@@ -214,6 +228,17 @@ contract SetupPayments is Script, Test {
         );
     }
 
+    /**
+     * @notice Processes a claim for a payment
+     * @dev Helper function that processes a claim for a payment
+     *      In production, payment roots are managed by an off-chain data pipeline.
+     *      See: https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/docs/core/RewardsCoordinator.md#off-chain-calculation
+     * @param filePath The path to the file containing the payment information
+     * @param indexToProve The index of the earner to prove
+     * @param recipient The address of the recipient
+     * @param earnerLeaf The earner leaf to prove
+     * @param amountPerPayment The amount of tokens per payment
+     */
     function processClaim(string memory filePath, uint256 indexToProve, address recipient, IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf, uint32 amountPerPayment) public {
         SetupPaymentsLib.processClaim(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),

@@ -155,7 +155,7 @@ library SetupPaymentsLib {
      * @dev This is a helper function used to simulate payment root submission for testing.
      *      In production, payment roots are managed by an off-chain data pipeline.
      *      See: https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/docs/core/RewardsCoordinator.md#off-chain-calculation
-     
+        
      */
     function submitRoot(
         IRewardsCoordinator rewardsCoordinator,
