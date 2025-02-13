@@ -56,7 +56,6 @@ npm install
 npm run start:anvil
 ```
 
-
 ### Deploy Contracts and Start Operator
 
 Open a separate terminal window #2, execute the following commands
@@ -83,7 +82,19 @@ npm run start:operator
 
 ```
 
-### Create and Claim Payments
+
+### Create Hello-World-AVS Tasks
+
+Open a separate terminal window #3, execute the following commands
+
+```sh
+# Start the createNewTasks application 
+npm run start:traffic
+```
+
+
+
+## Create and Claim Payments
 
 In a terminal, start a new instance of anvil and deploy the core and avs contracts
 ```sh
@@ -121,20 +132,9 @@ In order to create and claim multiple payments (run the above two commands more 
 
 
 
-### Create Hello-World-AVS Tasks
-
-Open a separate terminal window #3, execute the following commands
-
-```sh
-# Start the createNewTasks application 
-npm run start:traffic
-```
 
 
-
-
-
-### Help and Support
+## Help and Support
 
 For help and support deploying and modifying this repo for your AVS, please:
 
