@@ -44,7 +44,17 @@ library SetupPaymentsLib {
         }
         ECDSAServiceManagerBase(helloWorldServiceManager).createAVSRewardsSubmission(rewardsSubmissions);
     }
-
+    
+    /**
+     * @notice Creates Operator Directed AVS rewards submissions
+     * @dev Helper function that creates standard AVS rewards submissions with single strategy
+     * @param helloWorldServiceManager Address of the service manager contract
+     * @param strategy Address of the strategy contract
+     * @param numPayments Number of payment submissions to create
+     * @param amountPerPayment Amount of tokens per payment submission
+     * @param duration Duration in seconds for the rewards period
+     * @param startTimestamp Start timestamp for the rewards period
+     */
     function createOperatorDirectedAVSRewardsSubmissions(
         address helloWorldServiceManager,
         address[] memory operators,
@@ -88,6 +98,17 @@ library SetupPaymentsLib {
         ECDSAServiceManagerBase(helloWorldServiceManager).createOperatorDirectedAVSRewardsSubmission(rewardsSubmissions);
     }
 
+    /**
+     * @notice Process a rewards claim for a recipient
+     * @param rewardsCoordinator The RewardsCoordinator contract instance
+     * @param filePath Path to the JSON file containing merkle leaves
+     * @param indexToProve Index of the earner leaf to prove
+     * @param recipient Address to receive the rewards
+     * @param earnerLeaf The earner leaf data structure containing proof details
+     * @param NUM_TOKEN_EARNINGS Number of token earnings to process
+     * @param strategy The strategy contract address
+     * @param amountPerPayment Amount of tokens per payment
+     */
     function processClaim(
         IRewardsCoordinator rewardsCoordinator,
         string memory filePath,
@@ -128,6 +149,14 @@ library SetupPaymentsLib {
         rewardsCoordinator.processClaim(claim, recipient);
     }
 
+    /**
+     * @notice Creates token leaves for the rewards merkle tree
+     * @dev Each token leaf represents a token payment amount and strategy
+     * @dev This is a helper function used to simulate payment root submission for testing.
+     *      In production, payment roots are managed by an off-chain data pipeline.
+     *      See: https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/docs/core/RewardsCoordinator.md#off-chain-calculation
+     
+     */
     function submitRoot(
         IRewardsCoordinator rewardsCoordinator,
         bytes32[] memory tokenLeaves,
@@ -142,6 +171,82 @@ library SetupPaymentsLib {
         rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
 
+    /**
+     * @notice Creates AVS rewards submissions for operators
+     * @dev This is a helper function used to simulate AVS rewards submissions for testing.
+     *      In production, rewards submissions are managed by an off-chain data pipeline.
+     * @param helloWorldServiceManager The HelloWorldServiceManager contract address
+     * @param strategy The strategy contract address 
+     * @param numPayments The number of payments to create
+     * @param amountPerPayment The amount of tokens per payment
+     * @param duration The duration of the rewards period
+     * @param startTimestamp The timestamp when the rewards period starts
+     */
+    function createAVSRewardsSubmissions(
+        address helloWorldServiceManager,
+        address strategy,
+        uint256 numPayments,
+        uint256 amountPerPayment,
+        uint32 duration,
+        uint32 startTimestamp
+    ) public {
+        for (uint256 i = 0; i < numPayments; i++) {
+            IHelloWorldServiceManager(helloWorldServiceManager).submitAVSRewardsSubmission(
+                strategy,
+                amountPerPayment,
+                duration,
+                startTimestamp
+            );
+        }
+    }
+
+    /**
+     * @notice Creates operator-directed AVS rewards submissions
+     * @dev This is a helper function used to simulate operator-directed AVS rewards submissions for testing.
+     *      In production, rewards submissions are managed by an off-chain data pipeline.
+     * @param helloWorldServiceManager The HelloWorldServiceManager contract address
+     * @param operators Array of operator addresses to receive rewards
+     * @param numOperators Number of operators in the operators array
+     * @param strategy The strategy contract address
+     * @param numPayments The number of payments to create
+     * @param amountPerPayment The amount of tokens per payment
+     * @param duration The duration of the rewards period
+     * @param startTimestamp The timestamp when the rewards period starts
+     */
+    function createOperatorDirectedAVSRewardsSubmissions(
+        address helloWorldServiceManager,
+        address[] memory operators,
+        uint256 numOperators,
+        address strategy,
+        uint256 numPayments,
+        uint256 amountPerPayment,
+        uint32 duration,
+        uint32 startTimestamp
+    ) public {
+        for (uint256 i = 0; i < numPayments; i++) {
+            for (uint256 j = 0; j < numOperators; j++) {
+                IHelloWorldServiceManager(helloWorldServiceManager).submitOperatorDirectedAVSRewardsSubmission(
+                    operators[j],
+                    strategy,
+                    amountPerPayment,
+                    duration,
+                    startTimestamp
+                );
+            }
+        }
+    }
+    
+    /**
+     * @notice Creates token leaves for the rewards merkle tree
+     * @dev This is a helper function used to create token leaves for testing.
+     *      In production, token leaves are managed by an off-chain data pipeline.
+     *      See: https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/docs/core/RewardsCoordinator.md#off-chain-calculation
+     * @param rewardsCoordinator The RewardsCoordinator contract interface
+     * @param numTokenEarnings The number of token earnings to create leaves for
+     * @param amountPerPayment The amount of tokens per payment
+     * @param strategy The strategy contract address
+     * @return Array of token leaf hashes
+     */
     function createPaymentRoot(
         IRewardsCoordinator rewardsCoordinator,
         bytes32[] memory tokenLeaves,
@@ -162,6 +267,12 @@ library SetupPaymentsLib {
         return (merkleizeKeccak(leaves));
     }
 
+    /**
+     * @notice Creates earner leaves for the rewards merkle tree
+     * @param earners Array of earner addresses
+     * @param tokenLeaves Array of token leaf hashes
+     * @return Array of EarnerTreeMerkleLeaf structures
+     */
     function createEarnerLeaves(
         address[] calldata earners,
         bytes32[] memory tokenLeaves
@@ -176,10 +287,23 @@ library SetupPaymentsLib {
         return leaves;
     }
 
+    /**
+     * @notice Creates a token root from token leaves
+     * @param tokenLeaves Array of token leaf hashes
+     * @return bytes32 The calculated token root
+     */
     function createTokenRoot(bytes32[] memory tokenLeaves) public pure returns (bytes32) {
         return merkleizeKeccak(tokenLeaves);   
     }
 
+    /**
+     * @notice Creates token leaves for the rewards merkle tree
+     * @param rewardsCoordinator The RewardsCoordinator contract instance
+     * @param NUM_TOKEN_EARNINGS Number of token earnings to create
+     * @param TOKEN_EARNINGS Amount of tokens per earning
+     * @param strategy The strategy contract address
+     * @return Array of token leaf hashes
+     */
     function createTokenLeaves(
         IRewardsCoordinator rewardsCoordinator,
         uint256 NUM_TOKEN_EARNINGS,
@@ -194,6 +318,12 @@ library SetupPaymentsLib {
         return leaves;
     }
 
+    /**
+     * @notice Creates a default token leaf structure
+     * @param TOKEN_EARNINGS Amount of tokens for this leaf
+     * @param strategy The strategy contract address
+     * @return TokenTreeMerkleLeaf The created token leaf structure
+     */
     function defaultTokenLeaf(
         uint256 TOKEN_EARNINGS,
         address strategy
@@ -205,6 +335,12 @@ library SetupPaymentsLib {
         return leaf;
     }
 
+    /**
+     * @notice Writes merkle leaves to a JSON file
+     * @param leaves Array of earner leaf hashes
+     * @param tokenLeaves Array of token leaf hashes
+     * @param filePath Path where the JSON file will be written
+     */
     function writeLeavesToJson(
         bytes32[] memory leaves,
         bytes32[] memory tokenLeaves,
@@ -216,12 +352,23 @@ library SetupPaymentsLib {
         vm.writeJson(finalJson, filePath);
     }
 
+    /**
+     * @notice Reads merkle leaves from a JSON file
+     * @param filePath Path to the JSON file
+     * @return PaymentLeaves structure containing the leaves and token leaves
+     */
     function parseLeavesFromJson(string memory filePath) internal view returns (PaymentLeaves memory) {
         string memory json = vm.readFile(filePath);
         bytes memory data = vm.parseJson(json);
         return abi.decode(data, (PaymentLeaves));
     }
 
+    /**
+     * @notice Generates a merkle proof for a given leaf index
+     * @param leaves Array of leaf hashes
+     * @param index Index of the leaf to generate proof for
+     * @return bytes The generated merkle proof
+     */
     function generateMerkleProof(bytes32[] memory leaves, uint256 index) internal pure returns (bytes memory) {
         require(leaves.length > 0, "Leaves array cannot be empty");
         require(index < leaves.length, "Index out of bounds");
@@ -259,6 +406,24 @@ library SetupPaymentsLib {
         }
 
         return abi.encodePacked(proof);
+    }
+
+    /**
+     * @notice Pads an array of leaves to the next power of 2
+     * @param leaves Array of leaf hashes to pad
+     * @return bytes32[] The padded array of leaves
+     */
+    function padLeaves(bytes32[] memory leaves) internal pure returns (bytes32[] memory) {
+        uint256 paddedLength = 2;
+        while(paddedLength < leaves.length) {
+            paddedLength <<= 1;
+        }
+
+        bytes32[] memory paddedLeaves = new bytes32[](paddedLength);
+        for (uint256 i = 0; i < leaves.length; i++) {
+            paddedLeaves[i] = leaves[i];
+        }
+        return paddedLeaves;
     }
 
     /**

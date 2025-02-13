@@ -82,7 +82,19 @@ npm run start:operator
 
 ```
 
-### Create and Claim Payments
+
+### Create Hello-World-AVS Tasks
+
+Open a separate terminal window #3, execute the following commands
+
+```sh
+# Start the createNewTasks application 
+npm run start:traffic
+```
+
+
+
+## Create and Claim Payments
 
 In a terminal, start a new instance of anvil and deploy the core and avs contracts
 ```sh
@@ -120,14 +132,6 @@ In order to create and claim multiple payments (run the above two commands more 
 
 
 
-### Create Hello-World-AVS Tasks
-
-Open a separate terminal window #3, execute the following commands
-
-```sh
-# Start the createNewTasks application 
-npm run start:traffic
-```
 
 ### Help and Support
 

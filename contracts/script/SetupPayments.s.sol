@@ -99,6 +99,44 @@ contract SetupPayments is Script, Test {
         vm.stopBroadcast();
     }
 
+    /**
+     * @notice Creates operator-directed AVS rewards submissions
+     * @dev Helper function that mints tokens, approves spending, and creates operator-directed rewards submissions
+     * @param numPayments The number of payment submissions to create
+     * @param amountPerPayment The amount of tokens per payment
+     * @param startTimestamp The timestamp when the rewards period starts
+     */
+    function createOperatorDirectedAVSRewardsSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 startTimestamp) public {
+        // Mint tokens to the rewards initiator
+        ERC20Mock(helloWorldDeployment.token).mint(helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments * 2);
+        // Approve the service manager to spend the tokens
+        ERC20Mock(helloWorldDeployment.token).increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments * 2);
+        
+        uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
+        address[] memory operators = new address[](2);
+        operators[0] = operator1;
+        operators[1] = operator2;
+
+        SetupPaymentsLib.createOperatorDirectedAVSRewardsSubmissions(
+            helloWorldDeployment.helloWorldServiceManager,
+            operators,
+            2,
+            helloWorldDeployment.strategy,
+            numPayments,
+            amountPerPayment,
+            duration,
+            startTimestamp
+        );
+    }
+    /**
+     * @notice Submits a payment root to the rewards coordinator
+     * @dev Helper function that creates token leaves and earner leaves, then submits the root
+     * @param earners Array of earner addresses to include in the payment root
+     * @param endTimestamp Timestamp when the rewards calculation period ends
+     * @param numPayments The number of payments to include in the root
+     * @param amountPerPayment The amount of tokens per payment
+     */
+
     function runOperatorDirected() external {
         vm.startBroadcast(helloWorldConfig.rewardsInitiatorKey);
         if(rewardsCoordinator.currRewardsCalculationEndTimestamp() == 0) {
@@ -118,8 +156,10 @@ contract SetupPayments is Script, Test {
         uint256 nonce = rewardsCoordinator.getDistributionRootsLength();
         amountPerPayment = uint32(amountPerPayment * (nonce + 1));
 
+        // Create Operator Directed AVS Rewards Submission
         createOperatorDirectedAVSRewardsSubmissions(numPayments, amountPerPayment, startTimestamp);
         vm.stopBroadcast();
+
         vm.startBroadcast(deployer);
         earners = _getEarners(deployer);
         submitPaymentRoot(earners, endTimestamp, numPayments, amountPerPayment);
@@ -186,6 +226,17 @@ contract SetupPayments is Script, Test {
             amountPerPayment
         );
     }
+
+    /**
+     * @notice Submits a payment root to the RewardsCoordinator contract
+     * @dev This is a helper function used to simulate payment root submission for testing.
+     *      In production, payment roots are managed by an off-chain data pipeline.
+     *      See: https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/docs/core/RewardsCoordinator.md#off-chain-calculation
+     * @param earners Array of addresses that will receive payments
+     * @param endTimestamp The timestamp when the payment period ends
+     * @param numPayments The number of payments to be made
+     * @param amountPerPayment The amount of tokens per payment
+     */
 
     function submitPaymentRoot(address[] memory earners, uint32 endTimestamp, uint32 numPayments, uint32 amountPerPayment) public {
         emit log_named_uint("cumumlativePaymentMultiplier", cumumlativePaymentMultiplier);

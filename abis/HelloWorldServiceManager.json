@@ -13,6 +13,11 @@
         "internalType": "address"
       },
       {
+        "name": "_rewardsCoordinator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
         "name": "_delegationManager",
         "type": "address",
         "internalType": "address"
@@ -161,6 +166,75 @@
   },
   {
     "type": "function",
+    "name": "createOperatorDirectedAVSRewardsSubmission",
+    "inputs": [
+      {
+        "name": "operatorDirectedRewardsSubmissions",
+        "type": "tuple[]",
+        "internalType": "struct IRewardsCoordinator.OperatorDirectedRewardsSubmission[]",
+        "components": [
+          {
+            "name": "strategiesAndMultipliers",
+            "type": "tuple[]",
+            "internalType": "struct IRewardsCoordinator.StrategyAndMultiplier[]",
+            "components": [
+              {
+                "name": "strategy",
+                "type": "address",
+                "internalType": "contract IStrategy"
+              },
+              {
+                "name": "multiplier",
+                "type": "uint96",
+                "internalType": "uint96"
+              }
+            ]
+          },
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "contract IERC20"
+          },
+          {
+            "name": "operatorRewards",
+            "type": "tuple[]",
+            "internalType": "struct IRewardsCoordinator.OperatorReward[]",
+            "components": [
+              {
+                "name": "operator",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
+          },
+          {
+            "name": "startTimestamp",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "duration",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "deregisterOperatorFromAVS",
     "inputs": [
       {
@@ -203,6 +277,24 @@
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "initialOwner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_rewardsInitiator",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -319,6 +411,19 @@
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setClaimerFor",
+    "inputs": [
+      {
+        "name": "claimer",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
