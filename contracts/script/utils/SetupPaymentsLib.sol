@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {IHelloWorldServiceManager} from "@eigenlayer/contracts/interfaces/IHelloWorldServiceManager.sol";
 import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
 import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {Vm} from "forge-std/Vm.sol";

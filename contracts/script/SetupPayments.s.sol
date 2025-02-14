@@ -129,12 +129,7 @@ contract SetupPayments is Script, Test {
         );
     }
     /**
-     * @notice Submits a payment root to the rewards coordinator
-     * @dev Helper function that creates token leaves and earner leaves, then submits the root
-     * @param earners Array of earner addresses to include in the payment root
-     * @param endTimestamp Timestamp when the rewards calculation period ends
-     * @param numPayments The number of payments to include in the root
-     * @param amountPerPayment The amount of tokens per payment
+     * @notice Create Operator Directed AVS Rewards Submission and submit payment root to the rewards coordinator
      */
 
     function runOperatorDirected() external {
