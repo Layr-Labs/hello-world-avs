@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
-import {IHelloWorldServiceManager} from "@eigenlayer/contracts/interfaces/IHelloWorldServiceManager.sol";
 import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
 import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -172,70 +171,6 @@ library SetupPaymentsLib {
         rewardsCoordinator.submitRoot(paymentRoot, rewardsCalculationEndTimestamp);
     }
 
-    /**
-     * @notice Creates AVS rewards submissions for operators
-     * @dev This is a helper function used to simulate AVS rewards submissions for testing.
-     *      In production, rewards submissions are managed by an off-chain data pipeline.
-     * @param helloWorldServiceManager The HelloWorldServiceManager contract address
-     * @param strategy The strategy contract address 
-     * @param numPayments The number of payments to create
-     * @param amountPerPayment The amount of tokens per payment
-     * @param duration The duration of the rewards period
-     * @param startTimestamp The timestamp when the rewards period starts
-     */
-    function createAVSRewardsSubmissions(
-        address helloWorldServiceManager,
-        address strategy,
-        uint256 numPayments,
-        uint256 amountPerPayment,
-        uint32 duration,
-        uint32 startTimestamp
-    ) public {
-        for (uint256 i = 0; i < numPayments; i++) {
-            IHelloWorldServiceManager(helloWorldServiceManager).submitAVSRewardsSubmission(
-                strategy,
-                amountPerPayment,
-                duration,
-                startTimestamp
-            );
-        }
-    }
-
-    /**
-     * @notice Creates operator-directed AVS rewards submissions
-     * @dev This is a helper function used to simulate operator-directed AVS rewards submissions for testing.
-     *      In production, rewards submissions are managed by an off-chain data pipeline.
-     * @param helloWorldServiceManager The HelloWorldServiceManager contract address
-     * @param operators Array of operator addresses to receive rewards
-     * @param numOperators Number of operators in the operators array
-     * @param strategy The strategy contract address
-     * @param numPayments The number of payments to create
-     * @param amountPerPayment The amount of tokens per payment
-     * @param duration The duration of the rewards period
-     * @param startTimestamp The timestamp when the rewards period starts
-     */
-    function createOperatorDirectedAVSRewardsSubmissions(
-        address helloWorldServiceManager,
-        address[] memory operators,
-        uint256 numOperators,
-        address strategy,
-        uint256 numPayments,
-        uint256 amountPerPayment,
-        uint32 duration,
-        uint32 startTimestamp
-    ) public {
-        for (uint256 i = 0; i < numPayments; i++) {
-            for (uint256 j = 0; j < numOperators; j++) {
-                IHelloWorldServiceManager(helloWorldServiceManager).submitOperatorDirectedAVSRewardsSubmission(
-                    operators[j],
-                    strategy,
-                    amountPerPayment,
-                    duration,
-                    startTimestamp
-                );
-            }
-        }
-    }
     
     /**
      * @notice Creates token leaves for the rewards merkle tree
@@ -405,24 +340,7 @@ library SetupPaymentsLib {
         return abi.encodePacked(proof);
     }
 
-    /**
-     * @notice Pads an array of leaves to the next power of 2
-     * @param leaves Array of leaf hashes to pad
-     * @return bytes32[] The padded array of leaves
-     */
-    function padLeaves(bytes32[] memory leaves) internal pure returns (bytes32[] memory) {
-        uint256 paddedLength = 2;
-        while(paddedLength < leaves.length) {
-            paddedLength <<= 1;
-        }
-
-        bytes32[] memory paddedLeaves = new bytes32[](paddedLength);
-        for (uint256 i = 0; i < leaves.length; i++) {
-            paddedLeaves[i] = leaves[i];
-        }
-        return paddedLeaves;
-    }
-
+  
     /**
      * @notice this function returns the merkle root of a tree created from a set of leaves using keccak256 as its hash function
      *  @param leaves the leaves of the merkle tree
@@ -463,7 +381,12 @@ library SetupPaymentsLib {
         //the first node in the layer is the root
         return layer[0];
     }
-
+  
+  /**
+     * @notice Pads an array of leaves to the next power of 2
+     * @param leaves Array of leaf hashes to pad
+     * @return bytes32[] The padded array of leaves
+     */
     function padLeaves(bytes32[] memory leaves) internal pure returns (bytes32[] memory) {
         uint256 paddedLength = 2;
         while(paddedLength < leaves.length) {
