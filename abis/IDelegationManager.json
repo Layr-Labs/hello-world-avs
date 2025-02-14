@@ -550,6 +550,30 @@
   },
   {
     "type": "function",
+    "name": "getDelegatableShares",
+    "inputs": [
+      {
+        "name": "staker",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]",
+        "internalType": "contract IStrategy[]"
+      },
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getOperatorShares",
     "inputs": [
       {
@@ -821,6 +845,37 @@
         "name": "metadataURI",
         "type": "string",
         "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setMinWithdrawalDelayBlocks",
+    "inputs": [
+      {
+        "name": "newMinWithdrawalDelayBlocks",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setStrategyWithdrawalDelayBlocks",
+    "inputs": [
+      {
+        "name": "strategies",
+        "type": "address[]",
+        "internalType": "contract IStrategy[]"
+      },
+      {
+        "name": "withdrawalDelayBlocks",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "outputs": [],
