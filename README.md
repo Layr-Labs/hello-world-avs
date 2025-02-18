@@ -176,6 +176,7 @@ The architecture can be further enhanced via:
 
 In terminal window #1, execute the following commands:
 ```sh
+# Start local anvil chain
 anvil
 ```
 
@@ -183,20 +184,36 @@ anvil
 
 Open a separate terminal window #2, execute the following commands
 
-```
+```sh
+# Setup .env file
+cp .env.example .env
+cp contracts/.env.example contracts/.env
+
+# Builds the contracts
+make build-contracts
+
+# Deploy the EigenLayer contracts
 make deploy-eigenlayer-contracts
 
+# Deploy the Hello World AVS contracts
 make deploy-helloworld-contracts
 ```
 
-3. Start Operator
+3. Start Rust Operator
+
+In terminal window #2, execute the following command
 
 ```sh
+# Start the Operator
 make start-rust-operator
 ```
+
 4. Spam Tasks
 
+Open a separate terminal window #3, execute the following command
+
 ```sh
+# Start sending tasks
 make spam-rust-tasks
 ```
 
