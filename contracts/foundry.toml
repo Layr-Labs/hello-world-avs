@@ -4,6 +4,7 @@ out = "out"
 libs = ["lib"]
 fs_permissions = [{ access = "read-write", path = "./" }]
 solc = "0.8.26"
+optimizer = true
 via-ir = true
 
 remappings = [
