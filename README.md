@@ -197,12 +197,18 @@ make deploy-eigenlayer-contracts
 
 # Deploy the Hello World AVS contracts
 make deploy-helloworld-contracts
+```
 
+3. Start Rust Operator
+
+In terminal window #2, execute the following command
+
+```sh
 # Start the Operator
 make start-rust-operator
 ```
 
-3. Spam Tasks
+4. Spam Tasks
 
 Open a separate terminal window #3, execute the following command
 
