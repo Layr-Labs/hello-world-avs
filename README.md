@@ -189,7 +189,7 @@ Open a separate terminal window #2, execute the following commands
 cp .env.example .env
 cp contracts/.env.example contracts/.env
 
-# Updates dependencies if necessary and builds the contracts
+# Builds the contracts
 make build-contracts
 
 # Deploy the EigenLayer contracts
@@ -204,7 +204,7 @@ make start-rust-operator
 
 3. Spam Tasks
 
-Open a separate terminal window #3, execute the following commands
+Open a separate terminal window #3, execute the following command
 
 ```sh
 # Start sending tasks
