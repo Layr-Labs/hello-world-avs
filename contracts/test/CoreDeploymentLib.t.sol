@@ -19,10 +19,11 @@ contract CoreDeploymentLibTest is Test {
     }
 
     /// won't test specific functionality/values. Testing behavior of the library
-    function test_ReadConfig() view public {
+    function test_ReadConfig() public view {
         CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function test_ReadConfig_Reverts() public {
         vm.expectRevert();
         /// Incorrect path
@@ -33,6 +34,7 @@ contract CoreDeploymentLibTest is Test {
         CoreDeploymentLib.readDeploymentJson("test/mockData/deployments/core/", 1337);
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function test_ReadDeployment_Reverts() public {
         vm.expectRevert();
         /// Incorrect path
