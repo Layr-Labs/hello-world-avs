@@ -132,7 +132,7 @@ async fn register_operator() -> Result<()> {
     let pr = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
+        .on_http(Url::from_str(ANVIL_RPC_URL)?);
 
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
@@ -272,7 +272,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     let pr = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
+        .on_http(Url::from_str(ANVIL_RPC_URL)?);
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, pr);
 
     let tx = hello_world_contract
@@ -326,7 +326,7 @@ mod tests {
         let pr = ProviderBuilder::new()
             .with_recommended_fillers()
             .wallet(wallet)
-            .on_http(Url::from_str(&ANVIL_RPC_URL).unwrap());
+            .on_http(Url::from_str(ANVIL_RPC_URL).unwrap());
         let data = env!("CARGO_MANIFEST_DIR").to_string();
         let mut path = Path::new(&data);
         for _ in 0..4 {
@@ -378,7 +378,7 @@ mod tests {
             .hello_world_service_manager
             .parse()
             .unwrap();
-        let provider = &get_provider(&ANVIL_RPC_URL);
+        let provider = &get_provider(ANVIL_RPC_URL);
         let hello_world_contract =
             HelloWorldServiceManager::new(hello_world_contract_address, provider);
 
