@@ -251,8 +251,8 @@ fn generate_random_name() -> String {
 #[allow(unused)]
 /// Calls CreateNewTask function of the Hello world service manager contract
 async fn create_new_task(task_name: &str) -> Result<()> {
-    let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
-    let mut path = Path::new(data);
+    let data = env!("CARGO_MANIFEST_DIR").to_string();
+    let mut path = Path::new(&data);
     for _ in 0..4 {
         path = path
             .parent()
@@ -327,8 +327,8 @@ mod tests {
             .with_recommended_fillers()
             .wallet(wallet)
             .on_http(Url::from_str(&ANVIL_RPC_URL).unwrap());
-        let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
-        let mut path = Path::new(data);
+        let data = env!("CARGO_MANIFEST_DIR").to_string();
+        let mut path = Path::new(&data);
         for _ in 0..4 {
             path = path
                 .parent()
@@ -359,8 +359,8 @@ mod tests {
     async fn test_spam_tasks() {
         dotenv().ok();
         init_logger(eigen_logging::log_level::LogLevel::Info);
-        let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
-        let mut path = Path::new(data);
+        let data = env!("CARGO_MANIFEST_DIR").to_string();
+        let mut path = Path::new(&data);
         for _ in 0..4 {
             path = path
                 .parent()
