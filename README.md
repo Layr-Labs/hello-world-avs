@@ -66,7 +66,7 @@ cp .env.example .env
 cp contracts/.env.example contracts/.env
 
 # Updates dependencies if necessary and builds the contracts 
-npm run build
+npm run build:forge
 
 # Deploy the EigenLayer contracts
 npm run deploy:core
