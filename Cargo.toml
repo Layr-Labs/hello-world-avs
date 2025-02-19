@@ -20,7 +20,7 @@ rust.missing_debug_implementations = "warn"
 rust.missing_docs = "warn"
 rust.unreachable_pub = "warn"
 rust.unused_must_use = "deny"
-rust.rust_2018_idioms = "deny"
+rust.rust_2018_idioms = { level = "deny", priority = -1 }
 rustdoc.all = "warn"
 
 
@@ -34,12 +34,8 @@ serde = "1.0.214"
 hello-world-avs-operator = {path = "operator/rust/crates/operator"}
 hello-world-utils = {path = "operator/rust/crates/utils"}
 #eigensdk-rs
-eigen-client-elcontracts = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f27eb22"}
-eigen-types = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f27eb22"}
-eigen-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f27eb22"}
-eigen-logging = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f27eb22"}
-eigen-testing-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f27eb22"}
-
-
-
-
+eigen-client-elcontracts = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "cf37ee2"}
+eigen-types = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "cf37ee2"}
+eigen-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "cf37ee2"}
+eigen-logging = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "cf37ee2"}
+eigen-testing-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "cf37ee2"}
