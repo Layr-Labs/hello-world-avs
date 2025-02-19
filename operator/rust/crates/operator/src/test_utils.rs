@@ -104,19 +104,16 @@ async fn monitor_new_tasks() -> Result<()> {
         let logs = pr.get_logs(&filter).await?;
 
         for log in logs {
-            match log.topic0() {
-                Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) => {
-                    let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
-                        .log_decode()
-                        .expect("Failed to decode log new task created")
-                        .inner
-                        .data;
-                    println!("New task detected :Hello{:?} ", task.name);
+            if let Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) = log.topic0() {
+                let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
+                    .log_decode()
+                    .expect("Failed to decode log new task created")
+                    .inner
+                    .data;
+                println!("New task detected :Hello{:?} ", task.name);
 
-                    let _ = sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name)
-                        .await;
-                }
-                _ => {}
+                let _ =
+                    sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name).await;
             }
         }
 
