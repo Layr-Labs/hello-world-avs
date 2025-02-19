@@ -197,7 +197,7 @@ async fn register_operator() -> Result<()> {
     let operator_signature = SignatureWithSaltAndExpiry {
         signature: signature.as_bytes().into(),
         salt,
-        expiry: expiry,
+        expiry,
     };
     let stake_registry_address =
         parse_stake_registry_address("contracts/deployments/hello-world/31337.json")?;
