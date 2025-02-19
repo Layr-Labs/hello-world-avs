@@ -139,6 +139,7 @@ async fn register_operator() -> Result<()> {
 
     let delegation_manager_address =
         parse_delegation_manager_address("contracts/deployments/core/31337.json")?;
+    dbg!(&delegation_manager_address);
     let avs_directory_address: Address =
         parse_avs_directory_address("contracts/deployments/core/31337.json")?;
 
