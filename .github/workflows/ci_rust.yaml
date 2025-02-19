@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: ["**"]
     paths:
-      - "operator/rust"
+      - "operator/rust/**"
       - "Cargo.toml"
 
 env:
