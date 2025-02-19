@@ -67,7 +67,7 @@ async fn start_creating_tasks() {
         let random_name = generate_random_name();
         get_logger().info(
             &format!("Creating new task with name: {} ", random_name),
-            &"start_creating_tasks",
+            "start_creating_tasks",
         );
         let _ = create_new_task(&random_name).await;
     }
