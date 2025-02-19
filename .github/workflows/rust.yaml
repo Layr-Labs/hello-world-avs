@@ -1,0 +1,33 @@
+name: Rust CI
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "operator/rust"
+      - "Cargo.toml"
+
+env:
+  RUST_VERSION: 1.79
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Rustup toolchain install
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - name: Caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo build
+        run: |
+          cargo build
