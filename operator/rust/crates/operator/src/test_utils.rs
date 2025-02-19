@@ -170,14 +170,14 @@ async fn register_operator() -> Result<()> {
         .is_operator_registered(signer.address())
         .await
         .unwrap();
-    get_logger().info(&format!("is registered {}", is_registered), &"");
+    get_logger().info(&format!("is registered {}", is_registered), "");
     #[allow(unused)]
     let tx_hash = elcontracts_writer_instance
         .register_as_operator(operator)
         .await?;
     get_logger().info(
         "Operator registered on EL successfully tx_hash {tx_hash:?}",
-        &"",
+        "",
     );
     let mut salt = [0u8; 32];
     rand::rngs::OsRng.fill_bytes(&mut salt);
@@ -227,7 +227,7 @@ async fn register_operator() -> Result<()> {
             signer.address(),
             register_hello_world_hash
         ),
-        &"",
+        "",
     );
 
     Ok(())
