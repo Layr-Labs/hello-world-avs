@@ -5,9 +5,6 @@ on:
     branches: ["master"]
   pull_request:
     branches: ["**"]
-    paths:
-      - "operator/rust/**"
-      - "Cargo.toml"
 
 env:
   RUST_VERSION: 1.79
