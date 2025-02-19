@@ -14,7 +14,8 @@
     "create-payments-root": "cd contracts && forge script script/SetupPayments.s.sol --rpc-url http://localhost:8545 --broadcast -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "claim-payments": "cd contracts && forge script script/SetupPayments.s.sol --rpc-url http://localhost:8545 --broadcast --sig \"executeProcessClaim()\" -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "create-operator-directed-payments-root": "cd contracts && forge script script/SetupPayments.s.sol --rpc-url http://localhost:8545 --broadcast --sig \"runOperatorDirected()\" -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-    "build": "cd contracts && forge build",
+    "build": "tsc",
+    "build:forge": "cd contracts && forge build",
     "extract:abis": "node utils/abis.js",
     "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest"
   },
