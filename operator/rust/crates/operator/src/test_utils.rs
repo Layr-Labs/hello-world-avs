@@ -16,6 +16,7 @@ use eigen_client_elcontracts::{
 use eigen_logging::get_logger;
 use eigen_utils::{get_provider, get_signer};
 use eyre::Result;
+use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{
     ecdsastakeregistry::ISignatureUtils::SignatureWithSaltAndExpiry,
     helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
@@ -30,20 +31,17 @@ use reqwest::Url;
 use std::{env, path::Path, str::FromStr};
 use tokio::time::{self, Duration};
 
-use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
-
-pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
-
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
 #[allow(unused)]
 async fn sign_and_response_to_task(
+    anvil_http: &str,
     task_index: u32,
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+    let pr = get_signer(&KEY.clone(), anvil_http);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
 
     let message = format!("Hello, {}", name);
@@ -51,7 +49,7 @@ async fn sign_and_response_to_task(
     let operators: Vec<DynSolValue> = vec![DynSolValue::Address(signer.address())];
     let signature: Vec<DynSolValue> =
         vec![DynSolValue::Bytes(signer.sign_hash_sync(&m_hash)?.into())];
-    let current_block = U256::from(get_provider(ANVIL_RPC_URL).get_block_number().await?);
+    let current_block = U256::from(get_provider(anvil_http).get_block_number().await?);
     let signature_data = DynSolValue::Tuple(vec![
         DynSolValue::Array(operators.clone()),
         DynSolValue::Array(signature.clone()),
@@ -86,8 +84,8 @@ async fn sign_and_response_to_task(
 
 /// Monitor new tasks
 #[allow(unused)]
-async fn monitor_new_tasks() -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+async fn monitor_new_tasks(anvil_http: &str) -> Result<()> {
+    let pr = get_signer(&KEY.clone(), anvil_http);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
     let hello_world_contract_address: Address =
         parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
@@ -112,8 +110,13 @@ async fn monitor_new_tasks() -> Result<()> {
                     .data;
                 println!("New task detected :Hello{:?} ", task.name);
 
-                let _ =
-                    sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name).await;
+                let _ = sign_and_response_to_task(
+                    anvil_http,
+                    taskIndex,
+                    task.taskCreatedBlock,
+                    task.name,
+                )
+                .await;
             }
         }
 
@@ -123,13 +126,13 @@ async fn monitor_new_tasks() -> Result<()> {
     }
 }
 
-async fn register_operator() -> Result<()> {
+async fn register_operator(anvil_http: &str) -> Result<()> {
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
     let wallet = EthereumWallet::from(signer.clone());
     let pr = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(wallet)
-        .on_http(Url::from_str(ANVIL_RPC_URL)?);
+        .on_http(Url::from_str(anvil_http)?);
 
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
@@ -155,14 +158,14 @@ async fn register_operator() -> Result<()> {
         default_slasher,
         delegation_manager_address,
         avs_directory_address,
-        ANVIL_RPC_URL.to_string(),
+        anvil_http.to_string(),
     );
     let elcontracts_writer_instance = ELChainWriter::new(
         delegation_manager_address,
         default_strategy,
         Address::ZERO,
         elcontracts_reader_instance.clone(),
-        ANVIL_RPC_URL.to_string(),
+        anvil_http.to_string(),
         KEY.clone(),
     );
 
@@ -257,7 +260,7 @@ fn generate_random_name() -> String {
 
 #[allow(unused)]
 /// Calls CreateNewTask function of the Hello world service manager contract
-async fn create_new_task(task_name: &str) -> Result<()> {
+async fn create_new_task(anvil_http: &str, task_name: &str) -> Result<()> {
     let data = env!("CARGO_MANIFEST_DIR").to_string();
     let mut path = Path::new(&data);
     for _ in 0..4 {
@@ -279,7 +282,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     let pr = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(wallet)
-        .on_http(Url::from_str(ANVIL_RPC_URL)?);
+        .on_http(Url::from_str(anvil_http)?);
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, pr);
 
     let tx = hello_world_contract
@@ -302,21 +305,24 @@ async fn create_new_task(task_name: &str) -> Result<()> {
 
 #[allow(unused)]
 /// Start creating tasks at every 15 seconds
-async fn start_creating_tasks() {
+async fn start_creating_tasks(anvil_http: &str) {
     let mut interval = time::interval(Duration::from_secs(15));
 
     loop {
         interval.tick().await;
         let random_name = generate_random_name();
-        let _ = create_new_task(&random_name).await;
+        let _ = create_new_task(anvil_http, &random_name).await;
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::anvil::start_anvil_container;
+
     use super::*;
     use dotenv::dotenv;
     use eigen_logging::init_logger;
+
     use eigen_utils::delegationmanager::DelegationManager::{self, isOperatorReturn};
     use serial_test::serial;
     use std::path::Path;
@@ -324,16 +330,18 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn test_register_operator() {
+        let (_container, anvil_http, _) = start_anvil_container().await;
+
         dotenv().ok();
         init_logger(eigen_logging::log_level::LogLevel::Info);
-        register_operator().await.unwrap();
+        register_operator(&anvil_http).await.unwrap();
 
         let signer = PrivateKeySigner::from_str(&KEY.clone()).unwrap();
         let wallet = EthereumWallet::from(signer.clone());
         let pr = ProviderBuilder::new()
             .with_recommended_fillers()
             .wallet(wallet)
-            .on_http(Url::from_str(ANVIL_RPC_URL).unwrap());
+            .on_http(Url::from_str(&anvil_http).unwrap());
         let data = env!("CARGO_MANIFEST_DIR").to_string();
         let mut path = Path::new(&data);
         for _ in 0..4 {
@@ -364,6 +372,8 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn test_spam_tasks() {
+        let (_container, anvil_http, _) = start_anvil_container().await;
+
         dotenv().ok();
         init_logger(eigen_logging::log_level::LogLevel::Info);
         let data = env!("CARGO_MANIFEST_DIR").to_string();
@@ -385,14 +395,14 @@ mod tests {
             .hello_world_service_manager
             .parse()
             .unwrap();
-        let provider = &get_provider(ANVIL_RPC_URL);
+        let provider = &get_provider(&anvil_http);
         let hello_world_contract =
             HelloWorldServiceManager::new(hello_world_contract_address, provider);
 
         let latest_task_num = hello_world_contract.latestTaskNum().call().await.unwrap();
 
         let latestTaskNumReturn { _0: task_num } = latest_task_num;
-        let _ = create_new_task("HelloEigen").await;
+        let _ = create_new_task(&anvil_http, "HelloEigen").await;
 
         let latest_task_num_after_creating_task =
             hello_world_contract.latestTaskNum().call().await.unwrap();
