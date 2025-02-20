@@ -222,6 +222,9 @@ make spam-rust-tasks
 1. Build anvil state with deployed contracts
 
 ```sh
+# Build contracts
+make build-contracts
+
 # Starts anvil in the background with the --dump-state flag, builds and deploys the 
 # contracts, and generates a state.json file for use in tests.
 make build-anvil-state-with-deployed-contracts
