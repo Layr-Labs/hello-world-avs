@@ -137,10 +137,21 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
 
-    let delegation_manager_address =
-        parse_delegation_manager_address("contracts/deployments/core/31337.json")?;
-    let avs_directory_address: Address =
-        parse_avs_directory_address("contracts/deployments/core/31337.json")?;
+    let data = &env!("CARGO_MANIFEST_DIR").to_string();
+    let mut path = Path::new(data);
+    for _ in 0..4 {
+        path = path
+            .parent()
+            .expect("Reached the filesystem root, no more parent directories");
+    }
+    let core_contracts_path = &format!("{}/contracts/deployments/core/31337.json", &path.display());
+    let hello_world_contracts_path = &format!(
+        "{}/contracts/deployments/hello-world/31337.json",
+        &path.display()
+    );
+
+    let delegation_manager_address = parse_delegation_manager_address(core_contracts_path)?;
+    let avs_directory_address: Address = parse_avs_directory_address(core_contracts_path)?;
 
     let elcontracts_reader_instance = ELChainReader::new(
         get_logger().clone(),
@@ -187,7 +198,7 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
     let expiry: U256 = U256::from(now + 3600);
 
     let hello_world_contract_address: Address =
-        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
+        parse_hello_world_service_manager(hello_world_contracts_path)?;
     let digest_hash = elcontracts_reader_instance
         .calculate_operator_avs_registration_digest_hash(
             signer.address(),
@@ -203,8 +214,7 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         salt,
         expiry,
     };
-    let stake_registry_address: Address =
-        parse_stake_registry_address("contracts/deployments/hello-world/31337.json")?;
+    let stake_registry_address: Address = parse_stake_registry_address(hello_world_contracts_path)?;
     let contract_ecdsa_stake_registry = ECDSAStakeRegistry::new(stake_registry_address, &pr);
     let registeroperator_details_call: alloy::contract::CallBuilder<
         _,
@@ -324,7 +334,7 @@ mod tests {
 
         dotenv().ok();
         init_logger(eigen_logging::log_level::LogLevel::Info);
-        let _ = register_operator(&anvil_http).await;
+        register_operator(&anvil_http).await.unwrap();
 
         let signer = PrivateKeySigner::from_str(&KEY.clone()).unwrap();
         let wallet = EthereumWallet::from(signer.clone());
