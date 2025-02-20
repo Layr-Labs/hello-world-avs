@@ -104,19 +104,16 @@ async fn monitor_new_tasks() -> Result<()> {
         let logs = pr.get_logs(&filter).await?;
 
         for log in logs {
-            match log.topic0() {
-                Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) => {
-                    let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
-                        .log_decode()
-                        .expect("Failed to decode log new task created")
-                        .inner
-                        .data;
-                    println!("New task detected :Hello{:?} ", task.name);
+            if let Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) = log.topic0() {
+                let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
+                    .log_decode()
+                    .expect("Failed to decode log new task created")
+                    .inner
+                    .data;
+                println!("New task detected :Hello{:?} ", task.name);
 
-                    let _ = sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name)
-                        .await;
-                }
-                _ => {}
+                let _ =
+                    sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name).await;
             }
         }
 
@@ -132,7 +129,7 @@ async fn register_operator() -> Result<()> {
     let pr = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
+        .on_http(Url::from_str(ANVIL_RPC_URL)?);
 
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
@@ -181,14 +178,14 @@ async fn register_operator() -> Result<()> {
         .is_operator_registered(signer.address())
         .await
         .unwrap();
-    get_logger().info(&format!("is registered {}", is_registered), &"");
+    get_logger().info(&format!("is registered {}", is_registered), "");
     #[allow(unused)]
     let tx_hash = elcontracts_writer_instance
         .register_as_operator(operator)
         .await?;
     get_logger().info(
         "Operator registered on EL successfully tx_hash {tx_hash:?}",
-        &"",
+        "",
     );
     let mut salt = [0u8; 32];
     rand::rngs::OsRng.fill_bytes(&mut salt);
@@ -212,7 +209,7 @@ async fn register_operator() -> Result<()> {
     let operator_signature = SignatureWithSaltAndExpiry {
         signature: signature.as_bytes().into(),
         salt,
-        expiry: expiry,
+        expiry,
     };
     let stake_registry_address: Address = parse_stake_registry_address(hello_world_contracts_path)?;
     let contract_ecdsa_stake_registry = ECDSAStakeRegistry::new(stake_registry_address, &pr);
@@ -237,7 +234,7 @@ async fn register_operator() -> Result<()> {
             signer.address(),
             register_hello_world_hash
         ),
-        &"",
+        "",
     );
 
     Ok(())
@@ -261,8 +258,8 @@ fn generate_random_name() -> String {
 #[allow(unused)]
 /// Calls CreateNewTask function of the Hello world service manager contract
 async fn create_new_task(task_name: &str) -> Result<()> {
-    let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
-    let mut path = Path::new(data);
+    let data = env!("CARGO_MANIFEST_DIR").to_string();
+    let mut path = Path::new(&data);
     for _ in 0..4 {
         path = path
             .parent()
@@ -282,7 +279,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     let pr = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(wallet)
-        .on_http(Url::from_str(&ANVIL_RPC_URL)?);
+        .on_http(Url::from_str(ANVIL_RPC_URL)?);
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, pr);
 
     let tx = hello_world_contract
@@ -336,9 +333,9 @@ mod tests {
         let pr = ProviderBuilder::new()
             .with_recommended_fillers()
             .wallet(wallet)
-            .on_http(Url::from_str(&ANVIL_RPC_URL).unwrap());
-        let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
-        let mut path = Path::new(data);
+            .on_http(Url::from_str(ANVIL_RPC_URL).unwrap());
+        let data = env!("CARGO_MANIFEST_DIR").to_string();
+        let mut path = Path::new(&data);
         for _ in 0..4 {
             path = path
                 .parent()
@@ -369,8 +366,8 @@ mod tests {
     async fn test_spam_tasks() {
         dotenv().ok();
         init_logger(eigen_logging::log_level::LogLevel::Info);
-        let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
-        let mut path = Path::new(data);
+        let data = env!("CARGO_MANIFEST_DIR").to_string();
+        let mut path = Path::new(&data);
         for _ in 0..4 {
             path = path
                 .parent()
@@ -388,7 +385,7 @@ mod tests {
             .hello_world_service_manager
             .parse()
             .unwrap();
-        let provider = &get_provider(&ANVIL_RPC_URL);
+        let provider = &get_provider(ANVIL_RPC_URL);
         let hello_world_contract =
             HelloWorldServiceManager::new(hello_world_contract_address, provider);
 

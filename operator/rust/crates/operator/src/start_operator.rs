@@ -101,19 +101,16 @@ async fn monitor_new_tasks() -> Result<()> {
         let logs = pr.get_logs(&filter).await?;
 
         for log in logs {
-            match log.topic0() {
-                Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) => {
-                    let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
-                        .log_decode()
-                        .expect("Failed to decode log new task created")
-                        .inner
-                        .data;
-                    get_logger().info(&format!("New task detected :Hello{:?} ", task.name), "");
+            if let Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) = log.topic0() {
+                let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
+                    .log_decode()
+                    .expect("Failed to decode log new task created")
+                    .inner
+                    .data;
+                get_logger().info(&format!("New task detected :Hello{:?} ", task.name), "");
 
-                    let _ = sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name)
-                        .await;
-                }
-                _ => {}
+                let _ =
+                    sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name).await;
             }
         }
 
@@ -163,7 +160,7 @@ async fn register_operator() -> Result<()> {
         .is_operator_registered(signer.address())
         .await
         .unwrap();
-    get_logger().info(&format!("is registered {}", is_registered), &"");
+    get_logger().info(&format!("is registered {}", is_registered), "");
     #[allow(unused)]
     let tx_hash = elcontracts_writer_instance
         .register_as_operator(operator)
@@ -173,7 +170,7 @@ async fn register_operator() -> Result<()> {
             "Operator registered on EL successfully tx_hash {:?}",
             tx_hash
         ),
-        &"",
+        "",
     );
     let mut salt = [0u8; 32];
     rand::rngs::OsRng.fill_bytes(&mut salt);
@@ -197,7 +194,7 @@ async fn register_operator() -> Result<()> {
     let operator_signature = SignatureWithSaltAndExpiry {
         signature: signature.as_bytes().into(),
         salt,
-        expiry: expiry,
+        expiry,
     };
     let stake_registry_address =
         parse_stake_registry_address("contracts/deployments/hello-world/31337.json")?;
@@ -223,7 +220,7 @@ async fn register_operator() -> Result<()> {
             signer.address(),
             register_hello_world_hash
         ),
-        &"",
+        "",
     );
 
     Ok(())
