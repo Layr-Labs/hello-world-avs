@@ -6,8 +6,10 @@ STATE_FILE="contracts/anvil/state.json"
 mkdir -p "$(dirname "$STATE_FILE")"
 
 echo "Starting Anvil with state dump in background"
-anvil --dump-state "$STATE_FILE" --host 0.0.0.0 --port 8545 --base-fee 0 --gas-price 0 &
+anvil --dump-state "$STATE_FILE" &
 ANVIL_PID=$!
+
+sleep 3
 
 echo "Deploying EigenLayer contracts."
 make deploy-eigenlayer-contracts 
