@@ -17,7 +17,7 @@ DEPLOYMENT_FILES_DIR=contracts/script/output/${CHAINID}
 -----------------------------: ##
 
 ___ANVIL_STATE___: ##
-build-anvil-state-with-deployed-contracts-ci: ## builds anvil state with deployed contracts and generates a state
+build-anvil-state-with-deployed-contracts: ## builds anvil state with deployed contracts and generates a state
 	@chmod +x ./contracts/anvil/build-state.sh
 	./contracts/anvil/build-state.sh
 
