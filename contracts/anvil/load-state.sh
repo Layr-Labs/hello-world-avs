@@ -15,7 +15,7 @@ cp .env.example .env
 cp contracts/.env.example contracts/.env
 
 echo "Building contracts"
-make build-contracts
+make build-contracts > /dev/null 2>&1
 
 echo "Deploying EigenLayer contracts."
 make deploy-eigenlayer-contracts > /dev/null 2>&1
