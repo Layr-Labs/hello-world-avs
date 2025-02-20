@@ -134,7 +134,7 @@ async fn register_operator() -> Result<()> {
     let default_slasher = Address::ZERO; // We don't need slasher for our example.
     let default_strategy = Address::ZERO; // We don't need strategy for our example.
 
-    let data = &format!("{}", env!("CARGO_MANIFEST_DIR"));
+    let data = &env!("CARGO_MANIFEST_DIR").to_string();
     let mut path = Path::new(data);
     for _ in 0..4 {
         path = path
