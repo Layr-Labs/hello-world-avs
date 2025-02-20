@@ -48,9 +48,14 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
-
+    
       - name: Caching
         uses: Swatinem/rust-cache@v2
+          
+      - name: Install Foundry
+        run: |
+          curl -L https://foundry.paradigm.xyz | bash
+          foundryup
 
       - name: Run anvil with deployed contracts
         run: |
