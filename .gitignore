@@ -23,6 +23,7 @@ dist/*.d.ts
 
 # Ignore local anvil state
 # utils/anvil/*.json
+contracts/anvil/state.json
 
 oldUtils
 
