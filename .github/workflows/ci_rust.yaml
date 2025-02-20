@@ -59,9 +59,7 @@ jobs:
 
       - name: Run anvil with deployed contracts
         run: |
-          chmod +x contracts/anvil/load_state.sh
-          ./contracts/anvil/load_state.sh
-          ls contracts/anvil/state.json
+          make build-anvil-state-with-deployed-contracts
 
       - name: Run tests
         run: cargo test --workspace
