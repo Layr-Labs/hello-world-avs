@@ -53,9 +53,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
           
       - name: Install Foundry
-        run: |
-          curl -L https://foundry.paradigm.xyz | bash
-          foundryup
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v0.3.0
 
       - name: Run anvil with deployed contracts
         run: |
