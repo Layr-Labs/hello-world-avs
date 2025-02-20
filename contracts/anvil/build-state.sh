@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 STATE_FILE="contracts/anvil/state.json"
 
