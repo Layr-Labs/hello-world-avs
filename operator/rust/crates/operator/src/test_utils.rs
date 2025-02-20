@@ -181,7 +181,6 @@ async fn register_operator() -> Result<()> {
         .is_operator_registered(signer.address())
         .await
         .unwrap();
-    dbg!(&is_registered);
     get_logger().info(&format!("is registered {}", is_registered), &"");
     #[allow(unused)]
     let tx_hash = elcontracts_writer_instance
