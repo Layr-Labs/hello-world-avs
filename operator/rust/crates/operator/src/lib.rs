@@ -7,3 +7,7 @@ pub mod start_operator;
 /// test utils
 #[cfg(test)]
 pub mod test_utils;
+
+/// Anvil container for testing
+#[cfg(test)]
+pub mod anvil;
