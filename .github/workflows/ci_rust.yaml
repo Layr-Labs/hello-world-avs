@@ -38,6 +38,7 @@ jobs:
           cargo fmt --all -- --check
 
   test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
