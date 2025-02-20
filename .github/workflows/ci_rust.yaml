@@ -59,7 +59,7 @@ jobs:
 
       - name: Run anvil with deployed contracts
         run: |
-          make build-anvil-state-with-deployed-contracts
+          make build-anvil-state-with-deployed-contracts-ci
 
       - name: Run tests
         run: cargo test --workspace
