@@ -51,5 +51,11 @@ jobs:
       - name: Caching
         uses: Swatinem/rust-cache@v2
 
+      - name: Run anvil with deployed contracts
+        run: |
+          chmod +x contracts/anvil/load_state.sh
+          ./contracts/anvil/load_state.sh
+          ls contracts/anvil/state.json
+
       - name: Run tests
         run: cargo test --workspace
