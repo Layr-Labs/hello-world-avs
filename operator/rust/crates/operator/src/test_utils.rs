@@ -183,10 +183,14 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         .await
         .unwrap();
     get_logger().info(&format!("is registered {}", is_registered), "");
-    #[allow(unused)]
     let tx_hash = elcontracts_writer_instance
         .register_as_operator(operator)
         .await?;
+    let receipt = pr.get_transaction_receipt(tx_hash).await?;
+    if !receipt.is_some_and(|r| r.status()) {
+        get_logger().error("Operator registration failed tx_hash {tx_hash:?}", "");
+        return Err(eyre::eyre!("Operator registration failed"));
+    }
     get_logger().info(
         "Operator registered on EL successfully tx_hash {tx_hash:?}",
         "",
@@ -324,9 +328,7 @@ mod tests {
     use dotenv::dotenv;
     use eigensdk::logging::init_logger;
 
-    use eigensdk::utils::slashing::core::delegationmanager::DelegationManager::{
-        self, isOperatorReturn,
-    };
+    use eigensdk::utils::slashing::core::delegationmanager::DelegationManager;
     use serial_test::serial;
     use std::path::Path;
     use HelloWorldServiceManager::latestTaskNumReturn;
@@ -363,13 +365,10 @@ mod tests {
             .isOperator(signer.address())
             .call()
             .await
-            .unwrap();
+            .unwrap()
+            ._0;
 
-        let isOperatorReturn {
-            _0: isoperator_bool,
-        } = is_operator;
-
-        assert!(isoperator_bool);
+        assert!(is_operator);
     }
 
     #[tokio::test]
