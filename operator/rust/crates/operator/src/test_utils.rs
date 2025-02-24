@@ -9,12 +9,12 @@ use alloy::{
     sol_types::{SolEvent, SolValue},
 };
 use chrono::Utc;
-use eigen_client_elcontracts::{
+use eigensdk::client_elcontracts::{
     reader::ELChainReader,
     writer::{ELChainWriter, Operator},
 };
-use eigen_logging::get_logger;
-use eigen_utils::{get_provider, get_signer};
+use eigensdk::common::{get_provider, get_signer};
+use eigensdk::logging::get_logger;
 use eyre::Result;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{

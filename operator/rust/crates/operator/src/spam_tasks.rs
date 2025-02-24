@@ -1,8 +1,8 @@
 #![allow(missing_docs)]
 use alloy::{primitives::Address, signers::local::PrivateKeySigner};
 use dotenv::dotenv;
-use eigen_logging::{get_logger, init_logger, log_level::LogLevel};
-use eigen_utils::get_signer;
+use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
+use eigensdk::utils::get_signer;
 use eyre::Result;
 use hello_world_utils::{helloworldservicemanager::HelloWorldServiceManager, HelloWorldData};
 use once_cell::sync::Lazy;
