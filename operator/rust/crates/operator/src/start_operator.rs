@@ -55,7 +55,7 @@ async fn sign_and_response_to_task(
     .abi_encode_params();
 
     get_logger().info(
-        &format!("Signing and responding to task : {:?}", task_index),
+        &format!("Signing and responding to task: {task_index:?}"),
         "",
     );
     let hello_world_contract_address: Address =
@@ -107,7 +107,7 @@ async fn monitor_new_tasks() -> Result<()> {
                     .expect("Failed to decode log new task created")
                     .inner
                     .data;
-                get_logger().info(&format!("New task detected :Hello{:?} ", task.name), "");
+                get_logger().info(&format!("New task detected: Hello, {}", task.name), "");
 
                 let _ =
                     sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name).await;
