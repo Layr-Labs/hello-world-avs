@@ -163,10 +163,14 @@ async fn register_operator() -> Result<()> {
         .await
         .unwrap();
     get_logger().info(&format!("is registered {}", is_registered), "");
-    #[allow(unused)]
     let tx_hash = elcontracts_writer_instance
-        .register_as_operator(operator)
+        .register_as_operator_preslashing(operator)
         .await?;
+    let receipt = pr.get_transaction_receipt(tx_hash).await?;
+    if !receipt.is_some_and(|r| r.inner.is_success()) {
+        get_logger().error("Operator registration failed", "");
+        return Err(eyre::eyre!("Operator registration failed"));
+    }
     get_logger().info(
         &format!(
             "Operator registered on EL successfully tx_hash {:?}",
@@ -201,12 +205,7 @@ async fn register_operator() -> Result<()> {
     let stake_registry_address =
         parse_stake_registry_address("contracts/deployments/hello-world/31337.json")?;
     let contract_ecdsa_stake_registry = ECDSAStakeRegistry::new(stake_registry_address, &pr);
-    let registeroperator_details_call: alloy::contract::CallBuilder<
-        _,
-        &_,
-        std::marker::PhantomData<ECDSAStakeRegistry::registerOperatorWithSignatureCall>,
-        _,
-    > = contract_ecdsa_stake_registry
+    let registeroperator_details_call = contract_ecdsa_stake_registry
         .registerOperatorWithSignature(operator_signature, signer.clone().address())
         .gas(500000);
     let register_hello_world_hash = registeroperator_details_call
