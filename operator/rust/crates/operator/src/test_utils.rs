@@ -174,7 +174,7 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         delegation_approver_address: Address::ZERO,
         staker_opt_out_window_blocks: None,
         metadata_url: Default::default(),
-        allocation_delay: None,
+        allocation_delay: Some(0),
         _deprecated_earnings_receiver_address: None,
     };
 
