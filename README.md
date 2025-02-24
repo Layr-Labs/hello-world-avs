@@ -219,25 +219,19 @@ make spam-rust-tasks
 
 ### Testing
 
-1. Start Anvil Chain
+1. Build anvil state with deployed contracts
 
-In terminal window #1, execute the following commands:
 ```sh
-anvil
-```
+# Build contracts
+make build-contracts
 
-2. Deploy Contracts
+# Starts anvil in the background with the --dump-state flag, builds and deploys the 
+# contracts, and generates a state.json file for use in tests.
+make build-anvil-state-with-deployed-contracts
+````
 
-Open a separate terminal window #2, execute the following commands
+2. Run tests
 
-```
-make deploy-eigenlayer-contracts
-
-make deploy-helloworld-contracts
-```
-
-3. Run this command
-
-```
+```sh
 cargo test --workspace
 ```
