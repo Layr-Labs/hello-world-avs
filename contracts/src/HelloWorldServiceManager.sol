@@ -33,6 +33,10 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(address => mapping(uint32 => bytes)) public allTaskResponses;
 
+    // max interval in blocks for responding to a task
+    // operators can be penalized if they don't respond in time
+    uint32 immutable _MAX_RESPONSE_INTERVAL_BLOCKS = 600;
+
     modifier onlyOperator() {
         require(
             ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender),
@@ -86,6 +90,10 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
             "Operator has already responded to the task"
         );
+        require(
+            block.number <= task.taskCreatedBlock + _MAX_RESPONSE_INTERVAL_BLOCKS,
+            "Task response time has already expired"
+        );
 
         // The message that was signed
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
@@ -101,5 +109,38 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
+    }
+
+    function slashOperator(
+        Task calldata task,
+        uint32 referenceTaskIndex,
+        address operator
+    ) external {
+        // check that the task is valid, hasn't been responsed yet
+        require(
+            keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
+            "supplied task does not match the one recorded in the contract"
+        );
+        require(
+            allTaskResponses[operator][referenceTaskIndex].length == 0,
+            "Operator has already responded to the task"
+        );
+        require(
+            block.number > task.taskCreatedBlock + _MAX_RESPONSE_INTERVAL_BLOCKS,
+            "Task response time has not expired yet"
+        );
+
+        uint256 operatorWeight = ECDSAStakeRegistry(stakeRegistry).getOperatorWeightAtBlock(
+            operator, task.taskCreatedBlock
+        );
+        uint256 threshold = ECDSAStakeRegistry(stakeRegistry)
+            .getLastCheckpointThresholdWeightAtBlock(task.taskCreatedBlock);
+
+        require(operatorWeight > threshold, "Operator does not have enough stake to be slashed");
+
+        // updating the storage with task responses
+        allTaskResponses[operator][referenceTaskIndex] = "slashed";
+
+        // TODO: slash operator
     }
 }
