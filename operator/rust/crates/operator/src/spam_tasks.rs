@@ -1,8 +1,8 @@
 #![allow(missing_docs)]
 use alloy::{primitives::Address, signers::local::PrivateKeySigner};
 use dotenv::dotenv;
-use eigen_logging::{get_logger, init_logger, log_level::LogLevel};
-use eigen_utils::get_signer;
+use eigensdk::common::get_signer;
+use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
 use hello_world_utils::{helloworldservicemanager::HelloWorldServiceManager, HelloWorldData};
 use once_cell::sync::Lazy;
@@ -22,11 +22,11 @@ fn generate_random_name() -> String {
     let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
     let nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear"];
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
-    let adjective = adjectives[rng.gen_range(0..adjectives.len())];
-    let noun = nouns[rng.gen_range(0..nouns.len())];
-    let number: u16 = rng.gen_range(0..1000);
+    let adjective = adjectives[rng.random_range(0..adjectives.len())];
+    let noun = nouns[rng.random_range(0..nouns.len())];
+    let number: u16 = rng.random_range(0..1000);
 
     format!("{}{}{}", adjective, noun, number)
 }
@@ -66,7 +66,7 @@ async fn start_creating_tasks() {
         interval.tick().await;
         let random_name = generate_random_name();
         get_logger().info(
-            &format!("Creating new task with name: {} ", random_name),
+            &format!("Creating new task with name: {random_name}"),
             "start_creating_tasks",
         );
         let _ = create_new_task(&random_name).await;
