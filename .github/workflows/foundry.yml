@@ -1,4 +1,4 @@
-name: test
+name: Foundry project
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
       run:
         working-directory: ./contracts
 
-    name: Run Solidity tests
+    name: Foundry project
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
