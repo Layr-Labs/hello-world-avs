@@ -91,16 +91,10 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
-        if (
-            !(
-                magicValue
-                    == ECDSAStakeRegistry(stakeRegistry).isValidSignature(
-                        ethSignedMessageHash, signature
-                    )
-            )
-        ) {
-            revert();
-        }
+        bytes4 isValidSignatureResult =
+            ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash, signature);
+
+        require(magicValue == isValidSignatureResult);
 
         // updating the storage with task responses
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
