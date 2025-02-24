@@ -14,8 +14,6 @@ import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.
 import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 
-
-
 import {
     Quorum,
     StrategyParams,
@@ -38,12 +36,13 @@ contract HelloWorldDeployer is Script, Test {
     HelloWorldDeploymentLib.DeploymentConfigData helloWorldConfig;
     Quorum internal quorum;
     ERC20Mock token;
+
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
-        helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
-
+        helloWorldConfig =
+            HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
         coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
     }
@@ -54,19 +53,16 @@ contract HelloWorldDeployer is Script, Test {
         rewardsInitiator = helloWorldConfig.rewardsInitiator;
 
         token = new ERC20Mock();
-        helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
+        helloWorldStrategy =
+            IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
 
-
-        quorum.strategies.push(
-            StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
-        );
-
+        quorum.strategies.push(StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000}));
 
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
-
-        helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
+        helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
+            proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner
+        );
 
         helloWorldDeployment.strategy = address(helloWorldStrategy);
         helloWorldDeployment.token = address(token);
