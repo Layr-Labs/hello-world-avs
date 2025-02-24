@@ -172,7 +172,7 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
     let operator = Operator {
         address: signer.address(),
         delegation_approver_address: Address::ZERO,
-        staker_opt_out_window_blocks: None,
+        staker_opt_out_window_blocks: Some(0),
         metadata_url: Default::default(),
         allocation_delay: Some(0),
         _deprecated_earnings_receiver_address: None,
