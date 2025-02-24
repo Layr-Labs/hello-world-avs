@@ -1,8 +1,8 @@
 #![allow(missing_docs)]
 use alloy::{primitives::Address, signers::local::PrivateKeySigner};
 use dotenv::dotenv;
+use eigensdk::common::get_signer;
 use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
-use eigensdk::utils::get_signer;
 use eyre::Result;
 use hello_world_utils::{helloworldservicemanager::HelloWorldServiceManager, HelloWorldData};
 use once_cell::sync::Lazy;
@@ -22,11 +22,11 @@ fn generate_random_name() -> String {
     let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
     let nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear"];
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
-    let adjective = adjectives[rng.gen_range(0..adjectives.len())];
-    let noun = nouns[rng.gen_range(0..nouns.len())];
-    let number: u16 = rng.gen_range(0..1000);
+    let adjective = adjectives[rng.random_range(0..adjectives.len())];
+    let noun = nouns[rng.random_range(0..nouns.len())];
+    let number: u16 = rng.random_range(0..1000);
 
     format!("{}{}{}", adjective, noun, number)
 }

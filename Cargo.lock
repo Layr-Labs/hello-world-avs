@@ -2530,6 +2530,7 @@ dependencies = [
  "eigen-services-operatorsinfo",
  "eigen-signer",
  "eigen-testing-utils",
+ "eigen-utils",
 ]
 
 [[package]]

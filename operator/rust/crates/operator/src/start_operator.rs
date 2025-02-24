@@ -9,12 +9,12 @@ use alloy::{
 };
 use chrono::Utc;
 use dotenv::dotenv;
-use eigen_client_elcontracts::{
+use eigensdk::client_elcontracts::{
     reader::ELChainReader,
     writer::{ELChainWriter, Operator},
 };
-use eigen_logging::{get_logger, init_logger, log_level::LogLevel};
-use eigen_utils::{get_provider, get_signer};
+use eigensdk::common::{get_provider, get_signer};
+use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{
@@ -25,7 +25,7 @@ use hello_world_utils::{
     parse_hello_world_service_manager, parse_stake_registry_address, EigenLayerData,
 };
 use once_cell::sync::Lazy;
-use rand::RngCore;
+use rand::TryRngCore;
 use std::{env, str::FromStr};
 
 pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
@@ -124,9 +124,6 @@ async fn register_operator() -> Result<()> {
     let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
 
-    let default_slasher = Address::ZERO; // We don't need slasher for our example.
-    let default_strategy = Address::ZERO; // We don't need strategy for our example.
-
     let data = std::fs::read_to_string("contracts/deployments/core/31337.json")?;
     let el_parsed: EigenLayerData = serde_json::from_str(&data)?;
     let delegation_manager_address: Address = el_parsed.addresses.delegation.parse()?;
@@ -134,14 +131,18 @@ async fn register_operator() -> Result<()> {
 
     let elcontracts_reader_instance = ELChainReader::new(
         get_logger().clone(),
-        default_slasher,
+        None,
         delegation_manager_address,
+        Address::ZERO,
         avs_directory_address,
+        None,
         ANVIL_RPC_URL.to_string(),
     );
     let elcontracts_writer_instance = ELChainWriter::new(
-        delegation_manager_address,
-        default_strategy,
+        Address::ZERO,
+        Address::ZERO,
+        None,
+        None,
         Address::ZERO,
         elcontracts_reader_instance.clone(),
         ANVIL_RPC_URL.to_string(),
@@ -150,10 +151,11 @@ async fn register_operator() -> Result<()> {
 
     let operator = Operator {
         address: signer.address(),
-        earnings_receiver_address: signer.address(),
         delegation_approver_address: Address::ZERO,
-        staker_opt_out_window_blocks: 0u32,
-        metadata_url: None,
+        staker_opt_out_window_blocks: None,
+        metadata_url: Default::default(),
+        allocation_delay: None,
+        _deprecated_earnings_receiver_address: None,
     };
 
     let is_registered = elcontracts_reader_instance
@@ -173,7 +175,7 @@ async fn register_operator() -> Result<()> {
         "",
     );
     let mut salt = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut salt);
+    rand::rngs::OsRng.try_fill_bytes(&mut salt).unwrap();
 
     let salt = FixedBytes::from_slice(&salt);
     let now = Utc::now().timestamp();

@@ -25,8 +25,7 @@ use hello_world_utils::{
     HelloWorldData,
 };
 use once_cell::sync::Lazy;
-use rand::Rng;
-use rand::RngCore;
+use rand::{Rng, TryRngCore};
 use reqwest::Url;
 use std::{env, path::Path, str::FromStr};
 use tokio::time::{self, Duration};
@@ -134,9 +133,6 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         .wallet(wallet)
         .on_http(Url::from_str(anvil_http)?);
 
-    let default_slasher = Address::ZERO; // We don't need slasher for our example.
-    let default_strategy = Address::ZERO; // We don't need strategy for our example.
-
     let data = &env!("CARGO_MANIFEST_DIR").to_string();
     let mut path = Path::new(data);
     for _ in 0..4 {
@@ -155,14 +151,18 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
 
     let elcontracts_reader_instance = ELChainReader::new(
         get_logger().clone(),
-        default_slasher,
+        None,
         delegation_manager_address,
+        Address::ZERO,
         avs_directory_address,
+        None,
         anvil_http.to_string(),
     );
     let elcontracts_writer_instance = ELChainWriter::new(
-        delegation_manager_address,
-        default_strategy,
+        Address::ZERO,
+        Address::ZERO,
+        None,
+        None,
         Address::ZERO,
         elcontracts_reader_instance.clone(),
         anvil_http.to_string(),
@@ -171,10 +171,11 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
 
     let operator = Operator {
         address: signer.address(),
-        earnings_receiver_address: signer.address(),
         delegation_approver_address: Address::ZERO,
-        staker_opt_out_window_blocks: 0u32,
-        metadata_url: None,
+        staker_opt_out_window_blocks: None,
+        metadata_url: Default::default(),
+        allocation_delay: None,
+        _deprecated_earnings_receiver_address: None,
     };
 
     let is_registered = elcontracts_reader_instance
@@ -191,7 +192,7 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         "",
     );
     let mut salt = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut salt);
+    rand::rngs::OsRng.try_fill_bytes(&mut salt).unwrap();
 
     let salt = FixedBytes::from_slice(&salt);
     let now = Utc::now().timestamp();
@@ -249,11 +250,11 @@ fn generate_random_name() -> String {
     let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
     let nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear"];
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
-    let adjective = adjectives[rng.gen_range(0..adjectives.len())];
-    let noun = nouns[rng.gen_range(0..nouns.len())];
-    let number: u16 = rng.gen_range(0..1000);
+    let adjective = adjectives[rng.random_range(0..adjectives.len())];
+    let noun = nouns[rng.random_range(0..nouns.len())];
+    let number: u16 = rng.random_range(0..1000);
 
     format!("{}{}{}", adjective, noun, number)
 }
@@ -321,9 +322,11 @@ mod tests {
 
     use super::*;
     use dotenv::dotenv;
-    use eigen_logging::init_logger;
+    use eigensdk::logging::init_logger;
 
-    use eigen_utils::delegationmanager::DelegationManager::{self, isOperatorReturn};
+    use eigensdk::utils::slashing::core::delegationmanager::DelegationManager::{
+        self, isOperatorReturn,
+    };
     use serial_test::serial;
     use std::path::Path;
     use HelloWorldServiceManager::latestTaskNumReturn;
@@ -333,7 +336,7 @@ mod tests {
         let (_container, anvil_http, _) = start_anvil_container().await;
 
         dotenv().ok();
-        init_logger(eigen_logging::log_level::LogLevel::Info);
+        init_logger(eigensdk::logging::log_level::LogLevel::Info);
         register_operator(&anvil_http).await.unwrap();
 
         let signer = PrivateKeySigner::from_str(&KEY.clone()).unwrap();
@@ -375,7 +378,7 @@ mod tests {
         let (_container, anvil_http, _) = start_anvil_container().await;
 
         dotenv().ok();
-        init_logger(eigen_logging::log_level::LogLevel::Info);
+        init_logger(eigensdk::logging::log_level::LogLevel::Info);
         let data = env!("CARGO_MANIFEST_DIR").to_string();
         let mut path = Path::new(&data);
         for _ in 0..4 {

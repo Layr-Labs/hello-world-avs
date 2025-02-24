@@ -43,4 +43,5 @@ hello-world-utils = { path = "operator/rust/crates/utils" }
 alloy = { version = "0.9", features = ["full"] }
 eigensdk = { git = "https://github.com/Layr-Labs/eigensdk-rs.git", rev = "565a48a", features = [
     "full",
+    "utils",
 ] }
