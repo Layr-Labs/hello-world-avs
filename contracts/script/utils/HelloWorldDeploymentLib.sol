@@ -54,7 +54,10 @@ library HelloWorldDeploymentLib {
             address(new ECDSAStakeRegistry(IDelegationManager(core.delegationManager)));
         address helloWorldServiceManagerImpl = address(
             new HelloWorldServiceManager(
-                core.avsDirectory, result.stakeRegistry, core.rewardsCoordinator, core.delegationManager
+                core.avsDirectory,
+                result.stakeRegistry,
+                core.rewardsCoordinator,
+                core.delegationManager
             )
         );
         // Upgrade contracts
@@ -63,7 +66,9 @@ library HelloWorldDeploymentLib {
         );
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
         upgradeCall = abi.encodeCall(HelloWorldServiceManager.initialize, (owner, rewardsInitiator));
-        UpgradeableProxyLib.upgradeAndCall(result.helloWorldServiceManager, helloWorldServiceManagerImpl, upgradeCall);
+        UpgradeableProxyLib.upgradeAndCall(
+            result.helloWorldServiceManager, helloWorldServiceManagerImpl, upgradeCall
+        );
 
         return result;
     }
@@ -93,7 +98,6 @@ library HelloWorldDeploymentLib {
 
         return data;
     }
-    
 
     /// write to default output path
     function writeDeploymentJson(
@@ -120,7 +124,6 @@ library HelloWorldDeploymentLib {
         vm.writeFile(fileName, deploymentData);
         console2.log("Deployment artifacts written to:", fileName);
     }
-    
 
     function readDeploymentConfigValues(
         string memory directoryPath,
@@ -128,7 +131,9 @@ library HelloWorldDeploymentLib {
     ) internal view returns (DeploymentConfigData memory) {
         string memory pathToFile = string.concat(directoryPath, fileName);
 
-        require(vm.exists(pathToFile), "HelloWorldDeployment: Deployment Config file does not exist");
+        require(
+            vm.exists(pathToFile), "HelloWorldDeployment: Deployment Config file does not exist"
+        );
 
         string memory json = vm.readFile(pathToFile);
 
@@ -182,7 +187,7 @@ library HelloWorldDeploymentLib {
             data.strategy.toHexString(),
             '","token":"',
             data.token.toHexString(),
-             '"}'
+            '"}'
         );
     }
 }
