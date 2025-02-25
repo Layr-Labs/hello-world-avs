@@ -102,6 +102,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
             filePath
         );
         cheats.stopPrank();
+        vm.removeFile(filePath);
     }
 
     function testWriteLeavesToJson() public {
