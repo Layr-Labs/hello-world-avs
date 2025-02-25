@@ -9,12 +9,12 @@ use alloy::{
     sol_types::{SolEvent, SolValue},
 };
 use chrono::Utc;
-use eigen_client_elcontracts::{
+use eigensdk::client_elcontracts::{
     reader::ELChainReader,
     writer::{ELChainWriter, Operator},
 };
-use eigen_logging::get_logger;
-use eigen_utils::{get_provider, get_signer};
+use eigensdk::common::{get_provider, get_signer};
+use eigensdk::logging::get_logger;
 use eyre::Result;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{
@@ -25,8 +25,7 @@ use hello_world_utils::{
     HelloWorldData,
 };
 use once_cell::sync::Lazy;
-use rand::Rng;
-use rand::RngCore;
+use rand::{Rng, TryRngCore};
 use reqwest::Url;
 use std::{env, path::Path, str::FromStr};
 use tokio::time::{self, Duration};
@@ -57,7 +56,7 @@ async fn sign_and_response_to_task(
     ])
     .abi_encode_params();
 
-    println!("Signing and responding to task : {:?}", task_index);
+    println!("Signing and responding to task: {task_index:?}");
 
     let hello_world_contract_address: Address =
         parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
@@ -108,7 +107,7 @@ async fn monitor_new_tasks(anvil_http: &str) -> Result<()> {
                     .expect("Failed to decode log new task created")
                     .inner
                     .data;
-                println!("New task detected :Hello{:?} ", task.name);
+                println!("New task detected: Hello, {}", task.name);
 
                 let _ = sign_and_response_to_task(
                     anvil_http,
@@ -134,9 +133,6 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         .wallet(wallet)
         .on_http(Url::from_str(anvil_http)?);
 
-    let default_slasher = Address::ZERO; // We don't need slasher for our example.
-    let default_strategy = Address::ZERO; // We don't need strategy for our example.
-
     let data = &env!("CARGO_MANIFEST_DIR").to_string();
     let mut path = Path::new(data);
     for _ in 0..4 {
@@ -155,14 +151,18 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
 
     let elcontracts_reader_instance = ELChainReader::new(
         get_logger().clone(),
-        default_slasher,
+        None,
         delegation_manager_address,
+        Address::ZERO,
         avs_directory_address,
+        None,
         anvil_http.to_string(),
     );
     let elcontracts_writer_instance = ELChainWriter::new(
-        delegation_manager_address,
-        default_strategy,
+        Address::ZERO,
+        Address::ZERO,
+        None,
+        None,
         Address::ZERO,
         elcontracts_reader_instance.clone(),
         anvil_http.to_string(),
@@ -171,10 +171,11 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
 
     let operator = Operator {
         address: signer.address(),
-        earnings_receiver_address: signer.address(),
         delegation_approver_address: Address::ZERO,
-        staker_opt_out_window_blocks: 0u32,
-        metadata_url: None,
+        staker_opt_out_window_blocks: Some(0),
+        metadata_url: Default::default(),
+        allocation_delay: Some(0),
+        _deprecated_earnings_receiver_address: None,
     };
 
     let is_registered = elcontracts_reader_instance
@@ -182,16 +183,20 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         .await
         .unwrap();
     get_logger().info(&format!("is registered {}", is_registered), "");
-    #[allow(unused)]
     let tx_hash = elcontracts_writer_instance
-        .register_as_operator(operator)
+        .register_as_operator_preslashing(operator)
         .await?;
+    let receipt = pr.get_transaction_receipt(tx_hash).await?;
+    if !receipt.is_some_and(|r| r.inner.is_success()) {
+        get_logger().error("Operator registration failed", "");
+        return Err(eyre::eyre!("Operator registration failed"));
+    }
     get_logger().info(
         "Operator registered on EL successfully tx_hash {tx_hash:?}",
         "",
     );
     let mut salt = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut salt);
+    rand::rngs::OsRng.try_fill_bytes(&mut salt).unwrap();
 
     let salt = FixedBytes::from_slice(&salt);
     let now = Utc::now().timestamp();
@@ -216,12 +221,7 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
     };
     let stake_registry_address: Address = parse_stake_registry_address(hello_world_contracts_path)?;
     let contract_ecdsa_stake_registry = ECDSAStakeRegistry::new(stake_registry_address, &pr);
-    let registeroperator_details_call: alloy::contract::CallBuilder<
-        _,
-        &_,
-        std::marker::PhantomData<ECDSAStakeRegistry::registerOperatorWithSignatureCall>,
-        _,
-    > = contract_ecdsa_stake_registry
+    let registeroperator_details_call = contract_ecdsa_stake_registry
         .registerOperatorWithSignature(operator_signature, signer.clone().address())
         .gas(500000);
     let register_hello_world_hash = registeroperator_details_call
@@ -249,11 +249,11 @@ fn generate_random_name() -> String {
     let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
     let nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear"];
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
-    let adjective = adjectives[rng.gen_range(0..adjectives.len())];
-    let noun = nouns[rng.gen_range(0..nouns.len())];
-    let number: u16 = rng.gen_range(0..1000);
+    let adjective = adjectives[rng.random_range(0..adjectives.len())];
+    let noun = nouns[rng.random_range(0..nouns.len())];
+    let number: u16 = rng.random_range(0..1000);
 
     format!("{}{}{}", adjective, noun, number)
 }
@@ -321,9 +321,9 @@ mod tests {
 
     use super::*;
     use dotenv::dotenv;
-    use eigen_logging::init_logger;
+    use eigensdk::logging::init_logger;
 
-    use eigen_utils::delegationmanager::DelegationManager::{self, isOperatorReturn};
+    use eigensdk::utils::slashing::core::delegationmanager::DelegationManager;
     use serial_test::serial;
     use std::path::Path;
     use HelloWorldServiceManager::latestTaskNumReturn;
@@ -333,7 +333,7 @@ mod tests {
         let (_container, anvil_http, _) = start_anvil_container().await;
 
         dotenv().ok();
-        init_logger(eigen_logging::log_level::LogLevel::Info);
+        init_logger(eigensdk::logging::log_level::LogLevel::Info);
         register_operator(&anvil_http).await.unwrap();
 
         let signer = PrivateKeySigner::from_str(&KEY.clone()).unwrap();
@@ -360,13 +360,10 @@ mod tests {
             .isOperator(signer.address())
             .call()
             .await
-            .unwrap();
+            .unwrap()
+            ._0;
 
-        let isOperatorReturn {
-            _0: isoperator_bool,
-        } = is_operator;
-
-        assert!(isoperator_bool);
+        assert!(is_operator);
     }
 
     #[tokio::test]
@@ -375,7 +372,7 @@ mod tests {
         let (_container, anvil_http, _) = start_anvil_container().await;
 
         dotenv().ok();
-        init_logger(eigen_logging::log_level::LogLevel::Info);
+        init_logger(eigensdk::logging::log_level::LogLevel::Info);
         let data = env!("CARGO_MANIFEST_DIR").to_string();
         let mut path = Path::new(&data);
         for _ in 0..4 {

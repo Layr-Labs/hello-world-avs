@@ -1,0 +1,59 @@
+name: Foundry project
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  check-fmt:
+    defaults:
+      run:
+        working-directory: ./contracts
+
+    name: Check contract formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Print forge version
+        run: forge --version
+
+      - name: Check contract formatting
+        run: forge fmt --check
+
+  test:
+    defaults:
+      run:
+        working-directory: ./contracts
+
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Print forge version
+        run: forge --version
+
+      - name: Run Forge build
+        run: forge build --optimize --optimizer-runs 200 --via-ir --sizes
+
+      - name: Run Forge tests
+        run: forge test -vvv
