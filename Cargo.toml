@@ -39,9 +39,9 @@ serde = "1.0.214"
 
 hello-world-avs-operator = { path = "operator/rust/crates/operator" }
 hello-world-utils = { path = "operator/rust/crates/utils" }
-#eigensdk-rs
-eigen-client-elcontracts = { git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32" }
-eigen-types = { git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32" }
-eigen-utils = { git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32" }
-eigen-logging = { git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32" }
-eigen-testing-utils = { git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32" }
+
+alloy = { version = "0.9", features = ["full"] }
+eigensdk = { git = "https://github.com/Layr-Labs/eigensdk-rs.git", rev = "565a48a", features = [
+    "full",
+    "utils",
+] }
