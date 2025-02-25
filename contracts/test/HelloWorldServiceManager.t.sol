@@ -70,8 +70,9 @@ contract HelloWorldTaskManagerSetup is Test {
         IStrategy strategy = addStrategy(address(mockToken));
         quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
-        helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr);
+        helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
+            proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr
+        );
         labelContracts(coreDeployment, helloWorldDeployment);
     }
 
@@ -266,9 +267,9 @@ contract HelloWorldTaskManagerSetup is Test {
         bytes memory signature = signWithSigningKey(operator, messageHash);
 
         address[] memory operators = new address[](1);
-        operators[0]=operator.key.addr;
+        operators[0] = operator.key.addr;
         bytes[] memory signatures = new bytes[](1);
-        signatures[0]= signature;
+        signatures[0] = signature;
 
         bytes memory signedTask = abi.encode(operators, signatures, uint32(block.number));
 
@@ -381,8 +382,13 @@ contract CreateTask is HelloWorldTaskManagerSetup {
         vm.prank(generator.key.addr);
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
 
-        require(sha256(abi.encodePacked(newTask.name)) == sha256(abi.encodePacked(taskName)), "Task name not set correctly");
-        require(newTask.taskCreatedBlock == uint32(block.number), "Task created block not set correctly");
+        require(
+            sha256(abi.encodePacked(newTask.name)) == sha256(abi.encodePacked(taskName)),
+            "Task name not set correctly"
+        );
+        require(
+            newTask.taskCreatedBlock == uint32(block.number), "Task created block not set correctly"
+        );
     }
 }
 
@@ -433,13 +439,13 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         bytes memory signature = signWithSigningKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
 
         address[] memory operatorsMem = new address[](1);
-        operatorsMem[0]=operators[0].key.addr;
+        operatorsMem[0] = operators[0].key.addr;
         bytes[] memory signatures = new bytes[](1);
-        signatures[0]= signature;
+        signatures[0] = signature;
 
         bytes memory signedTask = abi.encode(operatorsMem, signatures, uint32(block.number));
 
-        vm.roll(block.number+1);
+        vm.roll(block.number + 1);
         sm.respondToTask(newTask, taskIndex, signedTask);
     }
 }

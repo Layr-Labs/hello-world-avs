@@ -7,11 +7,13 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
-import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
+import {IERC1271Upgradeable} from
+    "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from
+    "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
@@ -44,20 +46,11 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _stakeRegistry,
         address _rewardsCoordinator,
         address _delegationManager
-
     )
-        ECDSAServiceManagerBase(
-            _avsDirectory,
-            _stakeRegistry,
-            _rewardsCoordinator,
-            _delegationManager
-        )
+        ECDSAServiceManagerBase(_avsDirectory, _stakeRegistry, _rewardsCoordinator, _delegationManager)
     {}
 
-    function initialize(
-        address initialOwner,
-        address _rewardsInitiator
-    ) external initializer {
+    function initialize(address initialOwner, address _rewardsInitiator) external initializer {
         __ServiceManagerBase_init(initialOwner, _rewardsInitiator);
     }
 
@@ -98,9 +91,10 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
-        if (!(magicValue == ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash,signature))){
-            revert();
-        }
+        bytes4 isValidSignatureResult =
+            ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash, signature);
+
+        require(magicValue == isValidSignatureResult);
 
         // updating the storage with task responses
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
@@ -108,5 +102,4 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }
-
 }
