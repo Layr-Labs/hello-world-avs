@@ -88,6 +88,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
             SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
+        string memory filePath = "testSubmitRoot.json";
+
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupPaymentsLib.submitRoot(
             rewardsCoordinator,
@@ -97,7 +99,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
             endTimestamp,
             NUM_EARNERS,
             1,
-            "test/mockData/scratch/payments.json"
+            filePath
         );
         cheats.stopPrank();
     }
