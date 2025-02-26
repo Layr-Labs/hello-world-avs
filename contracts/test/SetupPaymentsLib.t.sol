@@ -43,7 +43,6 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     IStrategy public strategy;
     address proxyAdmin;
 
-    string internal constant filePath = "test/mockData/scratch/payments.json";
     address rewardsInitiator = address(1);
     address rewardsOwner = address(2);
 
@@ -89,6 +88,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
             SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
 
+        string memory filePath = "testSubmitRoot.json";
+
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupPaymentsLib.submitRoot(
             rewardsCoordinator,
@@ -101,6 +102,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
             filePath
         );
         cheats.stopPrank();
+        vm.removeFile(filePath);
     }
 
     function testWriteLeavesToJson() public {
@@ -112,11 +114,12 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         tokenLeaves[0] = bytes32(uint256(3));
         tokenLeaves[1] = bytes32(uint256(4));
 
-        string memory filePath = ("payments.json");
+        string memory filePath = "testWriteLeavesToJson.json";
 
         SetupPaymentsLib.writeLeavesToJson(leaves, tokenLeaves, filePath);
 
-        assertTrue(vm.exists("payments.json"), "JSON file should be created");
+        assertTrue(vm.exists(filePath), "JSON file should be created");
+        vm.removeFile(filePath);
     }
 
     function testParseLeavesFromJson() public {
@@ -129,6 +132,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
         assertEq(paymentLeaves.leaves.length, 1, "Incorrect number of leaves");
         assertEq(paymentLeaves.tokenLeaves.length, 1, "Incorrect number of token leaves");
+
+        vm.removeFile(filePath);
     }
 
     function testGenerateMerkleProof() public view {
@@ -162,7 +167,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
     function testProcessClaim() public {
         emit log_named_address("token address", address(mockToken));
-        string memory filePath = "test/mockData/scratch/payments.json";
+        string memory filePath = "testProcessClaim.json";
 
         address[] memory earners = new address[](NUM_EARNERS);
         for (uint256 i = 0; i < earners.length; i++) {
@@ -205,6 +210,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         );
 
         cheats.stopPrank();
+
+        vm.removeFile(filePath);
     }
 
     function testCreateAVSRewardsSubmissions() public {
