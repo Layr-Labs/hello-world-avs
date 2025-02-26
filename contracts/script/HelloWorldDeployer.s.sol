@@ -15,10 +15,9 @@ import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 
 import {
-    Quorum,
-    StrategyParams,
+    IECDSAStakeRegistryTypes,
     IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 
 import "forge-std/Test.sol";
 
@@ -34,7 +33,7 @@ contract HelloWorldDeployer is Script, Test {
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     HelloWorldDeploymentLib.DeploymentConfigData helloWorldConfig;
-    Quorum internal quorum;
+    IECDSAStakeRegistryTypes.Quorum internal quorum;
     ERC20Mock token;
 
     function setUp() public virtual {
@@ -56,7 +55,12 @@ contract HelloWorldDeployer is Script, Test {
         helloWorldStrategy =
             IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
 
-        quorum.strategies.push(StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000}));
+        quorum.strategies.push(
+            IECDSAStakeRegistryTypes.StrategyParams({
+                strategy: helloWorldStrategy,
+                multiplier: 10_000
+            })
+        );
 
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 

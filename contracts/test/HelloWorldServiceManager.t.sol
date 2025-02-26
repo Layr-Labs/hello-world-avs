@@ -13,10 +13,9 @@ import {ERC20Mock} from "./ERC20Mock.sol";
 import {IERC20, StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 
 import {
-    Quorum,
-    StrategyParams,
+    IECDSAStakeRegistryTypes,
     IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 import {IStrategyManager} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
@@ -28,7 +27,7 @@ import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 
 contract HelloWorldTaskManagerSetup is Test {
-    Quorum internal quorum;
+    IECDSAStakeRegistryTypes.Quorum internal quorum;
 
     struct Operator {
         Vm.Wallet key;
@@ -68,7 +67,9 @@ contract HelloWorldTaskManagerSetup is Test {
         mockToken = new ERC20Mock();
 
         IStrategy strategy = addStrategy(address(mockToken));
-        quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
+        quorum.strategies.push(
+            IECDSAStakeRegistryTypes.StrategyParams({strategy: strategy, multiplier: 10_000})
+        );
 
         helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
             proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr
@@ -283,7 +284,7 @@ contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
     function testInitialization() public view {
         ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
 
-        Quorum memory quorum = stakeRegistry.quorum();
+        IECDSAStakeRegistryTypes.Quorum memory quorum = stakeRegistry.quorum();
 
         assertGt(quorum.strategies.length, 0, "No strategies in quorum");
         assertEq(
