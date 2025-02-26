@@ -45,9 +45,16 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _avsDirectory,
         address _stakeRegistry,
         address _rewardsCoordinator,
-        address _delegationManager
+        address _delegationManager,
+        address _allocationManager
     )
-        ECDSAServiceManagerBase(_avsDirectory, _stakeRegistry, _rewardsCoordinator, _delegationManager)
+        ECDSAServiceManagerBase(
+            _avsDirectory,
+            _stakeRegistry,
+            _rewardsCoordinator,
+            _delegationManager,
+            _allocationManager
+        )
     {}
 
     function initialize(address initialOwner, address _rewardsInitiator) external initializer {

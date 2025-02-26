@@ -155,15 +155,8 @@ contract HelloWorldTaskManagerSetup is Test {
     ) internal {
         IDelegationManager delegationManager = IDelegationManager(coreDeployment.delegationManager);
 
-        IDelegationManagerTypes.OperatorDetails memory operatorDetails = IDelegationManagerTypes
-            .OperatorDetails({
-            __deprecated_earningsReceiver: operator.key.addr,
-            delegationApprover: address(0),
-            stakerOptOutWindowBlocks: 0
-        });
-
         vm.prank(operator.key.addr);
-        delegationManager.registerAsOperator(operatorDetails, "");
+        delegationManager.registerAsOperator(address(0), 0, "");
     }
 
     function registerOperatorToAVS(

@@ -58,7 +58,8 @@ library HelloWorldDeploymentLib {
                 core.avsDirectory,
                 result.stakeRegistry,
                 core.rewardsCoordinator,
-                core.delegationManager
+                core.delegationManager,
+                address(0)
             )
         );
         // Upgrade contracts
