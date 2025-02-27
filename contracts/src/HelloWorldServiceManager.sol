@@ -12,6 +12,7 @@ import {IERC1271Upgradeable} from
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {IAllocationManager} from "@eigenlayer/contracts/interfaces/IAllocationManager.sol";
 import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
@@ -61,6 +62,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         __ServiceManagerBase_init(initialOwner, _rewardsInitiator);
     }
 
+    // These are just to comply with IServiceManager interface
     function addPendingAdmin(
         address admin
     ) external onlyOwner {}
