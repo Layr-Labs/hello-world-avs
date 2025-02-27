@@ -56,7 +56,7 @@ contract CoreDeploymentLibTest is Test {
         deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
 
         string memory scratchPath = "test/mockData/scratch/test_WriteDeploymentJson/";
-        CoreDeploymentParsingLib.writeDeploymentJson(scratchPath, block.chainid, data);
+        CoreDeploymentParsingLib.writeDeploymentJson(scratchPath, block.chainid, deploymentData);
 
         string memory fileName = string.concat(scratchPath, vm.toString(block.chainid), ".json");
         assertTrue(vm.exists(fileName), "Deployment file not created");
