@@ -22,6 +22,7 @@ import {
     IDelegationManagerTypes
 } from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {DelegationManager} from "@eigenlayer/contracts/core/DelegationManager.sol";
+import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
 import {
@@ -69,8 +70,13 @@ contract HelloWorldTaskManagerSetup is Test {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         coreConfigData =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+
+        vm.prank(coreConfigData.strategyManager.initialOwner);
+        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
+            coreDeployment.strategyFactory
+        );
 
         mockToken = new ERC20Mock();
 

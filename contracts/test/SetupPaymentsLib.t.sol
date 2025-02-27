@@ -47,8 +47,13 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     function setUp() public virtual override {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         coreConfigData =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+
+        vm.prank(coreConfigData.strategyManager.initialOwner);
+        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
+            coreDeployment.strategyFactory
+        );
 
         mockToken = new ERC20Mock();
 

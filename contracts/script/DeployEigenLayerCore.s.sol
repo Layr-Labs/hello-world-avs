@@ -7,6 +7,7 @@ import {CoreDeploymentLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymen
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 
 import "forge-std/Test.sol";
 
@@ -32,6 +33,11 @@ contract DeployEigenLayerCore is Script, Test {
         configData.rewardsCoordinator.rewardsUpdater = deployer;
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
+
+        // TODO: the deployer lib should probably do this
+        StrategyManager(deploymentData.strategyManager).setStrategyWhitelister(
+            deploymentData.strategyFactory
+        );
         vm.stopBroadcast();
         string memory deploymentPath = "deployments/core/";
         CoreDeploymentParsingLib.writeDeploymentJson(deploymentPath, block.chainid, deploymentData);
