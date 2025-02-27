@@ -116,6 +116,8 @@ library CoreDeploymentParsingLib {
             uint32(json.readUint(".rewardsCoordinator.genesisRewardsTimestamp"));
         // RewardsCoordinator config end
 
+        data.ethPOSDeposit.ethPOSDepositAddress = address(1);
+
         return data;
     }
 
@@ -208,7 +210,7 @@ library CoreDeploymentParsingLib {
         return string.concat(
             '{"proxyAdmin":"',
             proxyAdmin.toHexString(),
-            '","delegation":"',
+            '","delegationManager":"',
             data.delegationManager.toHexString(),
             '","delegationManagerImpl":"',
             data.delegationManager.getImplementation().toHexString(),
@@ -224,6 +226,16 @@ library CoreDeploymentParsingLib {
             data.eigenPodManager.toHexString(),
             '","eigenPodManagerImpl":"',
             data.eigenPodManager.getImplementation().toHexString(),
+            '","allocationManager":"',
+            data.allocationManager.toHexString(),
+            '","allocationManagerImpl":"',
+            data.allocationManager.getImplementation().toHexString(),
+            '","eigenPodBeacon":"',
+            data.eigenPodBeacon.toHexString(),
+            '","pauserRegistry":"',
+            data.pauserRegistry.toHexString(),
+            '","pauserRegistryImpl":"',
+            data.pauserRegistry.getImplementation().toHexString(),
             '","strategyFactory":"',
             data.strategyFactory.toHexString(),
             '","strategyFactoryImpl":"',
@@ -232,6 +244,12 @@ library CoreDeploymentParsingLib {
             data.strategyBeacon.toHexString(),
             '","rewardsCoordinator":"',
             data.rewardsCoordinator.toHexString(),
+            '","rewardsCoordinatorImpl":"',
+            data.rewardsCoordinator.getImplementation().toHexString(),
+            '","permissionController":"',
+            data.permissionController.toHexString(),
+            '","permissionControllerImpl":"',
+            data.permissionController.getImplementation().toHexString(),
             '"}'
         );
     }

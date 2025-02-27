@@ -53,6 +53,7 @@ contract HelloWorldDeployer is Script, Test {
         rewardsInitiator = helloWorldConfig.rewardsInitiator;
 
         token = new ERC20Mock();
+        // NOTE: if this fails, it's because the initialStrategyWhitelister is not set to be the StrategyFactory
         helloWorldStrategy =
             IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
 

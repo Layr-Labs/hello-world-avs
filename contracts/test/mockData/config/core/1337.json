@@ -1,28 +1,42 @@
 {
   "strategyManager": {
-    "init_paused_status": 0,
-    "init_withdrawal_delay_blocks": 50400
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "initialStrategyWhitelister": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
   },
-  "delegation": {
-    "init_paused_status": 0,
-    "init_withdrawal_delay_blocks": 50400
-  },
-  "slasher": {
-    "init_paused_status": 0
+  "delegationManager": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "minWithdrawalDelayBlocks": 50400
   },
   "eigenPodManager": {
-    "init_paused_status": 0
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  },
+  "allocationManager": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "deallocationDelay": 0,
+    "allocationConfigurationDelay": 0
+  },
+  "strategyFactory": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  },
+  "avsDirectory": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
   },
   "rewardsCoordinator": {
-    "init_paused_status": 0,
-    "MAX_REWARDS_DURATION": 864000,
-    "MAX_RETROACTIVE_LENGTH": 86400,
-    "MAX_FUTURE_LENGTH": 86400,
-    "GENESIS_REWARDS_TIMESTAMP": 1672531200,
-    "rewards_updater_address": "0x1234567890123456789012345678901234567890",
-    "rewards_updater_key": "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
-    "activation_delay": 604800,
-    "calculation_interval_seconds": 86400,
-    "global_operator_commission_bips": 1000
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "rewardsUpdater": "0x1234567890123456789012345678901234567890",
+    "activationDelay": 604800,
+    "defaultSplitBips": 1000,
+    "calculationIntervalSeconds": 86400,
+    "maxRewardsDuration": 864000,
+    "maxRetroactiveLength": 86400,
+    "maxFutureLength": 86400,
+    "genesisRewardsTimestamp": 1672531200
   }
 }

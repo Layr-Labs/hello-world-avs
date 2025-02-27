@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set +e
+
 STATE_FILE="contracts/anvil/state.json"
 
 mkdir -p "$(dirname "$STATE_FILE")"
@@ -14,13 +16,13 @@ cp .env.example .env
 cp contracts/.env.example contracts/.env
 
 echo "Building contracts"
-make build-contracts > /dev/null 2>&1
+make build-contracts #> /dev/null 2>&1
 
 echo "Deploying EigenLayer contracts."
-make deploy-eigenlayer-contracts > /dev/null 2>&1
+make deploy-eigenlayer-contracts #> /dev/null 2>&1
 
 echo "Deploying HelloWorld contracts."
-make deploy-helloworld-contracts > /dev/null 2>&1
+make deploy-helloworld-contracts #> /dev/null 2>&1
 
 echo "Killed Anvil"
 kill $ANVIL_PID

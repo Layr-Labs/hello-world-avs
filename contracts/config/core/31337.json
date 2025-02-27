@@ -2,7 +2,7 @@
   "strategyManager": {
     "initPausedStatus": 0,
     "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-    "initialStrategyWhitelister": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+    "initialStrategyWhitelister": "0x959922be3caee4b8cd9a407cc3ac1c251c2007b1"
   },
   "delegationManager": {
     "initPausedStatus": 0,
