@@ -97,6 +97,8 @@ library CoreDeploymentParsingLib {
         data.rewardsCoordinator.initPausedStatus =
             json.readUint(".rewardsCoordinator.initPausedStatus");
         data.rewardsCoordinator.initialOwner = json.readAddress(".rewardsCoordinator.initialOwner");
+        data.rewardsCoordinator.rewardsUpdater =
+            json.readAddress(".rewardsCoordinator.rewardsUpdater");
 
         data.rewardsCoordinator.activationDelay =
             uint32(json.readUint(".rewardsCoordinator.activationDelay"));
