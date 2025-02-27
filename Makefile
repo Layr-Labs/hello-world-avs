@@ -27,17 +27,18 @@ build-contracts: ## builds all contracts
 	cd contracts && forge build
 
 deploy-eigenlayer-contracts:
-						@chmod +x ./contracts/anvil/deploy-el.sh
-						./contracts/anvil/deploy-el.sh
+	@chmod +x ./contracts/anvil/deploy-el.sh
+	./contracts/anvil/deploy-el.sh
 
 deploy-helloworld-contracts:
-						@chmod +x ./contracts/anvil/deploy-helloworld.sh
-						./contracts/anvil/deploy-helloworld.sh
+	@chmod +x ./contracts/anvil/deploy-helloworld.sh
+	./contracts/anvil/deploy-helloworld.sh
 
 __CLI__: ##
 
 send-fund: ## sends fund to the operator saved in tests/keys/test.ecdsa.key.json
-	cast send 0x860B6912C2d0337ef05bbC89b0C2CB6CbAEAB4A5 --value 10ether --private-key 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
+	cast send 0x860B6912C2d0337ef05bbC89b0C2CB6CbAEAB4A5 --value 10ether \
+		--private-key 
 
 -----------------------------: ##
 # We pipe all zapper logs through https://github.com/maoueh/zap-pretty so make sure to install it
