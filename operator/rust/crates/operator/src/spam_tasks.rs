@@ -13,11 +13,9 @@ use tokio::time::{self, Duration};
 
 pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 
-#[allow(unused)]
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
-#[allow(unused)]
 /// Generate random task names from the given adjectives and nouns
 fn generate_random_name() -> String {
     let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
@@ -55,7 +53,6 @@ pub async fn create_new_task(rpc_url: &str, task_name: &str) -> Result<()> {
     Ok(())
 }
 
-#[allow(unused)]
 /// Start creating tasks at every 15 seconds
 async fn start_creating_tasks() {
     let mut interval = time::interval(Duration::from_secs(15));

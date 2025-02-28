@@ -10,72 +10,67 @@ use std::path::Path;
 use alloy::primitives::Address;
 use serde::Deserialize;
 
-#[allow(unused)]
 #[derive(Deserialize, Debug)]
 pub struct HelloWorldData {
     #[serde(rename = "lastUpdate")]
-    last_update: LastUpdate,
+    pub last_update: LastUpdate,
     pub addresses: HelloWorldAddresses,
 }
 
-#[allow(unused)]
 #[derive(Deserialize, Debug)]
-struct LastUpdate {
-    timestamp: String,
-    block_number: String,
+pub struct LastUpdate {
+    pub timestamp: String,
+    pub block_number: String,
 }
 
-#[allow(unused)]
 #[derive(Deserialize, Debug)]
 pub struct HelloWorldAddresses {
     #[serde(rename = "proxyAdmin")]
-    _proxy_admin: String,
+    pub proxy_admin: String,
     #[serde(rename = "helloWorldServiceManager")]
     pub hello_world_service_manager: String,
     #[serde(rename = "helloWorldServiceManagerImpl")]
-    hello_world_service_manager_impl: String,
+    pub hello_world_service_manager_impl: String,
     #[serde(rename = "stakeRegistry")]
     pub stake_registry: String,
     #[serde(rename = "stakeRegistryImpl")]
-    stake_registry_impl: String,
-    strategy: String,
-    token: String,
+    pub stake_registry_impl: String,
+    pub strategy: String,
+    pub token: String,
 }
 
-#[allow(unused)]
 #[derive(Deserialize, Debug)]
 pub struct EigenLayerData {
     #[serde(rename = "lastUpdate")]
-    last_update: LastUpdate,
+    pub last_update: LastUpdate,
     pub addresses: EigenLayerAddresses,
 }
 
-#[allow(unused)]
 #[derive(Deserialize, Debug)]
 pub struct EigenLayerAddresses {
     #[serde(rename = "proxyAdmin")]
-    proxy_admin: String,
+    pub proxy_admin: String,
     pub delegation: String,
     #[serde(rename = "delegationManagerImpl")]
-    delegation_manager_impl: String,
+    pub delegation_manager_impl: String,
     #[serde(rename = "avsDirectory")]
     pub avs_directory: String,
     #[serde(rename = "avsDirectoryImpl")]
-    avs_directory_impl: String,
+    pub avs_directory_impl: String,
     #[serde(rename = "strategyManager")]
-    strategy_manager: String,
+    pub strategy_manager: String,
     #[serde(rename = "strategyManagerImpl")]
-    strategy_manager_impl: String,
+    pub strategy_manager_impl: String,
     #[serde(rename = "eigenPodManager")]
-    eigen_pod_manager: String,
+    pub eigen_pod_manager: String,
     #[serde(rename = "eigenPodManagerImpl")]
-    eigen_pod_manager_impl: String,
+    pub eigen_pod_manager_impl: String,
     #[serde(rename = "strategyFactory")]
-    strategy_factory: String,
+    pub strategy_factory: String,
     #[serde(rename = "strategyFactoryImpl")]
-    strategy_factory_impl: String,
+    pub strategy_factory_impl: String,
     #[serde(rename = "strategyBeacon")]
-    strategy_beacon: String,
+    pub strategy_beacon: String,
 }
 
 pub fn get_anvil_eigenlayer_deployment_data() -> eyre::Result<EigenLayerData> {
