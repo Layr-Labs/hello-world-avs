@@ -1,9 +1,6 @@
 #![cfg(not(doctest))]
-#[allow(clippy::all, clippy::pedantic, unused_imports)]
-pub mod helloworldservicemanager;
-
-#[allow(clippy::all, clippy::pedantic, unused_imports)]
-pub mod ecdsastakeregistry;
+mod bindings;
+pub use bindings::*;
 
 use std::path::Path;
 
