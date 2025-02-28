@@ -167,7 +167,7 @@ pub async fn register_operator(rpc_url: &str, private_key: &str) -> Result<()> {
         .unwrap();
     get_logger().info(&format!("is registered {}", is_registered), "");
     let tx_hash = elcontracts_writer_instance
-        .register_as_operator_preslashing(operator)
+        .register_as_operator(operator)
         .await?;
     let receipt = pr.get_transaction_receipt(tx_hash).await?;
     if !receipt.is_some_and(|r| r.inner.is_success()) {
