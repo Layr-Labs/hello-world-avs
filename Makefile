@@ -5,6 +5,8 @@ help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 
+RUST_BINDINGS_PATH:=operator/rust/crates/utils/src/bindings
+
 -----------------------------: ##
 
 ___ANVIL_STATE___: ##
@@ -24,6 +26,14 @@ deploy-eigenlayer-contracts:
 deploy-helloworld-contracts:
 	@chmod +x ./contracts/anvil/deploy-helloworld.sh
 	./contracts/anvil/deploy-helloworld.sh
+
+generate-bindings:
+	cd contracts && forge build --force --skip test --skip script
+	rm -rf ${RUST_BINDINGS_PATH}
+	forge bind --alloy --skip-build --overwrite --module \
+		--root contracts/  \
+		--bindings-path ${RUST_BINDINGS_PATH} \
+		--select '^ECDSAStakeRegistry$$' --select '^HelloWorldServiceManager$$'
 
 __CLI__: ##
 
