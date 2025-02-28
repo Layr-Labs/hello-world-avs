@@ -223,7 +223,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint256 numPayments = 5;
         uint256 amountPerPayment = 100;
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
-        uint32 startTimestamp = 10 days;
+        uint32 genesisTimestamp = rewardsCoordinator.GENESIS_REWARDS_TIMESTAMP();
+        uint32 startTimestamp = genesisTimestamp + 10 days;
         cheats.warp(startTimestamp + 1);
 
         cheats.prank(rewardsInitiator);
