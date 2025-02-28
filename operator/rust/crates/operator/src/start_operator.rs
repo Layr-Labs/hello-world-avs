@@ -35,12 +35,13 @@ static KEY: Lazy<String> =
 
 async fn sign_and_respond_to_task(
     rpc_url: &str,
+    private_key: &str,
     task_index: u32,
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
-    let pr = get_signer(&KEY.clone(), rpc_url);
-    let signer = PrivateKeySigner::from_str(&KEY.clone())?;
+    let pr = get_signer(private_key, rpc_url);
+    let signer = PrivateKeySigner::from_str(private_key)?;
 
     let message = format!("Hello, {}", name);
     let m_hash = eip191_hash_message(keccak256(message.abi_encode_packed()));
@@ -83,8 +84,8 @@ async fn sign_and_respond_to_task(
 }
 
 /// Monitor new tasks
-async fn monitor_new_tasks(rpc_url: &str) -> Result<()> {
-    let pr = get_signer(&KEY.clone(), rpc_url);
+async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
+    let pr = get_signer(private_key, rpc_url);
     let hello_world_contract_address: Address =
         parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let mut latest_processed_block = pr.get_block_number().await?;
@@ -107,9 +108,14 @@ async fn monitor_new_tasks(rpc_url: &str) -> Result<()> {
                     .data;
                 get_logger().info(&format!("New task detected: Hello, {}", task.name), "");
 
-                let _ =
-                    sign_and_respond_to_task(rpc_url, taskIndex, task.taskCreatedBlock, task.name)
-                        .await;
+                let _ = sign_and_respond_to_task(
+                    rpc_url,
+                    private_key,
+                    taskIndex,
+                    task.taskCreatedBlock,
+                    task.name,
+                )
+                .await;
             }
         }
 
@@ -119,9 +125,9 @@ async fn monitor_new_tasks(rpc_url: &str) -> Result<()> {
     }
 }
 
-async fn register_operator(rpc_url: &str) -> Result<()> {
-    let pr = get_signer(&KEY.clone(), rpc_url);
-    let signer = PrivateKeySigner::from_str(&KEY.clone())?;
+async fn register_operator(rpc_url: &str, private_key: &str) -> Result<()> {
+    let pr = get_signer(private_key, rpc_url);
+    let signer = PrivateKeySigner::from_str(private_key)?;
 
     let data = std::fs::read_to_string("contracts/deployments/core/31337.json")?;
     let el_parsed: EigenLayerData = serde_json::from_str(&data)?;
@@ -145,7 +151,7 @@ async fn register_operator(rpc_url: &str) -> Result<()> {
         Address::ZERO,
         elcontracts_reader_instance.clone(),
         rpc_url.to_string(),
-        KEY.clone(),
+        private_key.to_string(),
     );
 
     let operator = Operator {
@@ -232,14 +238,14 @@ pub async fn main() {
     dotenv().ok();
     init_logger(LogLevel::Info);
     let rpc_url = ANVIL_RPC_URL;
-    if let Err(e) = register_operator(rpc_url).await {
+    if let Err(e) = register_operator(rpc_url, &KEY).await {
         eprintln!("Failed to register operator: {:?}", e);
         return;
     }
 
     // Start the task monitoring as a separate async task to keep the process running
     tokio::spawn(async {
-        if let Err(e) = monitor_new_tasks(rpc_url).await {
+        if let Err(e) = monitor_new_tasks(rpc_url, &KEY).await {
             eprintln!("Failed to monitor new tasks: {:?}", e);
         }
     });
