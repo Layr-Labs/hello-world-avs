@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set +e
+set -e
 
 STATE_FILE="contracts/anvil/state.json"
 
