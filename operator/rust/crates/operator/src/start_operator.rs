@@ -28,7 +28,7 @@ use once_cell::sync::Lazy;
 use rand::TryRngCore;
 use std::{env, str::FromStr};
 
-const RPC_URL: Lazy<String> =
+static RPC_URL: Lazy<String> =
     Lazy::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
 static KEY: Lazy<String> =
