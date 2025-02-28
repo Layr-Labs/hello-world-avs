@@ -5,12 +5,12 @@ COPY ./Cargo.toml ./Cargo.lock rust-toolchain.toml ./
 COPY ./operator/rust ./operator/rust
 RUN cargo build --release --bin start_operator --bin spam_tasks
 
-FROM debian:bullseye-slim AS operator-rs
+FROM ubuntu:24.04 AS operator-rs
 WORKDIR /app
 COPY --from=rs-builder /usr/src/hello-world/target/release/start_operator /usr/local/bin/start_operator
 CMD ["start_operator"]
 
-FROM debian:bullseye-slim AS traffic-generator-rs
+FROM ubuntu:24.04 AS traffic-generator-rs
 WORKDIR /app
 COPY --from=rs-builder /usr/src/hello-world/target/release/spam_tasks /usr/local/bin/spam_tasks
 CMD ["spam_tasks"]
