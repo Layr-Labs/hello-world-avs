@@ -73,11 +73,11 @@ describe('Operator Functionality', () => {
   });
 
   it('should register as an operator', async () => {
-    const tx = await delegationManager.registerAsOperator({
-      __deprecated_earningsReceiver: await signer.getAddress(),
-      delegationApprover: "0x0000000000000000000000000000000000000000",
-      stakerOptOutWindowBlocks: 0
-    }, "");
+    const tx = await delegationManager.registerAsOperator(
+      "0x0000000000000000000000000000000000000000",
+      0,
+      ""
+    );
     await tx.wait();
 
     const isOperator = await delegationManager.isOperator(signer.address);
