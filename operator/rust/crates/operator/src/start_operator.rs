@@ -33,12 +33,13 @@ pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
-async fn sign_and_response_to_task(
+async fn sign_and_respond_to_task(
+    rpc_url: &str,
     task_index: u32,
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+    let pr = get_signer(&KEY.clone(), rpc_url);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
 
     let message = format!("Hello, {}", name);
@@ -46,7 +47,7 @@ async fn sign_and_response_to_task(
     let operators: Vec<DynSolValue> = vec![DynSolValue::Address(signer.address())];
     let signature: Vec<DynSolValue> =
         vec![DynSolValue::Bytes(signer.sign_hash_sync(&m_hash)?.into())];
-    let current_block = U256::from(get_provider(ANVIL_RPC_URL).get_block_number().await?);
+    let current_block = U256::from(get_provider(rpc_url).get_block_number().await?);
     let signature_data = DynSolValue::Tuple(vec![
         DynSolValue::Array(operators.clone()),
         DynSolValue::Array(signature.clone()),
@@ -62,15 +63,12 @@ async fn sign_and_response_to_task(
         parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
 
+    let task = Task {
+        name,
+        taskCreatedBlock: task_created_block,
+    };
     let response_hash = hello_world_contract
-        .respondToTask(
-            Task {
-                name,
-                taskCreatedBlock: task_created_block,
-            },
-            task_index,
-            signature_data.into(),
-        )
+        .respondToTask(task, task_index, signature_data.into())
         .gas(500000)
         .send()
         .await?
@@ -85,8 +83,8 @@ async fn sign_and_response_to_task(
 }
 
 /// Monitor new tasks
-async fn monitor_new_tasks() -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+async fn monitor_new_tasks(rpc_url: &str) -> Result<()> {
+    let pr = get_signer(&KEY.clone(), rpc_url);
     let hello_world_contract_address: Address =
         parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let mut latest_processed_block = pr.get_block_number().await?;
@@ -110,7 +108,8 @@ async fn monitor_new_tasks() -> Result<()> {
                 get_logger().info(&format!("New task detected: Hello, {}", task.name), "");
 
                 let _ =
-                    sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name).await;
+                    sign_and_respond_to_task(rpc_url, taskIndex, task.taskCreatedBlock, task.name)
+                        .await;
             }
         }
 
@@ -120,8 +119,8 @@ async fn monitor_new_tasks() -> Result<()> {
     }
 }
 
-async fn register_operator() -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+async fn register_operator(rpc_url: &str) -> Result<()> {
+    let pr = get_signer(&KEY.clone(), rpc_url);
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
 
     let data = std::fs::read_to_string("contracts/deployments/core/31337.json")?;
@@ -136,7 +135,7 @@ async fn register_operator() -> Result<()> {
         Address::ZERO,
         avs_directory_address,
         None,
-        ANVIL_RPC_URL.to_string(),
+        rpc_url.to_string(),
     );
     let elcontracts_writer_instance = ELChainWriter::new(
         Address::ZERO,
@@ -145,7 +144,7 @@ async fn register_operator() -> Result<()> {
         None,
         Address::ZERO,
         elcontracts_reader_instance.clone(),
-        ANVIL_RPC_URL.to_string(),
+        rpc_url.to_string(),
         KEY.clone(),
     );
 
@@ -232,14 +231,15 @@ pub async fn main() {
     use tokio::signal;
     dotenv().ok();
     init_logger(LogLevel::Info);
-    if let Err(e) = register_operator().await {
+    let rpc_url = ANVIL_RPC_URL;
+    if let Err(e) = register_operator(rpc_url).await {
         eprintln!("Failed to register operator: {:?}", e);
         return;
     }
 
     // Start the task monitoring as a separate async task to keep the process running
     tokio::spawn(async {
-        if let Err(e) = monitor_new_tasks().await {
+        if let Err(e) = monitor_new_tasks(rpc_url).await {
             eprintln!("Failed to monitor new tasks: {:?}", e);
         }
     });

@@ -125,13 +125,13 @@ async fn monitor_new_tasks(anvil_http: &str) -> Result<()> {
     }
 }
 
-async fn register_operator(anvil_http: &str) -> Result<()> {
+async fn register_operator(rpc_url: &str) -> Result<()> {
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
     let wallet = EthereumWallet::from(signer.clone());
     let pr = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(wallet)
-        .on_http(Url::from_str(anvil_http)?);
+        .on_http(Url::from_str(rpc_url)?);
 
     let data = &env!("CARGO_MANIFEST_DIR").to_string();
     let mut path = Path::new(data);
@@ -156,7 +156,7 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         Address::ZERO,
         avs_directory_address,
         None,
-        anvil_http.to_string(),
+        rpc_url.to_string(),
     );
     let elcontracts_writer_instance = ELChainWriter::new(
         Address::ZERO,
@@ -165,7 +165,7 @@ async fn register_operator(anvil_http: &str) -> Result<()> {
         None,
         Address::ZERO,
         elcontracts_reader_instance.clone(),
-        anvil_http.to_string(),
+        rpc_url.to_string(),
         KEY.clone(),
     );
 
