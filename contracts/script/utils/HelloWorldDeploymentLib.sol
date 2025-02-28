@@ -14,7 +14,7 @@ import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationMa
 import {IECDSAStakeRegistryTypes} from
     "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
-import {CoreDeploymentLib} from "./CoreDeploymentLib.sol";
+import {CoreDeploymentLib, CoreDeploymentParsingLib} from "./CoreDeploymentLib.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 library HelloWorldDeploymentLib {
@@ -47,32 +47,54 @@ library HelloWorldDeploymentLib {
     ) internal returns (DeploymentData memory) {
         DeploymentData memory result;
 
-        // First, deploy upgradeable proxy contracts that will point to the implementations.
-        result.helloWorldServiceManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        result.stakeRegistry = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
-        // Deploy the implementation contracts, using the proxy contracts as inputs
+        {
+            // First, deploy upgradeable proxy contracts that will point to the implementations.
+            result.helloWorldServiceManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
+            result.stakeRegistry = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
+        }
+        deployAndUpgradeStakeRegistryImpl(result, core, quorum);
+        deployAndUpgradeServiceManagerImpl(result, core, owner, rewardsInitiator);
+
+        return result;
+    }
+
+    function deployAndUpgradeStakeRegistryImpl(
+        DeploymentData memory deployment,
+        CoreDeploymentLib.DeploymentData memory core,
+        IECDSAStakeRegistryTypes.Quorum memory quorum
+    ) private {
         address stakeRegistryImpl =
             address(new ECDSAStakeRegistry(IDelegationManager(core.delegationManager)));
+
+        bytes memory upgradeCall = abi.encodeCall(
+            ECDSAStakeRegistry.initialize, (deployment.helloWorldServiceManager, 0, quorum)
+        );
+        UpgradeableProxyLib.upgradeAndCall(deployment.stakeRegistry, stakeRegistryImpl, upgradeCall);
+    }
+
+    function deployAndUpgradeServiceManagerImpl(
+        DeploymentData memory deployment,
+        CoreDeploymentLib.DeploymentData memory core,
+        address owner,
+        address rewardsInitiator
+    ) private {
+        address helloWorldServiceManager = deployment.helloWorldServiceManager;
         address helloWorldServiceManagerImpl = address(
             new HelloWorldServiceManager(
                 core.avsDirectory,
-                result.stakeRegistry,
+                deployment.stakeRegistry,
                 core.rewardsCoordinator,
                 core.delegationManager,
-                address(0)
+                core.allocationManager
             )
         );
-        // Upgrade contracts
-        bytes memory upgradeCall = abi.encodeCall(
-            ECDSAStakeRegistry.initialize, (result.helloWorldServiceManager, 0, quorum)
-        );
-        UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
-        upgradeCall = abi.encodeCall(HelloWorldServiceManager.initialize, (owner, rewardsInitiator));
-        UpgradeableProxyLib.upgradeAndCall(
-            result.helloWorldServiceManager, helloWorldServiceManagerImpl, upgradeCall
-        );
 
-        return result;
+        bytes memory upgradeCall =
+            abi.encodeCall(HelloWorldServiceManager.initialize, (owner, rewardsInitiator));
+
+        UpgradeableProxyLib.upgradeAndCall(
+            helloWorldServiceManager, helloWorldServiceManagerImpl, upgradeCall
+        );
     }
 
     function readDeploymentJson(

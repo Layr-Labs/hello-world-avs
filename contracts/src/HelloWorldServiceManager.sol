@@ -61,6 +61,33 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         __ServiceManagerBase_init(initialOwner, _rewardsInitiator);
     }
 
+    function addPendingAdmin(
+        address admin
+    ) external onlyOwner {}
+
+    function removePendingAdmin(
+        address pendingAdmin
+    ) external onlyOwner {}
+
+    function removeAdmin(
+        address admin
+    ) external onlyOwner {}
+
+    function setAppointee(address appointee, address target, bytes4 selector) external onlyOwner {}
+
+    function removeAppointee(
+        address appointee,
+        address target,
+        bytes4 selector
+    ) external onlyOwner {}
+
+    function deregisterOperatorFromOperatorSets(
+        address operator,
+        uint32[] memory operatorSetIds
+    ) external {
+        // unused
+    }
+
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(

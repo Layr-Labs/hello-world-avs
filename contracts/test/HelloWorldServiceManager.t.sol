@@ -7,7 +7,7 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {Vm} from "forge-std/Vm.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "../script/utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib} from "../script/utils/CoreDeploymentLib.sol";
+import {CoreDeploymentLib, CoreDeploymentParsingLib} from "../script/utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 import {ERC20Mock} from "./ERC20Mock.sol";
 import {IERC20, StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
@@ -56,6 +56,8 @@ contract HelloWorldTaskManagerSetup is Test {
     CoreDeploymentLib.DeploymentData internal coreDeployment;
     CoreDeploymentLib.DeploymentConfigData coreConfigData;
 
+    address proxyAdmin;
+
     ERC20Mock public mockToken;
 
     mapping(address => IStrategy) public tokenToStrategy;
@@ -64,10 +66,10 @@ contract HelloWorldTaskManagerSetup is Test {
         generator = TrafficGenerator({key: vm.createWallet("generator_wallet")});
         owner = AVSOwner({key: vm.createWallet("owner_wallet")});
 
-        address proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         coreConfigData =
-            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
 
         mockToken = new ERC20Mock();
@@ -80,6 +82,8 @@ contract HelloWorldTaskManagerSetup is Test {
         helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
             proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr
         );
+        helloWorldDeployment.strategy = address(strategy);
+        helloWorldDeployment.token = address(mockToken);
         labelContracts(coreDeployment, helloWorldDeployment);
     }
 

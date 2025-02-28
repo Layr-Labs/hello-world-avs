@@ -40,7 +40,6 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     IRewardsCoordinator public rewardsCoordinator;
     IHelloWorldServiceManager public helloWorldServiceManager;
     IStrategy public strategy;
-    address proxyAdmin;
 
     address rewardsInitiator = address(1);
     address rewardsOwner = address(2);
@@ -48,7 +47,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     function setUp() public virtual override {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         coreConfigData =
-            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
 
         mockToken = new ERC20Mock();
