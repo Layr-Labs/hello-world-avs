@@ -1,0 +1,131 @@
+# yaml-language-server: $schema=https://github.com/Layr-Labs/avs-devnet/raw/refs/heads/main/schema.json
+
+# Local devnet config file for the hello-world-avs example
+# This file can be used inside the hello-world-avs repo to start
+# a devnet with any local changes
+
+# To run this example:
+# 0. Ensure you have the latest version of the devnet (see https://github.com/Layr-Labs/avs-devnet for how to install)
+# 1. While inside the Hello World repo, run `avs-devnet start`
+
+deployments:
+  - name: EigenLayer
+    repo: "."
+    contracts_path: "contracts"
+    script: script/DeployEigenLayerCore.s.sol
+    env:
+      # NOTE: this is used inside the deployer script
+      PRIVATE_KEY: "{{.deployer_private_key}}"
+      # NOTE: these are needed because of repo's `foundry.toml`
+      HOLESKY_PRIVATE_KEY: ""
+      HOLESKY_RPC_URL: ""
+      ETHERSCAN_API_KEY: ""
+    input:
+      config/core/: core_deployment_config
+    output:
+      eigenlayer_addresses: "deployments/core/31337.json"
+
+  - name: hello-world-avs
+    repo: "."
+    contracts_path: "contracts"
+    script: script/HelloWorldDeployer.s.sol
+    env:
+      # NOTE: this is used inside the deployer script
+      PRIVATE_KEY: "{{.deployer_private_key}}"
+      # NOTE: these are needed because of repo's `foundry.toml`
+      HOLESKY_PRIVATE_KEY: ""
+      HOLESKY_RPC_URL: ""
+      ETHERSCAN_API_KEY: ""
+    input:
+      config/hello-world/: avs_deployment_config
+      deployments/core/: eigenlayer_addresses
+    output:
+      avs_addresses: "deployments/hello-world/31337.json"
+
+services:
+  - name: operator
+    image: hello_world
+    build_context: "."
+    input:
+      /app/contracts/deployments/core/: eigenlayer_addresses
+      /app/contracts/deployments/hello-world/: avs_addresses
+    env:
+      # This expands to the RPC node's URL
+      RPC_URL: "{{.http_rpc_url}}"
+      PRIVATE_KEY: "{{.keys.operator_ecdsa_keys.private_key}}"
+    cmd: ["npm", "run", "start:operator"]
+
+  - name: traffic-generator
+    image: hello_world
+    build_context: "."
+    input:
+      /app/contracts/deployments/core/: eigenlayer_addresses
+      /app/contracts/deployments/hello-world/: avs_addresses
+    env:
+      # This expands to the RPC node's URL
+      RPC_URL: "{{.http_rpc_url}}"
+      PRIVATE_KEY: "{{.keys.traffic_generator_ecdsa_keys.private_key}}"
+    cmd: ["npm", "run", "start:traffic"]
+
+keys:
+  - name: operator_ecdsa_keys
+    type: ecdsa
+  - name: traffic_generator_ecdsa_keys
+    type: ecdsa
+
+artifacts:
+  core_deployment_config:
+    files:
+      31337.json:
+        template: |
+          {
+            "strategyManager": {
+              "init_paused_status": 0,
+              "init_withdrawal_delay_blocks": 50400
+            },
+            "delegation": {
+              "init_paused_status": 0,
+              "init_withdrawal_delay_blocks": 50400
+            },
+            "slasher": {
+              "init_paused_status": 0
+            },
+            "eigenPodManager": {
+              "init_paused_status": 0
+            },
+            "rewardsCoordinator": {
+              "init_paused_status": 0,
+              "MAX_REWARDS_DURATION": 864000,
+              "MAX_RETROACTIVE_LENGTH": 86400,
+              "MAX_FUTURE_LENGTH": 86400,
+              "GENESIS_REWARDS_TIMESTAMP": 1672531200,
+              "rewards_updater_address": "{{.deployer_address}}",
+              "rewards_updater_key": "{{.deployer_private_key}}",
+              "activation_delay": 0,
+              "calculation_interval_seconds": 86400,
+              "global_operator_commission_bips": 1000
+            }
+          }
+
+  avs_deployment_config:
+    files:
+      31337.json:
+        template: |
+          {
+            "addresses": {
+              "rewardsOwner": "{{.deployer_address}}",
+              "rewardsInitiator": "{{.deployer_address}}"
+            },
+            "keys": {
+              "rewardsOwner": "{{.deployer_private_key}}",
+              "rewardsInitiator": "{{.deployer_private_key}}"
+            }
+          }
+
+ethereum_package:
+  additional_services:
+    - blockscout
+  network_params:
+    # We use the chain ID hardcoded in the hello-world-avs example
+    network_id: "31337"
+    seconds_per_slot: 3
