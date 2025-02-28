@@ -43,34 +43,60 @@ deployments:
       avs_addresses: "deployments/hello-world/31337.json"
 
 services:
-  - name: operator
-    image: hello_world
-    build_context: "."
+  - name: operator0
+    image: hello_world_ts
+    build_cmd: "docker build . -t hello_world_ts --target operator-ts"
     input:
       /app/contracts/deployments/core/: eigenlayer_addresses
       /app/contracts/deployments/hello-world/: avs_addresses
     env:
       # This expands to the RPC node's URL
       RPC_URL: "{{.http_rpc_url}}"
-      PRIVATE_KEY: "{{.keys.operator_ecdsa_keys.private_key}}"
+      PRIVATE_KEY: "{{.keys.operator0_ecdsa_keys.private_key}}"
     cmd: ["npm", "run", "start:operator"]
 
-  - name: traffic-generator
-    image: hello_world
-    build_context: "."
+  - name: operator1
+    image: operator_rs
+    build_cmd: "docker build . -t operator_rs --target operator-rs"
     input:
       /app/contracts/deployments/core/: eigenlayer_addresses
       /app/contracts/deployments/hello-world/: avs_addresses
     env:
       # This expands to the RPC node's URL
       RPC_URL: "{{.http_rpc_url}}"
-      PRIVATE_KEY: "{{.keys.traffic_generator_ecdsa_keys.private_key}}"
+      PRIVATE_KEY: "{{.keys.operator1_ecdsa_keys.private_key}}"
+
+  - name: traffic-generator0
+    image: hello_world_ts
+    build_cmd: "docker build . -t hello_world_ts --target operator-ts"
+    input:
+      /app/contracts/deployments/core/: eigenlayer_addresses
+      /app/contracts/deployments/hello-world/: avs_addresses
+    env:
+      # This expands to the RPC node's URL
+      RPC_URL: "{{.http_rpc_url}}"
+      PRIVATE_KEY: "{{.keys.traffic_generator0_ecdsa_keys.private_key}}"
     cmd: ["npm", "run", "start:traffic"]
 
+  - name: traffic-generator1
+    image: traffic_generator_rs
+    build_cmd: "docker build . -t traffic_generator_rs --target traffic-generator-rs"
+    input:
+      /app/contracts/deployments/core/: eigenlayer_addresses
+      /app/contracts/deployments/hello-world/: avs_addresses
+    env:
+      # This expands to the RPC node's URL
+      RPC_URL: "{{.http_rpc_url}}"
+      PRIVATE_KEY: "{{.keys.traffic_generator1_ecdsa_keys.private_key}}"
+
 keys:
-  - name: operator_ecdsa_keys
+  - name: operator0_ecdsa_keys
     type: ecdsa
-  - name: traffic_generator_ecdsa_keys
+  - name: operator1_ecdsa_keys
+    type: ecdsa
+  - name: traffic_generator0_ecdsa_keys
+    type: ecdsa
+  - name: traffic_generator1_ecdsa_keys
     type: ecdsa
 
 artifacts:

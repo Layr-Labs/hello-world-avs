@@ -10,7 +10,8 @@ use rand::Rng;
 use std::{env, str::FromStr};
 use tokio::time::{self, Duration};
 
-pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
+static RPC_URL: Lazy<String> =
+    Lazy::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
 #[allow(unused)]
 static KEY: Lazy<String> =
@@ -38,7 +39,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     let parsed: HelloWorldData = serde_json::from_str(&data)?;
     let hello_world_contract_address: Address =
         parsed.addresses.hello_world_service_manager.parse()?;
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+    let pr = get_signer(&KEY.clone(), &RPC_URL.clone());
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, pr);
 

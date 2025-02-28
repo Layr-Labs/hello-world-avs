@@ -28,7 +28,8 @@ use once_cell::sync::Lazy;
 use rand::TryRngCore;
 use std::{env, str::FromStr};
 
-pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
+static RPC_URL: Lazy<String> =
+    Lazy::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
@@ -38,7 +39,7 @@ async fn sign_and_response_to_task(
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+    let pr = get_signer(&KEY.clone(), &RPC_URL.clone());
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
 
     let message = format!("Hello, {}", name);
@@ -46,7 +47,7 @@ async fn sign_and_response_to_task(
     let operators: Vec<DynSolValue> = vec![DynSolValue::Address(signer.address())];
     let signature: Vec<DynSolValue> =
         vec![DynSolValue::Bytes(signer.sign_hash_sync(&m_hash)?.into())];
-    let current_block = U256::from(get_provider(ANVIL_RPC_URL).get_block_number().await?);
+    let current_block = U256::from(get_provider(&RPC_URL.clone()).get_block_number().await?);
     let signature_data = DynSolValue::Tuple(vec![
         DynSolValue::Array(operators.clone()),
         DynSolValue::Array(signature.clone()),
@@ -86,7 +87,7 @@ async fn sign_and_response_to_task(
 
 /// Monitor new tasks
 async fn monitor_new_tasks() -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+    let pr = get_signer(&KEY.clone(), &RPC_URL.clone());
     let hello_world_contract_address: Address =
         parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
     let mut latest_processed_block = pr.get_block_number().await?;
@@ -121,7 +122,7 @@ async fn monitor_new_tasks() -> Result<()> {
 }
 
 async fn register_operator() -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
+    let pr = get_signer(&KEY.clone(), &RPC_URL.clone());
     let signer = PrivateKeySigner::from_str(&KEY.clone())?;
 
     let data = std::fs::read_to_string("contracts/deployments/core/31337.json")?;
@@ -136,7 +137,7 @@ async fn register_operator() -> Result<()> {
         Address::ZERO,
         avs_directory_address,
         None,
-        ANVIL_RPC_URL.to_string(),
+        RPC_URL.to_string(),
     );
     let elcontracts_writer_instance = ELChainWriter::new(
         Address::ZERO,
@@ -145,7 +146,7 @@ async fn register_operator() -> Result<()> {
         None,
         Address::ZERO,
         elcontracts_reader_instance.clone(),
-        ANVIL_RPC_URL.to_string(),
+        RPC_URL.to_string(),
         KEY.clone(),
     );
 
