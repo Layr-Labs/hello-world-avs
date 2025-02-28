@@ -129,7 +129,7 @@ pub async fn register_operator(rpc_url: &str, private_key: &str) -> Result<()> {
     let signer = PrivateKeySigner::from_str(private_key)?;
 
     let el_data = get_anvil_eigenlayer_deployment_data()?;
-    let delegation_manager_address: Address = el_data.addresses.delegation.parse()?;
+    let delegation_manager_address: Address = el_data.addresses.delegation_manager.parse()?;
     let avs_directory_address: Address = el_data.addresses.avs_directory.parse()?;
 
     let elcontracts_reader_instance = ELChainReader::new(

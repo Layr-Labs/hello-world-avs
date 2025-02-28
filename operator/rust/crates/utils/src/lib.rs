@@ -50,7 +50,8 @@ pub struct EigenLayerData {
 pub struct EigenLayerAddresses {
     #[serde(rename = "proxyAdmin")]
     pub proxy_admin: String,
-    pub delegation: String,
+    #[serde(rename = "delegationManager")]
+    pub delegation_manager: String,
     #[serde(rename = "delegationManagerImpl")]
     pub delegation_manager_impl: String,
     #[serde(rename = "avsDirectory")]
@@ -104,7 +105,7 @@ pub fn get_stake_registry_address() -> eyre::Result<Address> {
 
 pub fn get_delegation_manager_address() -> eyre::Result<Address> {
     let data = get_anvil_eigenlayer_deployment_data()?;
-    let delegation_manager_address: Address = data.addresses.delegation.parse()?;
+    let delegation_manager_address: Address = data.addresses.delegation_manager.parse()?;
     Ok(delegation_manager_address)
 }
 
