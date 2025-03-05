@@ -68,11 +68,11 @@ const registerOperator = async () => {
 
     // Registers as an Operator in EigenLayer.
     try {
-        const tx1 = await delegationManager.registerAsOperator({
-            __deprecated_earningsReceiver: await wallet.address,
-            delegationApprover: "0x0000000000000000000000000000000000000000",
-            stakerOptOutWindowBlocks: 0
-        }, "");
+        const tx1 = await delegationManager.registerAsOperator(
+            "0x0000000000000000000000000000000000000000", // initDelegationApprover
+            0, // allocationDelay
+            "", // metadataURI
+        );
         await tx1.wait();
         console.log("Operator registered to Core EigenLayer contracts");
     } catch (error) {
