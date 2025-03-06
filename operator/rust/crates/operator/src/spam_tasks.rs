@@ -1,22 +1,21 @@
 #![allow(missing_docs)]
-use alloy::{primitives::Address, signers::local::PrivateKeySigner};
+use alloy::primitives::Address;
 use dotenv::dotenv;
 use eigensdk::common::get_signer;
 use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
-use hello_world_utils::{helloworldservicemanager::HelloWorldServiceManager, HelloWorldData};
+use hello_world_utils::get_anvil_hello_world_deployment_data;
+use hello_world_utils::helloworldservicemanager::HelloWorldServiceManager;
 use once_cell::sync::Lazy;
 use rand::Rng;
-use std::{env, str::FromStr};
+use std::env;
 use tokio::time::{self, Duration};
 
 pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 
-#[allow(unused)]
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
-#[allow(unused)]
 /// Generate random task names from the given adjectives and nouns
 fn generate_random_name() -> String {
     let adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
@@ -31,15 +30,12 @@ fn generate_random_name() -> String {
     format!("{}{}{}", adjective, noun, number)
 }
 
-#[allow(unused)]
 /// Calls CreateNewTask function of the Hello world service manager contract
-async fn create_new_task(task_name: &str) -> Result<()> {
-    let data = std::fs::read_to_string("contracts/deployments/hello-world/31337.json")?;
-    let parsed: HelloWorldData = serde_json::from_str(&data)?;
+pub async fn create_new_task(rpc_url: &str, task_name: &str) -> Result<()> {
+    let hw_data = get_anvil_hello_world_deployment_data()?;
     let hello_world_contract_address: Address =
-        parsed.addresses.hello_world_service_manager.parse()?;
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
-    let signer = PrivateKeySigner::from_str(&KEY.clone())?;
+        hw_data.addresses.hello_world_service_manager.parse()?;
+    let pr = get_signer(&KEY.clone(), rpc_url);
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, pr);
 
     let tx = hello_world_contract
@@ -57,7 +53,6 @@ async fn create_new_task(task_name: &str) -> Result<()> {
     Ok(())
 }
 
-#[allow(unused)]
 /// Start creating tasks at every 15 seconds
 async fn start_creating_tasks() {
     let mut interval = time::interval(Duration::from_secs(15));
@@ -69,7 +64,7 @@ async fn start_creating_tasks() {
             &format!("Creating new task with name: {random_name}"),
             "start_creating_tasks",
         );
-        let _ = create_new_task(&random_name).await;
+        let _ = create_new_task(ANVIL_RPC_URL, &random_name).await;
     }
 }
 
