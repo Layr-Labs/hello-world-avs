@@ -14,6 +14,19 @@
   },
   {
     "type": "function",
+    "name": "OPERATOR_SET_REGISTRATION_TYPEHASH",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "calculateOperatorAVSRegistrationDigestHash",
     "inputs": [
       {
@@ -48,12 +61,43 @@
   },
   {
     "type": "function",
+    "name": "cancelSalt",
+    "inputs": [
+      {
+        "name": "salt",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "deregisterOperatorFromAVS",
     "inputs": [
       {
         "name": "operator",
         "type": "address",
         "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "initialOwner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "initialPausedStatus",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -170,9 +214,39 @@
         "name": "status",
         "type": "uint8",
         "indexed": false,
-        "internalType": "enum IAVSDirectory.OperatorAVSRegistrationStatus"
+        "internalType": "enum IAVSDirectoryTypes.OperatorAVSRegistrationStatus"
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "InvalidSignature",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OperatorAlreadyRegisteredToAVS",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OperatorNotRegisteredToAVS",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OperatorNotRegisteredToEigenLayer",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SaltSpent",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SignatureExpired",
+    "inputs": []
   }
 ]

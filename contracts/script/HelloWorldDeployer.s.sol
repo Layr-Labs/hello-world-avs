@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
+import {CoreDeploymentLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
 import {ERC20Mock} from "../test/ERC20Mock.sol";
@@ -15,10 +15,9 @@ import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 
 import {
-    Quorum,
-    StrategyParams,
+    IECDSAStakeRegistryTypes,
     IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 
 import "forge-std/Test.sol";
 
@@ -34,7 +33,7 @@ contract HelloWorldDeployer is Script, Test {
     CoreDeploymentLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     HelloWorldDeploymentLib.DeploymentConfigData helloWorldConfig;
-    Quorum internal quorum;
+    IECDSAStakeRegistryTypes.Quorum internal quorum;
     ERC20Mock token;
 
     function setUp() public virtual {
@@ -44,7 +43,8 @@ contract HelloWorldDeployer is Script, Test {
         helloWorldConfig =
             HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
-        coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
+        coreDeployment =
+            CoreDeploymentParsingLib.readDeploymentJson("deployments/core/", block.chainid);
     }
 
     function run() external {
@@ -53,10 +53,16 @@ contract HelloWorldDeployer is Script, Test {
         rewardsInitiator = helloWorldConfig.rewardsInitiator;
 
         token = new ERC20Mock();
+        // NOTE: if this fails, it's because the initialStrategyWhitelister is not set to be the StrategyFactory
         helloWorldStrategy =
             IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
 
-        quorum.strategies.push(StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000}));
+        quorum.strategies.push(
+            IECDSAStakeRegistryTypes.StrategyParams({
+                strategy: helloWorldStrategy,
+                multiplier: 10_000
+            })
+        );
 
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 

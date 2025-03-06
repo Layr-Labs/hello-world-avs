@@ -66,18 +66,18 @@ describe('Operator Functionality', () => {
     const helloWorldServiceManagerABI = await loadJsonFile(path.join(__dirname, '..', 'abis', 'HelloWorldServiceManager.json'));
     const avsDirectoryABI = await loadJsonFile(path.join(__dirname, '..', 'abis', 'IAVSDirectory.json'));
 
-    delegationManager = new ethers.Contract(deployment.core.addresses.delegation, delegationManagerABI, signer);
+    delegationManager = new ethers.Contract(deployment.core.addresses.delegationManager, delegationManagerABI, signer);
     helloWorldServiceManager = new ethers.Contract(deployment.helloWorld.addresses.helloWorldServiceManager, helloWorldServiceManagerABI, signer);
     ecdsaRegistryContract = new ethers.Contract(deployment.helloWorld.addresses.stakeRegistry, ecdsaRegistryABI, signer);
     avsDirectory = new ethers.Contract(deployment.core.addresses.avsDirectory, avsDirectoryABI, signer);
   });
 
   it('should register as an operator', async () => {
-    const tx = await delegationManager.registerAsOperator({
-      __deprecated_earningsReceiver: await signer.getAddress(),
-      delegationApprover: "0x0000000000000000000000000000000000000000",
-      stakerOptOutWindowBlocks: 0
-    }, "");
+    const tx = await delegationManager.registerAsOperator(
+      "0x0000000000000000000000000000000000000000",
+      0,
+      ""
+    );
     await tx.wait();
 
     const isOperator = await delegationManager.isOperator(signer.address);
@@ -132,14 +132,14 @@ describe('Operator Functionality', () => {
     const operators = [await signer.getAddress()];
     const signatures = [signature];
     const signedTask = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address[]", "bytes[]", "uint32"],
-        [operators, signatures, ethers.toBigInt(taskCreatedBlock)]
+      ["address[]", "bytes[]", "uint32"],
+      [operators, signatures, ethers.toBigInt(taskCreatedBlock)]
     );
 
     const tx = await helloWorldServiceManager.respondToTask(
-        { name: taskName, taskCreatedBlock: taskCreatedBlock },
-        taskIndex,
-        signedTask
+      { name: taskName, taskCreatedBlock: taskCreatedBlock },
+      taskIndex,
+      signedTask
     );
     await tx.wait();
   });

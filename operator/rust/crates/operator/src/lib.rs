@@ -56,7 +56,8 @@ mod tests {
             .wallet(wallet)
             .on_http(Url::from_str(&anvil_http).unwrap());
         let el_data = get_anvil_eigenlayer_deployment_data().unwrap();
-        let delegation_manager_address: Address = el_data.addresses.delegation.parse().unwrap();
+        let delegation_manager_address: Address =
+            el_data.addresses.delegation_manager.parse().unwrap();
         let contract_delegation_manager = DelegationManager::new(delegation_manager_address, &pr);
 
         let is_operator = contract_delegation_manager

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Script} from "forge-std/Script.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
+import {CoreDeploymentLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymentLib.sol";
 import {SetupPaymentsLib} from "./utils/SetupPaymentsLib.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {RewardsCoordinator} from "@eigenlayer/contracts/core/RewardsCoordinator.sol";
@@ -58,8 +58,10 @@ contract SetupPayments is Script, Test {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
-        coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
-        coreConfig = CoreDeploymentLib.readDeploymentConfigValues("config/core/", block.chainid);
+        coreDeployment =
+            CoreDeploymentParsingLib.readDeploymentJson("deployments/core/", block.chainid);
+        coreConfig =
+            CoreDeploymentParsingLib.readDeploymentConfigValues("config/core/", block.chainid);
         helloWorldDeployment =
             HelloWorldDeploymentLib.readDeploymentJson("deployments/hello-world/", block.chainid);
         helloWorldConfig =

@@ -7,28 +7,34 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {Vm} from "forge-std/Vm.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "../script/utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib} from "../script/utils/CoreDeploymentLib.sol";
+import {CoreDeploymentLib, CoreDeploymentParsingLib} from "../script/utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 import {ERC20Mock} from "./ERC20Mock.sol";
 import {IERC20, StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 
 import {
-    Quorum,
-    StrategyParams,
+    IECDSAStakeRegistryTypes,
     IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 import {IStrategyManager} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
-import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
+import {
+    IDelegationManager,
+    IDelegationManagerTypes
+} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
+import {DelegationManager} from "@eigenlayer/contracts/core/DelegationManager.sol";
+import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
-import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
+import {
+    IAVSDirectory, IAVSDirectoryTypes
+} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {Test, console2 as console} from "forge-std/Test.sol";
 import {IHelloWorldServiceManager} from "../src/IHelloWorldServiceManager.sol";
 import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 
 contract HelloWorldTaskManagerSetup is Test {
-    Quorum internal quorum;
+    IECDSAStakeRegistryTypes.Quorum internal quorum;
 
     struct Operator {
         Vm.Wallet key;
@@ -51,6 +57,8 @@ contract HelloWorldTaskManagerSetup is Test {
     CoreDeploymentLib.DeploymentData internal coreDeployment;
     CoreDeploymentLib.DeploymentConfigData coreConfigData;
 
+    address proxyAdmin;
+
     ERC20Mock public mockToken;
 
     mapping(address => IStrategy) public tokenToStrategy;
@@ -59,20 +67,29 @@ contract HelloWorldTaskManagerSetup is Test {
         generator = TrafficGenerator({key: vm.createWallet("generator_wallet")});
         owner = AVSOwner({key: vm.createWallet("owner_wallet")});
 
-        address proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
+        proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         coreConfigData =
-            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+
+        vm.prank(coreConfigData.strategyManager.initialOwner);
+        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
+            coreDeployment.strategyFactory
+        );
 
         mockToken = new ERC20Mock();
 
         IStrategy strategy = addStrategy(address(mockToken));
-        quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
+        quorum.strategies.push(
+            IECDSAStakeRegistryTypes.StrategyParams({strategy: strategy, multiplier: 10_000})
+        );
 
         helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
             proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr
         );
+        helloWorldDeployment.strategy = address(strategy);
+        helloWorldDeployment.token = address(mockToken);
         labelContracts(coreDeployment, helloWorldDeployment);
     }
 
@@ -148,15 +165,8 @@ contract HelloWorldTaskManagerSetup is Test {
     ) internal {
         IDelegationManager delegationManager = IDelegationManager(coreDeployment.delegationManager);
 
-        IDelegationManager.OperatorDetails memory operatorDetails = IDelegationManager
-            .OperatorDetails({
-            __deprecated_earningsReceiver: operator.key.addr,
-            delegationApprover: address(0),
-            stakerOptOutWindowBlocks: 0
-        });
-
         vm.prank(operator.key.addr);
-        delegationManager.registerAsOperator(operatorDetails, "");
+        delegationManager.registerAsOperator(address(0), 0, "");
     }
 
     function registerOperatorToAVS(
@@ -283,7 +293,7 @@ contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
     function testInitialization() public view {
         ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
 
-        Quorum memory quorum = stakeRegistry.quorum();
+        IECDSAStakeRegistryTypes.Quorum memory quorum = stakeRegistry.quorum();
 
         assertGt(quorum.strategies.length, 0, "No strategies in quorum");
         assertEq(
@@ -311,7 +321,7 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
     uint256 internal constant DEPOSIT_AMOUNT = 1 ether;
     uint256 internal constant OPERATOR_COUNT = 4;
 
-    IDelegationManager internal delegationManager;
+    DelegationManager internal delegationManager;
     AVSDirectory internal avsDirectory;
     IHelloWorldServiceManager internal sm;
     ECDSAStakeRegistry internal stakeRegistry;
@@ -319,7 +329,7 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
     function setUp() public virtual override {
         super.setUp();
         /// Setting to internal state for convenience
-        delegationManager = IDelegationManager(coreDeployment.delegationManager);
+        delegationManager = DelegationManager(coreDeployment.delegationManager);
         avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
         sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
         stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
@@ -356,11 +366,11 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
         registerOperatorToAVS(operators[0]);
         assertTrue(
             avsDirectory.avsOperatorStatus(address(sm), operatorAddr)
-                == IAVSDirectory.OperatorAVSRegistrationStatus.REGISTERED,
+                == IAVSDirectoryTypes.OperatorAVSRegistrationStatus.REGISTERED,
             "Operator not registered in AVSDirectory"
         );
 
-        address signingKey = stakeRegistry.getLastestOperatorSigningKey(operatorAddr);
+        address signingKey = stakeRegistry.getLatestOperatorSigningKey(operatorAddr);
         assertTrue(signingKey != address(0), "Operator signing key not set in ECDSAStakeRegistry");
 
         uint256 operatorWeight = stakeRegistry.getLastCheckpointOperatorWeight(operatorAddr);

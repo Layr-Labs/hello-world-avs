@@ -16,10 +16,9 @@ import {HelloWorldTaskManagerSetup} from "test/HelloWorldServiceManager.t.sol";
 import {ECDSAServiceManagerBase} from
     "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {
-    Quorum,
-    StrategyParams,
+    IECDSAStakeRegistryTypes,
     IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 
 contract TestConstants {
@@ -41,7 +40,6 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     IRewardsCoordinator public rewardsCoordinator;
     IHelloWorldServiceManager public helloWorldServiceManager;
     IStrategy public strategy;
-    address proxyAdmin;
 
     address rewardsInitiator = address(1);
     address rewardsOwner = address(2);
@@ -49,13 +47,20 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     function setUp() public virtual override {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         coreConfigData =
-            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+
+        vm.prank(coreConfigData.strategyManager.initialOwner);
+        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
+            coreDeployment.strategyFactory
+        );
 
         mockToken = new ERC20Mock();
 
         strategy = addStrategy(address(mockToken)); // Similar function to HW_SM test using strategy factory
-        quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
+        quorum.strategies.push(
+            IECDSAStakeRegistryTypes.StrategyParams({strategy: strategy, multiplier: 10_000})
+        );
 
         helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
             proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner
@@ -218,7 +223,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint256 numPayments = 5;
         uint256 amountPerPayment = 100;
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
-        uint32 startTimestamp = 10 days;
+        uint32 genesisTimestamp = rewardsCoordinator.GENESIS_REWARDS_TIMESTAMP();
+        uint32 startTimestamp = genesisTimestamp + 10 days;
         cheats.warp(startTimestamp + 1);
 
         cheats.prank(rewardsInitiator);
