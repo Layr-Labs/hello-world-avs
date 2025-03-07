@@ -108,17 +108,17 @@ npm run deploy:hello-world
 In another terminal, run:
 
 ```sh
-# Create payment roots
+# Create distribution roots
 npm run create-distribution-root
 
-# Claim created payment
+# Claim created distribution
 npm run claim-distribution
 ```
 
 To run operator directed rewards distribution, run:
 
 ```sh
-#Create payment roots
+#Create distribution roots
 npm run create-operator-directed-distribution-root
 
 # Claim created rewards distribution
