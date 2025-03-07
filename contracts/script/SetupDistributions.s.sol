@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Script} from "forge-std/Script.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
 import {CoreDeploymentLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymentLib.sol";
-import {SetupPaymentsLib} from "./utils/SetupPaymentsLib.sol";
+import {SetupDistributionsLib} from "./utils/SetupDistributionsLib.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {RewardsCoordinator} from "@eigenlayer/contracts/core/RewardsCoordinator.sol";
 import {IStrategy} from "@eigenlayer/contracts/interfaces/IStrategy.sol";
@@ -12,7 +12,7 @@ import {ERC20Mock} from "../test/ERC20Mock.sol";
 
 import "forge-std/Test.sol";
 
-contract SetupPayments is Script, Test {
+contract SetupDistributions is Script, Test {
     struct PaymentInfo {
         address recipient;
         uint32 numPayments;
@@ -154,7 +154,7 @@ contract SetupPayments is Script, Test {
             helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments
         );
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
-        SetupPaymentsLib.createAVSRewardsSubmissions(
+        SetupDistributionsLib.createAVSRewardsSubmissions(
             helloWorldDeployment.helloWorldServiceManager,
             helloWorldDeployment.strategy,
             numPayments,
@@ -182,7 +182,7 @@ contract SetupPayments is Script, Test {
 
         uint256 numOperators = operators.length;
 
-        SetupPaymentsLib.createOperatorDirectedAVSRewardsSubmissions(
+        SetupDistributionsLib.createOperatorDirectedAVSRewardsSubmissions(
             helloWorldDeployment.helloWorldServiceManager,
             operators,
             numOperators,
@@ -201,7 +201,7 @@ contract SetupPayments is Script, Test {
         IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf,
         uint32 amountPerPayment
     ) public {
-        SetupPaymentsLib.processClaim(
+        SetupDistributionsLib.processClaim(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             filePath,
             indexToProve,
@@ -220,18 +220,18 @@ contract SetupPayments is Script, Test {
         uint32 amountPerPayment
     ) public {
         emit log_named_uint("cumumlativePaymentMultiplier", cumumlativePaymentMultiplier);
-        bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(
+        bytes32[] memory tokenLeaves = SetupDistributionsLib.createTokenLeaves(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             NUM_TOKEN_EARNINGS,
             amountPerPayment,
             helloWorldDeployment.strategy
         );
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
-            SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
+            SetupDistributionsLib.createEarnerLeaves(earners, tokenLeaves);
         emit log_named_uint("Earner Leaves Length", earnerLeaves.length);
         emit log_named_uint("numPayments", numPayments);
 
-        SetupPaymentsLib.submitRoot(
+        SetupDistributionsLib.submitRoot(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             tokenLeaves,
             earnerLeaves,
@@ -248,7 +248,7 @@ contract SetupPayments is Script, Test {
         uint32 amountPerPayment,
         address strategy
     ) internal view returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
-        bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(
+        bytes32[] memory tokenLeaves = SetupDistributionsLib.createTokenLeaves(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             NUM_TOKEN_EARNINGS,
             amountPerPayment,
@@ -256,7 +256,7 @@ contract SetupPayments is Script, Test {
         );
 
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
-            SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
+            SetupDistributionsLib.createEarnerLeaves(earners, tokenLeaves);
 
         return earnerLeaves;
     }

@@ -90,7 +90,7 @@ Open a separate terminal window #3, execute the following commands
 npm run start:traffic
 ```
 
-### Create and Claim Payments
+### Create and Claim Distribution
 
 In a terminal, start a new instance of anvil and deploy the core and avs contracts
 
@@ -108,24 +108,24 @@ npm run deploy:hello-world
 In another terminal, run:
 
 ```sh
-# Create payment roots
-npm run create-payments-root
+# Create distribution roots
+npm run create-distributions-root
 
-# Claim created payment
-npm run claim-payments
+# Claim created distribution
+npm run claim-distributions
 ```
 
-To run operator directed payments, run:
+To run operator directed rewards distribution, run:
 
 ```sh
-#Create payment roots
-npm run create-operator-directed-payments-root
+#Create distribution roots
+npm run create-operator-directed-distributions-root
 
-# Claim created payment
-npm run claim-payments
+# Claim created rewards distribution
+npm run claim-distributions
 ```
 
-In order to create and claim multiple payments (run the above two commands more than once), you must wait up to 5 minutes.
+In order to create and claim multiple distributions (run the above two commands more than once), you must wait up to 5 minutes.
 
 ### Help and Support
 
