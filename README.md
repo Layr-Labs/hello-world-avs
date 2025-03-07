@@ -109,10 +109,10 @@ In another terminal, run:
 
 ```sh
 # Create distribution roots
-npm run create-distribution-root
+npm run create-distributions-root
 
 # Claim created distribution
-npm run claim-distribution
+npm run claim-distributions
 ```
 
 To run operator directed rewards distribution, run:
@@ -122,7 +122,7 @@ To run operator directed rewards distribution, run:
 npm run create-operator-directed-distribution-root
 
 # Claim created rewards distribution
-npm run claim-distribution
+npm run claim-distributions
 ```
 
 In order to create and claim multiple distributions (run the above two commands more than once), you must wait up to 5 minutes.
