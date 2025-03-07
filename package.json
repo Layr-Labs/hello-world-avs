@@ -13,7 +13,7 @@
     "deploy:hello-world-debug": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug",
     "create-distributions-root": "cd contracts && forge script script/SetupDistributions.s.sol --rpc-url http://localhost:8545 --broadcast -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "claim-distributions": "cd contracts && forge script script/SetupDistributions.s.sol --rpc-url http://localhost:8545 --broadcast --sig \"executeProcessClaim()\" -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-    "create-operator-directed-distributions-root": "cd contracts && forge script script/Setupdistributions.s.sol --rpc-url http://localhost:8545 --broadcast --sig \"runOperatorDirected()\" -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    "create-operator-directed-distributions-root": "cd contracts && forge script script/SetupDistributions.s.sol --rpc-url http://localhost:8545 --broadcast --sig \"runOperatorDirected()\" -v --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "build": "tsc",
     "build:forge": "cd contracts && forge build",
     "extract:abis": "node utils/abis.js",
