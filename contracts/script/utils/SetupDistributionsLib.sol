@@ -10,7 +10,7 @@ import {ECDSAServiceManagerBase} from
     "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {Vm} from "forge-std/Vm.sol";
 
-library SetupPaymentsLib {
+library SetupDistributionsLib {
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     struct PaymentLeaves {
