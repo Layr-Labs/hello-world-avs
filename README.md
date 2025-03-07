@@ -119,7 +119,7 @@ To run operator directed rewards distribution, run:
 
 ```sh
 #Create distribution roots
-npm run create-operator-directed-distribution-root
+npm run create-operator-directed-distributions-root
 
 # Claim created rewards distribution
 npm run claim-distributions
