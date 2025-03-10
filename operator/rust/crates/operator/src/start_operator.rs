@@ -22,7 +22,8 @@ use hello_world_utils::{
     helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
 };
 use hello_world_utils::{
-    parse_hello_world_service_manager, parse_stake_registry_address, EigenLayerData,
+    get_anvil_eigenlayer_deployment_data, get_hello_world_service_manager,
+    get_stake_registry_address,
 };
 use once_cell::sync::Lazy;
 use rand::TryRngCore;
@@ -33,20 +34,22 @@ pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
-async fn sign_and_response_to_task(
+async fn sign_and_respond_to_task(
+    rpc_url: &str,
+    private_key: &str,
     task_index: u32,
     task_created_block: u32,
     name: String,
 ) -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
-    let signer = PrivateKeySigner::from_str(&KEY.clone())?;
+    let pr = get_signer(private_key, rpc_url);
+    let signer = PrivateKeySigner::from_str(private_key)?;
 
     let message = format!("Hello, {}", name);
     let m_hash = eip191_hash_message(keccak256(message.abi_encode_packed()));
     let operators: Vec<DynSolValue> = vec![DynSolValue::Address(signer.address())];
     let signature: Vec<DynSolValue> =
         vec![DynSolValue::Bytes(signer.sign_hash_sync(&m_hash)?.into())];
-    let current_block = U256::from(get_provider(ANVIL_RPC_URL).get_block_number().await?);
+    let current_block = U256::from(get_provider(rpc_url).get_block_number().await?);
     let signature_data = DynSolValue::Tuple(vec![
         DynSolValue::Array(operators.clone()),
         DynSolValue::Array(signature.clone()),
@@ -58,19 +61,15 @@ async fn sign_and_response_to_task(
         &format!("Signing and responding to task: {task_index:?}"),
         "",
     );
-    let hello_world_contract_address: Address =
-        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
+    let hello_world_contract_address: Address = get_hello_world_service_manager()?;
     let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
 
+    let task = Task {
+        name,
+        taskCreatedBlock: task_created_block,
+    };
     let response_hash = hello_world_contract
-        .respondToTask(
-            Task {
-                name,
-                taskCreatedBlock: task_created_block,
-            },
-            task_index,
-            signature_data.into(),
-        )
+        .respondToTask(task, task_index, signature_data.into())
         .gas(500000)
         .send()
         .await?
@@ -85,10 +84,9 @@ async fn sign_and_response_to_task(
 }
 
 /// Monitor new tasks
-async fn monitor_new_tasks() -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
-    let hello_world_contract_address: Address =
-        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
+async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
+    let pr = get_signer(private_key, rpc_url);
+    let hello_world_contract_address: Address = get_hello_world_service_manager()?;
     let mut latest_processed_block = pr.get_block_number().await?;
 
     loop {
@@ -109,8 +107,14 @@ async fn monitor_new_tasks() -> Result<()> {
                     .data;
                 get_logger().info(&format!("New task detected: Hello, {}", task.name), "");
 
-                let _ =
-                    sign_and_response_to_task(taskIndex, task.taskCreatedBlock, task.name).await;
+                let _ = sign_and_respond_to_task(
+                    rpc_url,
+                    private_key,
+                    taskIndex,
+                    task.taskCreatedBlock,
+                    task.name,
+                )
+                .await;
             }
         }
 
@@ -120,14 +124,13 @@ async fn monitor_new_tasks() -> Result<()> {
     }
 }
 
-async fn register_operator() -> Result<()> {
-    let pr = get_signer(&KEY.clone(), ANVIL_RPC_URL);
-    let signer = PrivateKeySigner::from_str(&KEY.clone())?;
+pub async fn register_operator(rpc_url: &str, private_key: &str) -> Result<()> {
+    let pr = get_signer(private_key, rpc_url);
+    let signer = PrivateKeySigner::from_str(private_key)?;
 
-    let data = std::fs::read_to_string("contracts/deployments/core/31337.json")?;
-    let el_parsed: EigenLayerData = serde_json::from_str(&data)?;
-    let delegation_manager_address: Address = el_parsed.addresses.delegation.parse()?;
-    let avs_directory_address: Address = el_parsed.addresses.avs_directory.parse()?;
+    let el_data = get_anvil_eigenlayer_deployment_data()?;
+    let delegation_manager_address: Address = el_data.addresses.delegation_manager.parse()?;
+    let avs_directory_address: Address = el_data.addresses.avs_directory.parse()?;
 
     let elcontracts_reader_instance = ELChainReader::new(
         get_logger().clone(),
@@ -136,7 +139,7 @@ async fn register_operator() -> Result<()> {
         Address::ZERO,
         avs_directory_address,
         None,
-        ANVIL_RPC_URL.to_string(),
+        rpc_url.to_string(),
     );
     let elcontracts_writer_instance = ELChainWriter::new(
         Address::ZERO,
@@ -145,8 +148,8 @@ async fn register_operator() -> Result<()> {
         None,
         Address::ZERO,
         elcontracts_reader_instance.clone(),
-        ANVIL_RPC_URL.to_string(),
-        KEY.clone(),
+        rpc_url.to_string(),
+        private_key.to_string(),
     );
 
     let operator = Operator {
@@ -164,7 +167,7 @@ async fn register_operator() -> Result<()> {
         .unwrap();
     get_logger().info(&format!("is registered {}", is_registered), "");
     let tx_hash = elcontracts_writer_instance
-        .register_as_operator_preslashing(operator)
+        .register_as_operator(operator)
         .await?;
     let receipt = pr.get_transaction_receipt(tx_hash).await?;
     if !receipt.is_some_and(|r| r.inner.is_success()) {
@@ -185,8 +188,7 @@ async fn register_operator() -> Result<()> {
     let now = Utc::now().timestamp();
     let expiry: U256 = U256::from(now + 3600);
 
-    let hello_world_contract_address: Address =
-        parse_hello_world_service_manager("contracts/deployments/hello-world/31337.json")?;
+    let hello_world_contract_address: Address = get_hello_world_service_manager()?;
     let digest_hash = elcontracts_reader_instance
         .calculate_operator_avs_registration_digest_hash(
             signer.address(),
@@ -202,8 +204,7 @@ async fn register_operator() -> Result<()> {
         salt,
         expiry,
     };
-    let stake_registry_address =
-        parse_stake_registry_address("contracts/deployments/hello-world/31337.json")?;
+    let stake_registry_address = get_stake_registry_address()?;
     let contract_ecdsa_stake_registry = ECDSAStakeRegistry::new(stake_registry_address, &pr);
     let registeroperator_details_call = contract_ecdsa_stake_registry
         .registerOperatorWithSignature(operator_signature, signer.clone().address())
@@ -232,14 +233,15 @@ pub async fn main() {
     use tokio::signal;
     dotenv().ok();
     init_logger(LogLevel::Info);
-    if let Err(e) = register_operator().await {
+    let rpc_url = ANVIL_RPC_URL;
+    if let Err(e) = register_operator(rpc_url, &KEY).await {
         eprintln!("Failed to register operator: {:?}", e);
         return;
     }
 
     // Start the task monitoring as a separate async task to keep the process running
     tokio::spawn(async {
-        if let Err(e) = monitor_new_tasks().await {
+        if let Err(e) = monitor_new_tasks(rpc_url, &KEY).await {
             eprintln!("Failed to monitor new tasks: {:?}", e);
         }
     });

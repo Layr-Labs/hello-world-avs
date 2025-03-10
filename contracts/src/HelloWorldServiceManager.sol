@@ -12,6 +12,7 @@ import {IERC1271Upgradeable} from
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {IAllocationManager} from "@eigenlayer/contracts/interfaces/IAllocationManager.sol";
 import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
@@ -49,13 +50,48 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _avsDirectory,
         address _stakeRegistry,
         address _rewardsCoordinator,
-        address _delegationManager
+        address _delegationManager,
+        address _allocationManager
     )
-        ECDSAServiceManagerBase(_avsDirectory, _stakeRegistry, _rewardsCoordinator, _delegationManager)
+        ECDSAServiceManagerBase(
+            _avsDirectory,
+            _stakeRegistry,
+            _rewardsCoordinator,
+            _delegationManager,
+            _allocationManager
+        )
     {}
 
     function initialize(address initialOwner, address _rewardsInitiator) external initializer {
         __ServiceManagerBase_init(initialOwner, _rewardsInitiator);
+    }
+
+    // These are just to comply with IServiceManager interface
+    function addPendingAdmin(
+        address admin
+    ) external onlyOwner {}
+
+    function removePendingAdmin(
+        address pendingAdmin
+    ) external onlyOwner {}
+
+    function removeAdmin(
+        address admin
+    ) external onlyOwner {}
+
+    function setAppointee(address appointee, address target, bytes4 selector) external onlyOwner {}
+
+    function removeAppointee(
+        address appointee,
+        address target,
+        bytes4 selector
+    ) external onlyOwner {}
+
+    function deregisterOperatorFromOperatorSets(
+        address operator,
+        uint32[] memory operatorSetIds
+    ) external {
+        // unused
     }
 
     /* FUNCTIONS */

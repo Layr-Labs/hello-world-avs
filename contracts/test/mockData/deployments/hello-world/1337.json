@@ -1,4 +1,15 @@
 {
-    "rewardsOwner": "0x3C4293F66941ECa00f4950C10d4255d5c271bAe1",
-    "rewardsInitiator": "0x3C4293F66941ECa00f4950C10d4255d5c271bAe1"
+  "lastUpdate": {
+    "timestamp": "1740693629",
+    "block_number": "39"
+  },
+  "addresses": {
+    "proxyAdmin": "0x8f86403a4de0bb5791fa46b8e795c547942fe4cf",
+    "helloWorldServiceManager": "0x5eb3bc0a489c5a8288765d2336659ebca68fcd00",
+    "helloWorldServiceManagerImpl": "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
+    "stakeRegistry": "0x809d550fca64d94bd9f66e60752a544199cfac3d",
+    "stakeRegistryImpl": "0x4c5859f0f772848b2d91f1d83e2fe57935348029",
+    "strategy": "0x24b3c7704709ed1491473f30393ffc93cfb0fc34",
+    "token": "0x99bba657f2bbc93c02d617f8ba121cb8fc104acf"
+  }
 }

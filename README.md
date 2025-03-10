@@ -84,12 +84,21 @@ npm run extract:abis
 
 # Start the Operator application
 npm run start:operator
-
 ```
 
-### Create and Claim Payments
+### Create Hello-World-AVS Tasks
+
+Open a separate terminal window #3, execute the following commands
+
+```sh
+# Start the createNewTasks application 
+npm run start:traffic
+```
+
+### Create and Claim Distribution
 
 In a terminal, start a new instance of anvil and deploy the core and avs contracts
+
 ```sh
 # Start anvil
 npm run start:anvil-quick
@@ -104,35 +113,24 @@ npm run deploy:hello-world
 In another terminal, run:
 
 ```sh
-# Create payment roots
-npm run create-payments-root
+# Create distribution roots
+npm run create-distributions-root
 
-# Claim created payment
-npm run claim-payments
+# Claim created distribution
+npm run claim-distributions
 ```
 
-To run operator directed payments, run:
-```sh
-#Create payment roots
-npm run create-operator-directed-payments-root
-
-# Claim created payment
-npm run claim-payments
-```
-
-In order to create and claim multiple payments (run the above two commands more than once), you must wait up to 5 minutes.
-
-
-
-
-### Create Hello-World-AVS Tasks
-
-Open a separate terminal window #3, execute the following commands
+To run operator directed rewards distribution, run:
 
 ```sh
-# Start the createNewTasks application 
-npm run start:traffic
+#Create distribution roots
+npm run create-operator-directed-distributions-root
+
+# Claim created rewards distribution
+npm run claim-distributions
 ```
+
+In order to create and claim multiple distributions (run the above two commands more than once), you must wait up to 5 minutes.
 
 ### Help and Support
 

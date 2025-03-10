@@ -22,7 +22,7 @@
     "name": "getLastCheckpointOperatorWeight",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "internalType": "address"
       }
@@ -54,7 +54,7 @@
     "name": "getLastCheckpointThresholdWeightAtBlock",
     "inputs": [
       {
-        "name": "_blockNumber",
+        "name": "blockNumber",
         "type": "uint32",
         "internalType": "uint32"
       }
@@ -86,7 +86,7 @@
     "name": "getLastCheckpointTotalWeightAtBlock",
     "inputs": [
       {
-        "name": "_blockNumber",
+        "name": "blockNumber",
         "type": "uint32",
         "internalType": "uint32"
       }
@@ -102,10 +102,10 @@
   },
   {
     "type": "function",
-    "name": "getLastestOperatorSigningKey",
+    "name": "getLatestOperatorSigningKey",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "internalType": "address"
       }
@@ -124,12 +124,12 @@
     "name": "getOperatorSigningKeyAtBlock",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "_blockNumber",
+        "name": "blockNumber",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -148,7 +148,7 @@
     "name": "getOperatorWeight",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "internalType": "address"
       }
@@ -167,12 +167,12 @@
     "name": "getOperatorWeightAtBlock",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "_blockNumber",
+        "name": "blockNumber",
         "type": "uint32",
         "internalType": "uint32"
       }
@@ -196,19 +196,19 @@
         "internalType": "address"
       },
       {
-        "name": "_thresholdWeight",
+        "name": "thresholdWeight",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "_quorum",
+        "name": "quorum",
         "type": "tuple",
-        "internalType": "struct Quorum",
+        "internalType": "struct IECDSAStakeRegistryTypes.Quorum",
         "components": [
           {
             "name": "strategies",
             "type": "tuple[]",
-            "internalType": "struct StrategyParams[]",
+            "internalType": "struct IECDSAStakeRegistryTypes.StrategyParams[]",
             "components": [
               {
                 "name": "strategy",
@@ -233,7 +233,7 @@
     "name": "isValidSignature",
     "inputs": [
       {
-        "name": "_dataHash",
+        "name": "digest",
         "type": "bytes32",
         "internalType": "bytes32"
       },
@@ -270,7 +270,7 @@
     "name": "operatorRegistered",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "internalType": "address"
       }
@@ -305,12 +305,12 @@
       {
         "name": "",
         "type": "tuple",
-        "internalType": "struct Quorum",
+        "internalType": "struct IECDSAStakeRegistryTypes.Quorum",
         "components": [
           {
             "name": "strategies",
             "type": "tuple[]",
-            "internalType": "struct StrategyParams[]",
+            "internalType": "struct IECDSAStakeRegistryTypes.StrategyParams[]",
             "components": [
               {
                 "name": "strategy",
@@ -334,7 +334,7 @@
     "name": "registerOperatorWithSignature",
     "inputs": [
       {
-        "name": "_operatorSignature",
+        "name": "operatorSignature",
         "type": "tuple",
         "internalType": "struct ISignatureUtils.SignatureWithSaltAndExpiry",
         "components": [
@@ -356,7 +356,7 @@
         ]
       },
       {
-        "name": "_signingKey",
+        "name": "signingKey",
         "type": "address",
         "internalType": "address"
       }
@@ -389,12 +389,12 @@
     "name": "updateMinimumWeight",
     "inputs": [
       {
-        "name": "_newMinimumWeight",
+        "name": "newMinimumWeight",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "_operators",
+        "name": "operators",
         "type": "address[]",
         "internalType": "address[]"
       }
@@ -407,7 +407,7 @@
     "name": "updateOperatorSigningKey",
     "inputs": [
       {
-        "name": "_newSigningKey",
+        "name": "newSigningKey",
         "type": "address",
         "internalType": "address"
       }
@@ -420,7 +420,7 @@
     "name": "updateOperators",
     "inputs": [
       {
-        "name": "_operators",
+        "name": "operators",
         "type": "address[]",
         "internalType": "address[]"
       }
@@ -451,14 +451,14 @@
     "name": "updateQuorumConfig",
     "inputs": [
       {
-        "name": "_quorum",
+        "name": "quorum",
         "type": "tuple",
-        "internalType": "struct Quorum",
+        "internalType": "struct IECDSAStakeRegistryTypes.Quorum",
         "components": [
           {
             "name": "strategies",
             "type": "tuple[]",
-            "internalType": "struct StrategyParams[]",
+            "internalType": "struct IECDSAStakeRegistryTypes.StrategyParams[]",
             "components": [
               {
                 "name": "strategy",
@@ -475,7 +475,7 @@
         ]
       },
       {
-        "name": "_operators",
+        "name": "operators",
         "type": "address[]",
         "internalType": "address[]"
       }
@@ -488,7 +488,7 @@
     "name": "updateStakeThreshold",
     "inputs": [
       {
-        "name": "_thresholdWeight",
+        "name": "thresholdWeight",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -514,13 +514,13 @@
     "name": "MinimumWeightUpdated",
     "inputs": [
       {
-        "name": "_old",
+        "name": "previous",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
       },
       {
-        "name": "_new",
+        "name": "current",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -533,13 +533,13 @@
     "name": "OperatorDeregistered",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "indexed": true,
         "internalType": "address"
       },
       {
-        "name": "_avs",
+        "name": "avs",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -552,13 +552,13 @@
     "name": "OperatorRegistered",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "indexed": true,
         "internalType": "address"
       },
       {
-        "name": "_avs",
+        "name": "avs",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -571,7 +571,7 @@
     "name": "OperatorWeightUpdated",
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -615,15 +615,15 @@
     "name": "QuorumUpdated",
     "inputs": [
       {
-        "name": "_old",
+        "name": "previous",
         "type": "tuple",
         "indexed": false,
-        "internalType": "struct Quorum",
+        "internalType": "struct IECDSAStakeRegistryTypes.Quorum",
         "components": [
           {
             "name": "strategies",
             "type": "tuple[]",
-            "internalType": "struct StrategyParams[]",
+            "internalType": "struct IECDSAStakeRegistryTypes.StrategyParams[]",
             "components": [
               {
                 "name": "strategy",
@@ -640,15 +640,15 @@
         ]
       },
       {
-        "name": "_new",
+        "name": "current",
         "type": "tuple",
         "indexed": false,
-        "internalType": "struct Quorum",
+        "internalType": "struct IECDSAStakeRegistryTypes.Quorum",
         "components": [
           {
             "name": "strategies",
             "type": "tuple[]",
-            "internalType": "struct StrategyParams[]",
+            "internalType": "struct IECDSAStakeRegistryTypes.StrategyParams[]",
             "components": [
               {
                 "name": "strategy",
@@ -703,7 +703,7 @@
     "name": "ThresholdWeightUpdated",
     "inputs": [
       {
-        "name": "_thresholdWeight",
+        "name": "thresholdWeight",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"

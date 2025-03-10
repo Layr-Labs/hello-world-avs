@@ -1,29 +1,42 @@
 {
-    "strategyManager": {
-      "init_paused_status": 0,
-      "init_withdrawal_delay_blocks": 50400
-    },
-    "delegation": {
-      "init_paused_status": 0,
-      "init_withdrawal_delay_blocks": 50400
-    },
-    "slasher": {
-      "init_paused_status": 0
-    },
-    "eigenPodManager": {
-      "init_paused_status": 0
-    },
-    "rewardsCoordinator": {
-      "init_paused_status": 0,
-      "MAX_REWARDS_DURATION": 864000,
-      "MAX_RETROACTIVE_LENGTH": 86400,
-      "MAX_FUTURE_LENGTH": 86400,
-      "GENESIS_REWARDS_TIMESTAMP": 1672531200,
-      "rewards_updater_address": "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955",
-      "rewards_updater_key": "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
-      "activation_delay": 0,
-      "calculation_interval_seconds": 86400,
-      "global_operator_commission_bips": 1000
-    }
+  "strategyManager": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "initialStrategyWhitelister": "0x959922be3caee4b8cd9a407cc3ac1c251c2007b1"
+  },
+  "delegationManager": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "minWithdrawalDelayBlocks": 50400
+  },
+  "eigenPodManager": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  },
+  "allocationManager": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "deallocationDelay": 0,
+    "allocationConfigurationDelay": 0
+  },
+  "strategyFactory": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  },
+  "avsDirectory": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  },
+  "rewardsCoordinator": {
+    "initPausedStatus": 0,
+    "initialOwner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "rewardsUpdater": "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955",
+    "activationDelay": 0,
+    "defaultSplitBips": 1000,
+    "calculationIntervalSeconds": 86400,
+    "maxRewardsDuration": 864000,
+    "maxRetroactiveLength": 86400,
+    "maxFutureLength": 86400,
+    "genesisRewardsTimestamp": 1672531200
   }
-  
+}

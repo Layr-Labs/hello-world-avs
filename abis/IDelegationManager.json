@@ -14,32 +14,6 @@
   },
   {
     "type": "function",
-    "name": "DOMAIN_TYPEHASH",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "STAKER_DELEGATION_TYPEHASH",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "beaconChainETHStrategy",
     "inputs": [],
     "outputs": [
@@ -53,32 +27,31 @@
   },
   {
     "type": "function",
-    "name": "calculateCurrentStakerDelegationDigestHash",
+    "name": "burnOperatorShares",
     "inputs": [
-      {
-        "name": "staker",
-        "type": "address",
-        "internalType": "address"
-      },
       {
         "name": "operator",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "expiry",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
+        "name": "strategy",
+        "type": "address",
+        "internalType": "contract IStrategy"
+      },
       {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
+        "name": "prevMaxMagnitude",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "newMaxMagnitude",
+        "type": "uint64",
+        "internalType": "uint64"
       }
     ],
-    "stateMutability": "view"
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -121,46 +94,12 @@
   },
   {
     "type": "function",
-    "name": "calculateStakerDelegationDigestHash",
-    "inputs": [
-      {
-        "name": "staker",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "_stakerNonce",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "operator",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "expiry",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "calculateWithdrawalRoot",
     "inputs": [
       {
         "name": "withdrawal",
         "type": "tuple",
-        "internalType": "struct IDelegationManager.Withdrawal",
+        "internalType": "struct IDelegationManagerTypes.Withdrawal",
         "components": [
           {
             "name": "staker",
@@ -193,7 +132,7 @@
             "internalType": "contract IStrategy[]"
           },
           {
-            "name": "shares",
+            "name": "scaledShares",
             "type": "uint256[]",
             "internalType": "uint256[]"
           }
@@ -216,7 +155,7 @@
       {
         "name": "withdrawal",
         "type": "tuple",
-        "internalType": "struct IDelegationManager.Withdrawal",
+        "internalType": "struct IDelegationManagerTypes.Withdrawal",
         "components": [
           {
             "name": "staker",
@@ -249,7 +188,7 @@
             "internalType": "contract IStrategy[]"
           },
           {
-            "name": "shares",
+            "name": "scaledShares",
             "type": "uint256[]",
             "internalType": "uint256[]"
           }
@@ -259,11 +198,6 @@
         "name": "tokens",
         "type": "address[]",
         "internalType": "contract IERC20[]"
-      },
-      {
-        "name": "middlewareTimesIndex",
-        "type": "uint256",
-        "internalType": "uint256"
       },
       {
         "name": "receiveAsTokens",
@@ -281,7 +215,7 @@
       {
         "name": "withdrawals",
         "type": "tuple[]",
-        "internalType": "struct IDelegationManager.Withdrawal[]",
+        "internalType": "struct IDelegationManagerTypes.Withdrawal[]",
         "components": [
           {
             "name": "staker",
@@ -314,7 +248,7 @@
             "internalType": "contract IStrategy[]"
           },
           {
-            "name": "shares",
+            "name": "scaledShares",
             "type": "uint256[]",
             "internalType": "uint256[]"
           }
@@ -326,11 +260,6 @@
         "internalType": "contract IERC20[][]"
       },
       {
-        "name": "middlewareTimesIndexes",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
-      },
-      {
         "name": "receiveAsTokens",
         "type": "bool[]",
         "internalType": "bool[]"
@@ -338,6 +267,35 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "convertToDepositShares",
+    "inputs": [
+      {
+        "name": "staker",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "strategies",
+        "type": "address[]",
+        "internalType": "contract IStrategy[]"
+      },
+      {
+        "name": "withdrawableShares",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -368,14 +326,14 @@
         "internalType": "address"
       },
       {
-        "name": "strategy",
-        "type": "address",
-        "internalType": "contract IStrategy"
-      },
-      {
-        "name": "shares",
+        "name": "curDepositShares",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "beaconChainSlashingFactorDecrease",
+        "type": "uint64",
+        "internalType": "uint64"
       }
     ],
     "outputs": [],
@@ -389,63 +347,6 @@
         "name": "operator",
         "type": "address",
         "internalType": "address"
-      },
-      {
-        "name": "approverSignatureAndExpiry",
-        "type": "tuple",
-        "internalType": "struct ISignatureUtils.SignatureWithExpiry",
-        "components": [
-          {
-            "name": "signature",
-            "type": "bytes",
-            "internalType": "bytes"
-          },
-          {
-            "name": "expiry",
-            "type": "uint256",
-            "internalType": "uint256"
-          }
-        ]
-      },
-      {
-        "name": "approverSalt",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "delegateToBySignature",
-    "inputs": [
-      {
-        "name": "staker",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "operator",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "stakerSignatureAndExpiry",
-        "type": "tuple",
-        "internalType": "struct ISignatureUtils.SignatureWithExpiry",
-        "components": [
-          {
-            "name": "signature",
-            "type": "bytes",
-            "internalType": "bytes"
-          },
-          {
-            "name": "expiry",
-            "type": "uint256",
-            "internalType": "uint256"
-          }
-        ]
       },
       {
         "name": "approverSignatureAndExpiry",
@@ -537,13 +438,48 @@
   },
   {
     "type": "function",
-    "name": "domainSeparator",
-    "inputs": [],
+    "name": "depositScalingFactor",
+    "inputs": [
+      {
+        "name": "staker",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "strategy",
+        "type": "address",
+        "internalType": "contract IStrategy"
+      }
+    ],
     "outputs": [
       {
         "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDepositedShares",
+    "inputs": [
+      {
+        "name": "staker",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]",
+        "internalType": "contract IStrategy[]"
+      },
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "stateMutability": "view"
@@ -574,8 +510,13 @@
   },
   {
     "type": "function",
-    "name": "getWithdrawalDelay",
+    "name": "getOperatorsShares",
     "inputs": [
+      {
+        "name": "operators",
+        "type": "address[]",
+        "internalType": "address[]"
+      },
       {
         "name": "strategies",
         "type": "address[]",
@@ -585,8 +526,197 @@
     "outputs": [
       {
         "name": "",
+        "type": "uint256[][]",
+        "internalType": "uint256[][]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getQueuedWithdrawal",
+    "inputs": [
+      {
+        "name": "withdrawalRoot",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IDelegationManagerTypes.Withdrawal",
+        "components": [
+          {
+            "name": "staker",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "delegatedTo",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "withdrawer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "startBlock",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "strategies",
+            "type": "address[]",
+            "internalType": "contract IStrategy[]"
+          },
+          {
+            "name": "scaledShares",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getQueuedWithdrawalRoots",
+    "inputs": [
+      {
+        "name": "staker",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getQueuedWithdrawals",
+    "inputs": [
+      {
+        "name": "staker",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "withdrawals",
+        "type": "tuple[]",
+        "internalType": "struct IDelegationManagerTypes.Withdrawal[]",
+        "components": [
+          {
+            "name": "staker",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "delegatedTo",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "withdrawer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "startBlock",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "strategies",
+            "type": "address[]",
+            "internalType": "contract IStrategy[]"
+          },
+          {
+            "name": "scaledShares",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ]
+      },
+      {
+        "name": "shares",
+        "type": "uint256[][]",
+        "internalType": "uint256[][]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getSlashableSharesInQueue",
+    "inputs": [
+      {
+        "name": "operator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "strategy",
+        "type": "address",
+        "internalType": "contract IStrategy"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getWithdrawableShares",
+    "inputs": [
+      {
+        "name": "staker",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "strategies",
+        "type": "address[]",
+        "internalType": "contract IStrategy[]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "withdrawableShares",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "depositShares",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "stateMutability": "view"
@@ -606,7 +736,30 @@
         "internalType": "contract IStrategy"
       },
       {
-        "name": "shares",
+        "name": "prevDepositShares",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "addedShares",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "initialOwner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "initialPausedStatus",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -659,8 +812,8 @@
     "outputs": [
       {
         "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint32",
+        "internalType": "uint32"
       }
     ],
     "stateMutability": "view"
@@ -670,26 +823,14 @@
     "name": "modifyOperatorDetails",
     "inputs": [
       {
-        "name": "newOperatorDetails",
-        "type": "tuple",
-        "internalType": "struct IDelegationManager.OperatorDetails",
-        "components": [
-          {
-            "name": "__deprecated_earningsReceiver",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "delegationApprover",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "stakerOptOutWindowBlocks",
-            "type": "uint32",
-            "internalType": "uint32"
-          }
-        ]
+        "name": "operator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "newDelegationApprover",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -697,72 +838,12 @@
   },
   {
     "type": "function",
-    "name": "operatorDetails",
-    "inputs": [
-      {
-        "name": "operator",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct IDelegationManager.OperatorDetails",
-        "components": [
-          {
-            "name": "__deprecated_earningsReceiver",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "delegationApprover",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "stakerOptOutWindowBlocks",
-            "type": "uint32",
-            "internalType": "uint32"
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "operatorShares",
-    "inputs": [
-      {
-        "name": "operator",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "strategy",
-        "type": "address",
-        "internalType": "contract IStrategy"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "queueWithdrawals",
     "inputs": [
       {
-        "name": "queuedWithdrawalParams",
+        "name": "params",
         "type": "tuple[]",
-        "internalType": "struct IDelegationManager.QueuedWithdrawalParams[]",
+        "internalType": "struct IDelegationManagerTypes.QueuedWithdrawalParams[]",
         "components": [
           {
             "name": "strategies",
@@ -770,12 +851,12 @@
             "internalType": "contract IStrategy[]"
           },
           {
-            "name": "shares",
+            "name": "depositShares",
             "type": "uint256[]",
             "internalType": "uint256[]"
           },
           {
-            "name": "withdrawer",
+            "name": "__deprecated_withdrawer",
             "type": "address",
             "internalType": "address"
           }
@@ -793,29 +874,58 @@
   },
   {
     "type": "function",
+    "name": "redelegate",
+    "inputs": [
+      {
+        "name": "newOperator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "newOperatorApproverSig",
+        "type": "tuple",
+        "internalType": "struct ISignatureUtils.SignatureWithExpiry",
+        "components": [
+          {
+            "name": "signature",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "expiry",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "approverSalt",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "withdrawalRoots",
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "registerAsOperator",
     "inputs": [
       {
-        "name": "registeringOperatorDetails",
-        "type": "tuple",
-        "internalType": "struct IDelegationManager.OperatorDetails",
-        "components": [
-          {
-            "name": "__deprecated_earningsReceiver",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "delegationApprover",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "stakerOptOutWindowBlocks",
-            "type": "uint32",
-            "internalType": "uint32"
-          }
-        ]
+        "name": "initDelegationApprover",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "allocationDelay",
+        "type": "uint32",
+        "internalType": "uint32"
       },
       {
         "name": "metadataURI",
@@ -825,63 +935,6 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "stakerNonce",
-    "inputs": [
-      {
-        "name": "staker",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "stakerOptOutWindowBlocks",
-    "inputs": [
-      {
-        "name": "operator",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "strategyWithdrawalDelayBlocks",
-    "inputs": [
-      {
-        "name": "strategy",
-        "type": "address",
-        "internalType": "contract IStrategy"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -895,7 +948,7 @@
     ],
     "outputs": [
       {
-        "name": "withdrawalRoot",
+        "name": "withdrawalRoots",
         "type": "bytes32[]",
         "internalType": "bytes32[]"
       }
@@ -907,6 +960,11 @@
     "name": "updateOperatorMetadataURI",
     "inputs": [
       {
+        "name": "operator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
         "name": "metadataURI",
         "type": "string",
         "internalType": "string"
@@ -917,26 +975,7 @@
   },
   {
     "type": "event",
-    "name": "MinWithdrawalDelayBlocksSet",
-    "inputs": [
-      {
-        "name": "previousValue",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "newValue",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "OperatorDetailsModified",
+    "name": "DelegationApproverUpdated",
     "inputs": [
       {
         "name": "operator",
@@ -945,27 +984,35 @@
         "internalType": "address"
       },
       {
-        "name": "newOperatorDetails",
-        "type": "tuple",
+        "name": "newDelegationApprover",
+        "type": "address",
         "indexed": false,
-        "internalType": "struct IDelegationManager.OperatorDetails",
-        "components": [
-          {
-            "name": "__deprecated_earningsReceiver",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "delegationApprover",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "stakerOptOutWindowBlocks",
-            "type": "uint32",
-            "internalType": "uint32"
-          }
-        ]
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "DepositScalingFactorUpdated",
+    "inputs": [
+      {
+        "name": "staker",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "strategy",
+        "type": "address",
+        "indexed": false,
+        "internalType": "contract IStrategy"
+      },
+      {
+        "name": "newDepositScalingFactor",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1000,27 +1047,35 @@
         "internalType": "address"
       },
       {
-        "name": "operatorDetails",
-        "type": "tuple",
+        "name": "delegationApprover",
+        "type": "address",
         "indexed": false,
-        "internalType": "struct IDelegationManager.OperatorDetails",
-        "components": [
-          {
-            "name": "__deprecated_earningsReceiver",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "delegationApprover",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "stakerOptOutWindowBlocks",
-            "type": "uint32",
-            "internalType": "uint32"
-          }
-        ]
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OperatorSharesBurned",
+    "inputs": [
+      {
+        "name": "operator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "strategy",
+        "type": "address",
+        "indexed": false,
+        "internalType": "contract IStrategy"
+      },
+      {
+        "name": "shares",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1089,6 +1144,81 @@
   },
   {
     "type": "event",
+    "name": "SlashingWithdrawalCompleted",
+    "inputs": [
+      {
+        "name": "withdrawalRoot",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SlashingWithdrawalQueued",
+    "inputs": [
+      {
+        "name": "withdrawalRoot",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "withdrawal",
+        "type": "tuple",
+        "indexed": false,
+        "internalType": "struct IDelegationManagerTypes.Withdrawal",
+        "components": [
+          {
+            "name": "staker",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "delegatedTo",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "withdrawer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "startBlock",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "strategies",
+            "type": "address[]",
+            "internalType": "contract IStrategy[]"
+          },
+          {
+            "name": "scaledShares",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ]
+      },
+      {
+        "name": "sharesToWithdraw",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "StakerDelegated",
     "inputs": [
       {
@@ -1145,97 +1275,88 @@
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "StrategyWithdrawalDelayBlocksSet",
-    "inputs": [
-      {
-        "name": "strategy",
-        "type": "address",
-        "indexed": false,
-        "internalType": "contract IStrategy"
-      },
-      {
-        "name": "previousValue",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "newValue",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
+    "type": "error",
+    "name": "ActivelyDelegated",
+    "inputs": []
   },
   {
-    "type": "event",
-    "name": "WithdrawalCompleted",
-    "inputs": [
-      {
-        "name": "withdrawalRoot",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
+    "type": "error",
+    "name": "CallerCannotUndelegate",
+    "inputs": []
   },
   {
-    "type": "event",
-    "name": "WithdrawalQueued",
-    "inputs": [
-      {
-        "name": "withdrawalRoot",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "withdrawal",
-        "type": "tuple",
-        "indexed": false,
-        "internalType": "struct IDelegationManager.Withdrawal",
-        "components": [
-          {
-            "name": "staker",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "delegatedTo",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "withdrawer",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "nonce",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "startBlock",
-            "type": "uint32",
-            "internalType": "uint32"
-          },
-          {
-            "name": "strategies",
-            "type": "address[]",
-            "internalType": "contract IStrategy[]"
-          },
-          {
-            "name": "shares",
-            "type": "uint256[]",
-            "internalType": "uint256[]"
-          }
-        ]
-      }
-    ],
-    "anonymous": false
+    "type": "error",
+    "name": "FullySlashed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InputArrayLengthMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InputArrayLengthZero",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidSignature",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotActivelyDelegated",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OnlyAllocationManager",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OnlyEigenPodManager",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OnlyStrategyManagerOrEigenPodManager",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OperatorNotRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OperatorsCannotUndelegate",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SaltSpent",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SignatureExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WithdrawalDelayNotElapsed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WithdrawalNotQueued",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WithdrawerNotCaller",
+    "inputs": []
   }
 ]

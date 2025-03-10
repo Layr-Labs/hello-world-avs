@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "../script/utils/SetupPaymentsLib.sol";
+import "../script/utils/SetupDistributionsLib.sol";
 import "../script/utils/CoreDeploymentLib.sol";
 import "../script/utils/HelloWorldDeploymentLib.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
@@ -16,10 +16,9 @@ import {HelloWorldTaskManagerSetup} from "test/HelloWorldServiceManager.t.sol";
 import {ECDSAServiceManagerBase} from
     "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {
-    Quorum,
-    StrategyParams,
+    IECDSAStakeRegistryTypes,
     IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 
 contract TestConstants {
@@ -33,15 +32,14 @@ contract TestConstants {
     uint256 NUM_EARNERS = 4;
 }
 
-contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup {
-    using SetupPaymentsLib for *;
+contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup {
+    using SetupDistributionsLib for *;
 
     Vm cheats = Vm(VM_ADDRESS);
 
     IRewardsCoordinator public rewardsCoordinator;
     IHelloWorldServiceManager public helloWorldServiceManager;
     IStrategy public strategy;
-    address proxyAdmin;
 
     address rewardsInitiator = address(1);
     address rewardsOwner = address(2);
@@ -49,13 +47,20 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     function setUp() public virtual override {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         coreConfigData =
-            CoreDeploymentLib.readDeploymentConfigValues("test/mockData/config/core/", 1337); // TODO: Fix this to correct path
+            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+
+        vm.prank(coreConfigData.strategyManager.initialOwner);
+        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
+            coreDeployment.strategyFactory
+        );
 
         mockToken = new ERC20Mock();
 
         strategy = addStrategy(address(mockToken)); // Similar function to HW_SM test using strategy factory
-        quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
+        quorum.strategies.push(
+            IECDSAStakeRegistryTypes.StrategyParams({strategy: strategy, multiplier: 10_000})
+        );
 
         helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
             proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner
@@ -82,16 +87,16 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint32 endTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() + 1 weeks;
         cheats.warp(endTimestamp + 1);
 
-        bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(
+        bytes32[] memory tokenLeaves = SetupDistributionsLib.createTokenLeaves(
             rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy)
         );
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
-            SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
+            SetupDistributionsLib.createEarnerLeaves(earners, tokenLeaves);
 
         string memory filePath = "testSubmitRoot.json";
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
-        SetupPaymentsLib.submitRoot(
+        SetupDistributionsLib.submitRoot(
             rewardsCoordinator,
             tokenLeaves,
             earnerLeaves,
@@ -116,7 +121,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
         string memory filePath = "testWriteLeavesToJson.json";
 
-        SetupPaymentsLib.writeLeavesToJson(leaves, tokenLeaves, filePath);
+        SetupDistributionsLib.writeLeavesToJson(leaves, tokenLeaves, filePath);
 
         assertTrue(vm.exists(filePath), "JSON file should be created");
         vm.removeFile(filePath);
@@ -127,8 +132,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         string memory jsonContent = '{"leaves":["0x1234"], "tokenLeaves":["0x5678"]}';
         vm.writeFile(filePath, jsonContent);
 
-        SetupPaymentsLib.PaymentLeaves memory paymentLeaves =
-            SetupPaymentsLib.parseLeavesFromJson(filePath);
+        SetupDistributionsLib.PaymentLeaves memory paymentLeaves =
+            SetupDistributionsLib.parseLeavesFromJson(filePath);
 
         assertEq(paymentLeaves.leaves.length, 1, "Incorrect number of leaves");
         assertEq(paymentLeaves.tokenLeaves.length, 1, "Incorrect number of token leaves");
@@ -137,8 +142,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
     }
 
     function testGenerateMerkleProof() public view {
-        SetupPaymentsLib.PaymentLeaves memory paymentLeaves =
-            SetupPaymentsLib.parseLeavesFromJson("test/mockData/scratch/payments_test.json");
+        SetupDistributionsLib.PaymentLeaves memory paymentLeaves =
+            SetupDistributionsLib.parseLeavesFromJson("test/mockData/scratch/payments_test.json");
 
         bytes32[] memory leaves = paymentLeaves.leaves;
         uint256 indexToProve = 0;
@@ -149,14 +154,14 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
 
         bytes memory proofBytesConstructed = abi.encodePacked(proof);
         bytes memory proofBytesCalculated =
-            SetupPaymentsLib.generateMerkleProof(leaves, indexToProve);
+            SetupDistributionsLib.generateMerkleProof(leaves, indexToProve);
 
         require(
             keccak256(proofBytesConstructed) == keccak256(proofBytesCalculated),
             "Proofs do not match"
         );
 
-        bytes32 root = SetupPaymentsLib.merkleizeKeccak(leaves);
+        bytes32 root = SetupDistributionsLib.merkleizeKeccak(leaves);
 
         require(
             Merkle.verifyInclusionKeccak(
@@ -176,14 +181,14 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint32 endTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() + 1 weeks;
         cheats.warp(endTimestamp + 1);
 
-        bytes32[] memory tokenLeaves = SetupPaymentsLib.createTokenLeaves(
+        bytes32[] memory tokenLeaves = SetupDistributionsLib.createTokenLeaves(
             rewardsCoordinator, NUM_TOKEN_EARNINGS, TOKEN_EARNINGS, address(strategy)
         );
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
-            SetupPaymentsLib.createEarnerLeaves(earners, tokenLeaves);
+            SetupDistributionsLib.createEarnerLeaves(earners, tokenLeaves);
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
-        SetupPaymentsLib.submitRoot(
+        SetupDistributionsLib.submitRoot(
             rewardsCoordinator,
             tokenLeaves,
             earnerLeaves,
@@ -198,7 +203,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         cheats.warp(block.timestamp + 2 weeks);
 
         cheats.startPrank(earnerLeaves[INDEX_TO_PROVE].earner, earnerLeaves[INDEX_TO_PROVE].earner);
-        SetupPaymentsLib.processClaim(
+        SetupDistributionsLib.processClaim(
             rewardsCoordinator,
             filePath,
             INDEX_TO_PROVE,
@@ -218,7 +223,8 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         uint256 numPayments = 5;
         uint256 amountPerPayment = 100;
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
-        uint32 startTimestamp = 10 days;
+        uint32 genesisTimestamp = rewardsCoordinator.GENESIS_REWARDS_TIMESTAMP();
+        uint32 startTimestamp = genesisTimestamp + 10 days;
         cheats.warp(startTimestamp + 1);
 
         cheats.prank(rewardsInitiator);
@@ -227,7 +233,7 @@ contract SetupPaymentsLibTest is Test, TestConstants, HelloWorldTaskManagerSetup
         );
 
         cheats.startPrank(rewardsInitiator);
-        SetupPaymentsLib.createAVSRewardsSubmissions(
+        SetupDistributionsLib.createAVSRewardsSubmissions(
             address(helloWorldDeployment.helloWorldServiceManager),
             address(strategy),
             numPayments,
