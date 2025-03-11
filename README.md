@@ -18,7 +18,7 @@ That's it. This simple flow highlights some of the core mechanics of how AVSs wo
 
 ### Slashing
 
-The example includes a simple slashing condition: "a task MUST be responded by every operator before N blocks have passed since the task creation".
+The example includes a simple slashing condition: "a task MUST be responded by enough operators before N blocks have passed since the task creation".
 In case this condition isn't satisfied by some operator, anyone can permissionlessly slash them via calling `HelloWorldServiceManager.slashOperator`.
 
 # Local Devnet Deployment
