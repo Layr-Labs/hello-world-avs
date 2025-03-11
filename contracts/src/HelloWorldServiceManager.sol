@@ -189,8 +189,13 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             block.number > task.taskCreatedBlock + _MAX_RESPONSE_INTERVAL_BLOCKS,
             "Task response time has not expired yet"
         );
+        // check operator was registered when task was created
+        uint256 operatorWeight = ECDSAStakeRegistry(stakeRegistry).getOperatorWeightAtBlock(
+            operator, task.taskCreatedBlock
+        );
+        require(operatorWeight > 0, "Operator was not registered when task was created");
 
-        // updating the storage with task responses
+        // we update the storage with a sentinel value
         allTaskResponses[operator][referenceTaskIndex] = "slashed";
 
         // TODO: slash operator
