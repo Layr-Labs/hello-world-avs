@@ -190,14 +190,6 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             "Task response time has not expired yet"
         );
 
-        uint256 operatorWeight = ECDSAStakeRegistry(stakeRegistry).getOperatorWeightAtBlock(
-            operator, task.taskCreatedBlock
-        );
-        uint256 threshold = ECDSAStakeRegistry(stakeRegistry)
-            .getLastCheckpointThresholdWeightAtBlock(task.taskCreatedBlock);
-
-        require(operatorWeight > threshold, "Operator does not have enough stake to be slashed");
-
         // updating the storage with task responses
         allTaskResponses[operator][referenceTaskIndex] = "slashed";
 
