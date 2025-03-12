@@ -73,18 +73,9 @@ contract SetupDistributions is Script, Test {
 
         uint32 diff = (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
 
-        // if (rewardsCoordinator.currRewardsCalculationEndTimestamp() == 0) {
-        //     startTimestamp =
-        //         uint32(block.timestamp) - diff;
-        // } else {
-        //     // startTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() - DURATION
-        //     //     + CALCULATION_INTERVAL_SECONDS;
-        //     startTimestamp =rewardsCoordinator.currRewardsCalculationEndTimestamp();
-        // }
-
         startTimestamp = uint32(block.timestamp) - diff;
 
-        endTimestamp = startTimestamp + diff - 1;
+        endTimestamp = uint32(block.timestamp) - 1;
         emit log_named_uint("startTimestamp", startTimestamp);
         emit log_named_uint("endTimestamp", endTimestamp);
         emit log_named_uint("block.timestamp", block.timestamp);
