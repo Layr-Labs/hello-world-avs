@@ -58,14 +58,10 @@ contract SetupDistributions is Script, Test {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
-        coreDeployment =
-            CoreDeploymentParsingLib.readDeploymentJson("deployments/core/", block.chainid);
-        coreConfig =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("config/core/", block.chainid);
-        helloWorldDeployment =
-            HelloWorldDeploymentLib.readDeploymentJson("deployments/hello-world/", block.chainid);
-        helloWorldConfig =
-            HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
+        coreDeployment = CoreDeploymentParsingLib.readDeploymentJson("deployments/core/", block.chainid);
+        coreConfig = CoreDeploymentParsingLib.readDeploymentConfigValues("config/core/", block.chainid);
+        helloWorldDeployment = HelloWorldDeploymentLib.readDeploymentJson("deployments/hello-world/", block.chainid);
+        helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
         rewardsCoordinator = RewardsCoordinator(coreDeployment.rewardsCoordinator);
 
@@ -86,8 +82,7 @@ contract SetupDistributions is Script, Test {
         //     startTimestamp =rewardsCoordinator.currRewardsCalculationEndTimestamp();
         // }
 
-        startTimestamp =
-                uint32(block.timestamp) - diff;
+        startTimestamp = uint32(block.timestamp) - diff;
 
         endTimestamp = startTimestamp + diff - 1;
         emit log_named_uint("startTimestamp", startTimestamp);
@@ -114,11 +109,10 @@ contract SetupDistributions is Script, Test {
     function runOperatorDirected() external {
         vm.startBroadcast(helloWorldConfig.rewardsInitiatorKey);
         if (rewardsCoordinator.currRewardsCalculationEndTimestamp() == 0) {
-            startTimestamp =
-                uint32(block.timestamp) - (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
+            startTimestamp = uint32(block.timestamp) - (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
         } else {
-            startTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() - DURATION
-                + CALCULATION_INTERVAL_SECONDS;
+            startTimestamp =
+                rewardsCoordinator.currRewardsCalculationEndTimestamp() - DURATION + CALCULATION_INTERVAL_SECONDS;
         }
 
         endTimestamp = startTimestamp + 1;
@@ -144,22 +138,13 @@ contract SetupDistributions is Script, Test {
         amountPerPayment = uint32(amountPerPayment * nonce);
 
         vm.startBroadcast(deployer);
-        earnerLeaves =
-            _getEarnerLeaves(_getEarners(deployer), amountPerPayment, helloWorldDeployment.strategy);
-        processClaim(
-            filePath, indexToProve, recipient, earnerLeaves[indexToProve], amountPerPayment
-        );
+        earnerLeaves = _getEarnerLeaves(_getEarners(deployer), amountPerPayment, helloWorldDeployment.strategy);
+        processClaim(filePath, indexToProve, recipient, earnerLeaves[indexToProve], amountPerPayment);
         vm.stopBroadcast();
     }
 
-    function createAVSRewardsSubmissions(
-        uint256 numPayments,
-        uint256 amountPerPayment,
-        uint32 startTimestamp
-    ) public {
-        ERC20Mock(helloWorldDeployment.token).mint(
-            helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments
-        );
+    function createAVSRewardsSubmissions(uint256 numPayments, uint256 amountPerPayment, uint32 startTimestamp) public {
+        ERC20Mock(helloWorldDeployment.token).mint(helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments);
         ERC20Mock(helloWorldDeployment.token).increaseAllowance(
             helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments
         );
@@ -179,9 +164,7 @@ contract SetupDistributions is Script, Test {
         uint256 amountPerPayment,
         uint32 startTimestamp
     ) public {
-        ERC20Mock(helloWorldDeployment.token).mint(
-            helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments
-        );
+        ERC20Mock(helloWorldDeployment.token).mint(helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments);
         ERC20Mock(helloWorldDeployment.token).increaseAllowance(
             helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments
         );
@@ -253,16 +236,13 @@ contract SetupDistributions is Script, Test {
         );
     }
 
-    function _getEarnerLeaves(
-        address[] memory earners,
-        uint32 amountPerPayment,
-        address strategy
-    ) internal view returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
+    function _getEarnerLeaves(address[] memory earners, uint32 amountPerPayment, address strategy)
+        internal
+        view
+        returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory)
+    {
         bytes32[] memory tokenLeaves = SetupDistributionsLib.createTokenLeaves(
-            IRewardsCoordinator(coreDeployment.rewardsCoordinator),
-            NUM_TOKEN_EARNINGS,
-            amountPerPayment,
-            strategy
+            IRewardsCoordinator(coreDeployment.rewardsCoordinator), NUM_TOKEN_EARNINGS, amountPerPayment, strategy
         );
 
         IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
@@ -271,9 +251,7 @@ contract SetupDistributions is Script, Test {
         return earnerLeaves;
     }
 
-    function _getEarners(
-        address deployer
-    ) internal pure returns (address[] memory) {
+    function _getEarners(address deployer) internal pure returns (address[] memory) {
         address[] memory earners = new address[](NUM_EARNERS);
         for (uint256 i = 0; i < earners.length; i++) {
             earners[i] = deployer;

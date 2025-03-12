@@ -13,12 +13,8 @@ import "../script/DeployEigenLayerCore.s.sol";
 import "../script/HelloWorldDeployer.s.sol";
 import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 import {HelloWorldTaskManagerSetup} from "test/HelloWorldServiceManager.t.sol";
-import {ECDSAServiceManagerBase} from
-    "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
-import {
-    IECDSAStakeRegistryTypes,
-    IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
+import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
+import {IECDSAStakeRegistryTypes, IStrategy} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 
 contract TestConstants {
@@ -46,31 +42,23 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
 
     function setUp() public virtual override {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
-        coreConfigData =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
+        coreConfigData = CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
 
         vm.prank(coreConfigData.strategyManager.initialOwner);
-        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
-            coreDeployment.strategyFactory
-        );
+        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(coreDeployment.strategyFactory);
 
         mockToken = new ERC20Mock();
 
         strategy = addStrategy(address(mockToken)); // Similar function to HW_SM test using strategy factory
-        quorum.strategies.push(
-            IECDSAStakeRegistryTypes.StrategyParams({strategy: strategy, multiplier: 10_000})
-        );
+        quorum.strategies.push(IECDSAStakeRegistryTypes.StrategyParams({strategy: strategy, multiplier: 10_000}));
 
-        helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
-            proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner
-        );
+        helloWorldDeployment =
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
         labelContracts(coreDeployment, helloWorldDeployment);
 
         cheats.prank(rewardsOwner);
-        ECDSAServiceManagerBase(helloWorldDeployment.helloWorldServiceManager).setRewardsInitiator(
-            rewardsInitiator
-        );
+        ECDSAServiceManagerBase(helloWorldDeployment.helloWorldServiceManager).setRewardsInitiator(rewardsInitiator);
 
         rewardsCoordinator = IRewardsCoordinator(coreDeployment.rewardsCoordinator);
 
@@ -97,14 +85,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupDistributionsLib.submitRoot(
-            rewardsCoordinator,
-            tokenLeaves,
-            earnerLeaves,
-            address(strategy),
-            endTimestamp,
-            NUM_EARNERS,
-            1,
-            filePath
+            rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath
         );
         cheats.stopPrank();
         vm.removeFile(filePath);
@@ -132,8 +113,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
         string memory jsonContent = '{"leaves":["0x1234"], "tokenLeaves":["0x5678"]}';
         vm.writeFile(filePath, jsonContent);
 
-        SetupDistributionsLib.PaymentLeaves memory paymentLeaves =
-            SetupDistributionsLib.parseLeavesFromJson(filePath);
+        SetupDistributionsLib.PaymentLeaves memory paymentLeaves = SetupDistributionsLib.parseLeavesFromJson(filePath);
 
         assertEq(paymentLeaves.leaves.length, 1, "Incorrect number of leaves");
         assertEq(paymentLeaves.tokenLeaves.length, 1, "Incorrect number of token leaves");
@@ -153,21 +133,13 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
         proof[1] = keccak256(abi.encodePacked(leaves[2], leaves[3]));
 
         bytes memory proofBytesConstructed = abi.encodePacked(proof);
-        bytes memory proofBytesCalculated =
-            SetupDistributionsLib.generateMerkleProof(leaves, indexToProve);
+        bytes memory proofBytesCalculated = SetupDistributionsLib.generateMerkleProof(leaves, indexToProve);
 
-        require(
-            keccak256(proofBytesConstructed) == keccak256(proofBytesCalculated),
-            "Proofs do not match"
-        );
+        require(keccak256(proofBytesConstructed) == keccak256(proofBytesCalculated), "Proofs do not match");
 
         bytes32 root = SetupDistributionsLib.merkleizeKeccak(leaves);
 
-        require(
-            Merkle.verifyInclusionKeccak(
-                proofBytesCalculated, root, leaves[indexToProve], indexToProve
-            )
-        );
+        require(Merkle.verifyInclusionKeccak(proofBytesCalculated, root, leaves[indexToProve], indexToProve));
     }
 
     function testProcessClaim() public {
@@ -189,14 +161,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupDistributionsLib.submitRoot(
-            rewardsCoordinator,
-            tokenLeaves,
-            earnerLeaves,
-            address(strategy),
-            endTimestamp,
-            NUM_EARNERS,
-            1,
-            filePath
+            rewardsCoordinator, tokenLeaves, earnerLeaves, address(strategy), endTimestamp, NUM_EARNERS, 1, filePath
         );
         cheats.stopPrank();
 
@@ -228,9 +193,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
         cheats.warp(startTimestamp + 1);
 
         cheats.prank(rewardsInitiator);
-        mockToken.increaseAllowance(
-            helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments
-        );
+        mockToken.increaseAllowance(helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments);
 
         cheats.startPrank(rewardsInitiator);
         SetupDistributionsLib.createAVSRewardsSubmissions(

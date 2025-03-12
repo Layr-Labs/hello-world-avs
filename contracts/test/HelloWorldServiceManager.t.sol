@@ -12,26 +12,17 @@ import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 import {ERC20Mock} from "./ERC20Mock.sol";
 import {IERC20, StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 
-import {
-    IECDSAStakeRegistryTypes,
-    IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
+import {IECDSAStakeRegistryTypes, IStrategy} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 import {IStrategyManager} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
-import {
-    IDelegationManager,
-    IDelegationManagerTypes
-} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
+import {IDelegationManager, IDelegationManagerTypes} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {DelegationManager} from "@eigenlayer/contracts/core/DelegationManager.sol";
 import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
-import {
-    IAVSDirectory, IAVSDirectoryTypes
-} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
+import {IAVSDirectory, IAVSDirectoryTypes} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {Test, console2 as console} from "forge-std/Test.sol";
 import {IHelloWorldServiceManager} from "../src/IHelloWorldServiceManager.sol";
-import {ECDSAUpgradeable} from
-    "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
+import {ECDSAUpgradeable} from "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 
 contract HelloWorldTaskManagerSetup is Test {
     IECDSAStakeRegistryTypes.Quorum internal quorum;
@@ -69,33 +60,25 @@ contract HelloWorldTaskManagerSetup is Test {
 
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
-        coreConfigData =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
+        coreConfigData = CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
 
         vm.prank(coreConfigData.strategyManager.initialOwner);
-        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
-            coreDeployment.strategyFactory
-        );
+        StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(coreDeployment.strategyFactory);
 
         mockToken = new ERC20Mock();
 
         IStrategy strategy = addStrategy(address(mockToken));
-        quorum.strategies.push(
-            IECDSAStakeRegistryTypes.StrategyParams({strategy: strategy, multiplier: 10_000})
-        );
+        quorum.strategies.push(IECDSAStakeRegistryTypes.StrategyParams({strategy: strategy, multiplier: 10_000}));
 
-        helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
-            proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr
-        );
+        helloWorldDeployment =
+            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, owner.key.addr, owner.key.addr);
         helloWorldDeployment.strategy = address(strategy);
         helloWorldDeployment.token = address(mockToken);
         labelContracts(coreDeployment, helloWorldDeployment);
     }
 
-    function addStrategy(
-        address token
-    ) public returns (IStrategy) {
+    function addStrategy(address token) public returns (IStrategy) {
         if (tokenToStrategy[token] != IStrategy(address(0))) {
             return tokenToStrategy[token];
         }
@@ -123,18 +106,12 @@ contract HelloWorldTaskManagerSetup is Test {
         vm.label(helloWorldDeployment.stakeRegistry, "StakeRegistry");
     }
 
-    function signWithOperatorKey(
-        Operator memory operator,
-        bytes32 digest
-    ) internal pure returns (bytes memory) {
+    function signWithOperatorKey(Operator memory operator, bytes32 digest) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(operator.key.privateKey, digest);
         return abi.encodePacked(r, s, v);
     }
 
-    function signWithSigningKey(
-        Operator memory operator,
-        bytes32 digest
-    ) internal pure returns (bytes memory) {
+    function signWithSigningKey(Operator memory operator, bytes32 digest) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(operator.signingKey.privateKey, digest);
         return abi.encodePacked(r, s, v);
     }
@@ -143,11 +120,10 @@ contract HelloWorldTaskManagerSetup is Test {
         mockToken.mint(operator.key.addr, amount);
     }
 
-    function depositTokenIntoStrategy(
-        Operator memory operator,
-        address token,
-        uint256 amount
-    ) internal returns (uint256) {
+    function depositTokenIntoStrategy(Operator memory operator, address token, uint256 amount)
+        internal
+        returns (uint256)
+    {
         IStrategy strategy = IStrategy(tokenToStrategy[token]);
         require(address(strategy) != address(0), "Strategy was not found");
         IStrategyManager strategyManager = IStrategyManager(coreDeployment.strategyManager);
@@ -160,41 +136,34 @@ contract HelloWorldTaskManagerSetup is Test {
         return shares;
     }
 
-    function registerAsOperator(
-        Operator memory operator
-    ) internal {
+    function registerAsOperator(Operator memory operator) internal {
         IDelegationManager delegationManager = IDelegationManager(coreDeployment.delegationManager);
 
         vm.prank(operator.key.addr);
         delegationManager.registerAsOperator(address(0), 0, "");
     }
 
-    function registerOperatorToAVS(
-        Operator memory operator
-    ) internal {
+    function registerOperatorToAVS(Operator memory operator) internal {
         ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
         AVSDirectory avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
 
         bytes32 salt = keccak256(abi.encodePacked(block.timestamp, operator.key.addr));
         uint256 expiry = block.timestamp + 1 hours;
 
-        bytes32 operatorRegistrationDigestHash = avsDirectory
-            .calculateOperatorAVSRegistrationDigestHash(
+        bytes32 operatorRegistrationDigestHash = avsDirectory.calculateOperatorAVSRegistrationDigestHash(
             operator.key.addr, address(helloWorldDeployment.helloWorldServiceManager), salt, expiry
         );
 
         bytes memory signature = signWithOperatorKey(operator, operatorRegistrationDigestHash);
 
-        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature = ISignatureUtils
-            .SignatureWithSaltAndExpiry({signature: signature, salt: salt, expiry: expiry});
+        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature =
+            ISignatureUtils.SignatureWithSaltAndExpiry({signature: signature, salt: salt, expiry: expiry});
 
         vm.prank(address(operator.key.addr));
         stakeRegistry.registerOperatorWithSignature(operatorSignature, operator.signingKey.addr);
     }
 
-    function deregisterOperatorFromAVS(
-        Operator memory operator
-    ) internal {
+    function deregisterOperatorFromAVS(Operator memory operator) internal {
         ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
 
         vm.prank(operator.key.addr);
@@ -202,10 +171,8 @@ contract HelloWorldTaskManagerSetup is Test {
     }
 
     function createAndAddOperator() internal returns (Operator memory) {
-        Vm.Wallet memory operatorKey =
-            vm.createWallet(string.concat("operator", vm.toString(operators.length)));
-        Vm.Wallet memory signingKey =
-            vm.createWallet(string.concat("signing", vm.toString(operators.length)));
+        Vm.Wallet memory operatorKey = vm.createWallet(string.concat("operator", vm.toString(operators.length)));
+        Vm.Wallet memory signingKey = vm.createWallet(string.concat("signing", vm.toString(operators.length)));
 
         Operator memory newOperator = Operator({key: operatorKey, signingKey: signingKey});
 
@@ -213,9 +180,7 @@ contract HelloWorldTaskManagerSetup is Test {
         return newOperator;
     }
 
-    function updateOperatorWeights(
-        Operator[] memory _operators
-    ) internal {
+    function updateOperatorWeights(Operator[] memory _operators) internal {
         ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
 
         address[] memory operatorAddresses = new address[](_operators.length);
@@ -226,10 +191,11 @@ contract HelloWorldTaskManagerSetup is Test {
         stakeRegistry.updateOperators(operatorAddresses);
     }
 
-    function getSortedOperatorSignatures(
-        Operator[] memory _operators,
-        bytes32 digest
-    ) internal pure returns (bytes[] memory) {
+    function getSortedOperatorSignatures(Operator[] memory _operators, bytes32 digest)
+        internal
+        pure
+        returns (bytes[] memory)
+    {
         uint256 length = _operators.length;
         bytes[] memory signatures = new bytes[](length);
         address[] memory addresses = new address[](length);
@@ -303,10 +269,7 @@ contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
         );
 
         assertTrue(helloWorldDeployment.stakeRegistry != address(0), "StakeRegistry not deployed");
-        assertTrue(
-            helloWorldDeployment.helloWorldServiceManager != address(0),
-            "HelloWorldServiceManager not deployed"
-        );
+        assertTrue(helloWorldDeployment.helloWorldServiceManager != address(0), "HelloWorldServiceManager not deployed");
         assertTrue(coreDeployment.delegationManager != address(0), "DelegationManager not deployed");
         assertTrue(coreDeployment.avsDirectory != address(0), "AVSDirectory not deployed");
         assertTrue(coreDeployment.strategyManager != address(0), "StrategyManager not deployed");
@@ -353,11 +316,8 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
         for (uint256 i = 0; i < OPERATOR_COUNT; i++) {
             address operatorAddr = operators[i].key.addr;
 
-            uint256 operatorShares =
-                delegationManager.operatorShares(operatorAddr, tokenToStrategy[address(mockToken)]);
-            assertEq(
-                operatorShares, DEPOSIT_AMOUNT, "Operator shares in DelegationManager incorrect"
-            );
+            uint256 operatorShares = delegationManager.operatorShares(operatorAddr, tokenToStrategy[address(mockToken)]);
+            assertEq(operatorShares, DEPOSIT_AMOUNT, "Operator shares in DelegationManager incorrect");
         }
     }
 
@@ -393,12 +353,9 @@ contract CreateTask is HelloWorldTaskManagerSetup {
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
 
         require(
-            sha256(abi.encodePacked(newTask.name)) == sha256(abi.encodePacked(taskName)),
-            "Task name not set correctly"
+            sha256(abi.encodePacked(newTask.name)) == sha256(abi.encodePacked(taskName)), "Task name not set correctly"
         );
-        require(
-            newTask.taskCreatedBlock == uint32(block.number), "Task created block not set correctly"
-        );
+        require(newTask.taskCreatedBlock == uint32(block.number), "Task created block not set correctly");
     }
 }
 
