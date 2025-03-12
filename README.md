@@ -96,7 +96,7 @@ In a terminal, start a new instance of anvil and deploy the core and avs contrac
 
 ```sh
 # Start anvil
-npm run start:anvil-quick
+npm run start:anvil
 # Deploy the EigenLayer contracts
 npm run deploy:core
 
@@ -125,8 +125,12 @@ npm run create-operator-directed-distributions-root
 npm run claim-distributions
 ```
 
-In order to create and claim multiple distributions (run the above two commands more than once), you must wait up to 5 minutes.
-
+To run either flow multiple times, run:
+```sh
+#Advances anvil chain by 2 days
+npm run advance:anvil
+```
+You can now run the root creation and payment claim flows once again.
 ### Help and Support
 
 For help and support deploying and modifying this repo for your AVS, please:

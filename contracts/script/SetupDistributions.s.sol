@@ -75,18 +75,28 @@ contract SetupDistributions is Script, Test {
     function run() external {
         vm.startBroadcast(helloWorldConfig.rewardsInitiatorKey);
 
-        if (rewardsCoordinator.currRewardsCalculationEndTimestamp() == 0) {
-            startTimestamp =
-                uint32(block.timestamp) - (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
-        } else {
-            startTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() - DURATION
-                + CALCULATION_INTERVAL_SECONDS;
-        }
+        uint32 diff = (uint32(block.timestamp) % CALCULATION_INTERVAL_SECONDS);
 
-        endTimestamp = startTimestamp + 1;
+        // if (rewardsCoordinator.currRewardsCalculationEndTimestamp() == 0) {
+        //     startTimestamp =
+        //         uint32(block.timestamp) - diff;
+        // } else {
+        //     // startTimestamp = rewardsCoordinator.currRewardsCalculationEndTimestamp() - DURATION
+        //     //     + CALCULATION_INTERVAL_SECONDS;
+        //     startTimestamp =rewardsCoordinator.currRewardsCalculationEndTimestamp();
+        // }
+
+        startTimestamp =
+                uint32(block.timestamp) - diff;
+
+        endTimestamp = startTimestamp + diff - 1;
+        emit log_named_uint("startTimestamp", startTimestamp);
+        emit log_named_uint("endTimestamp", endTimestamp);
+        emit log_named_uint("block.timestamp", block.timestamp);
+        emit log_named_uint("MAX_RETROACTIVE_LENGTH", rewardsCoordinator.MAX_RETROACTIVE_LENGTH());
 
         if (endTimestamp > block.timestamp) {
-            revert("End timestamp must be in the future.  Please wait to generate new payments.");
+            revert("End timestamp must not be in the future.  Please wait to generate new payments.");
         }
 
         // sets a multiplier based on block number such that cumulativeEarnings increase accordingly for multiple runs of this script in the same session
