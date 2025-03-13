@@ -34,6 +34,9 @@ import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 
 contract HelloWorldTaskManagerSetup is Test {
+    // used for `toEthSignedMessageHash`
+    using ECDSAUpgradeable for bytes32;
+
     IECDSAStakeRegistryTypes.Quorum internal quorum;
 
     struct Operator {
@@ -226,44 +229,38 @@ contract HelloWorldTaskManagerSetup is Test {
         stakeRegistry.updateOperators(operatorAddresses);
     }
 
-    function getSortedOperatorSignatures(
-        Operator[] memory _operators,
-        bytes32 digest
-    ) internal pure returns (bytes[] memory) {
-        uint256 length = _operators.length;
-        bytes[] memory signatures = new bytes[](length);
-        address[] memory addresses = new address[](length);
+    function getOperators(uint256 numOperators) internal returns (Operator[] memory) {
+        require(numOperators <= operators.length, "Not enough operators");
 
-        for (uint256 i = 0; i < length; i++) {
-            addresses[i] = _operators[i].key.addr;
-            signatures[i] = signWithOperatorKey(_operators[i], digest);
+        Operator[] memory operatorsMem = new Operator[](numOperators);
+        for (uint256 i = 0; i < numOperators; i++) {
+            operatorsMem[i] = operators[i];
         }
-
-        for (uint256 i = 0; i < length - 1; i++) {
-            for (uint256 j = 0; j < length - i - 1; j++) {
-                if (addresses[j] > addresses[j + 1]) {
-                    // Swap addresses
-                    address tempAddr = addresses[j];
-                    addresses[j] = addresses[j + 1];
-                    addresses[j + 1] = tempAddr;
-
-                    // Swap signatures
-                    bytes memory tempSig = signatures[j];
-                    signatures[j] = signatures[j + 1];
-                    signatures[j + 1] = tempSig;
+        // Sort the operators by address
+        for (uint256 i = 0; i < numOperators - 1; i++) {
+            uint256 minIndex = i;
+            // Find the minimum operator by address
+            for (uint256 j = i + 1; j < numOperators; j++) {
+                if (operatorsMem[minIndex].key.addr > operatorsMem[j].key.addr) {
+                    minIndex = j;
                 }
             }
+            // Swap the minimum operator with the ith operator
+            Operator memory temp = operatorsMem[i];
+            operatorsMem[i] = operatorsMem[minIndex];
+            operatorsMem[minIndex] = temp;
         }
-
-        return signatures;
+        return operatorsMem;
     }
 
-    function createTask(TrafficGenerator memory generator, string memory taskName) internal {
+    function createTask(string memory taskName) internal returns (IHelloWorldServiceManager.Task memory task, uint32 taskIndex) {
         IHelloWorldServiceManager helloWorldServiceManager =
             IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
 
         vm.prank(generator.key.addr);
-        helloWorldServiceManager.createNewTask(taskName);
+        taskIndex = helloWorldServiceManager.latestTaskNum();
+        task = helloWorldServiceManager.createNewTask(taskName);
+        return (task, taskIndex);
     }
 
     function respondToTask(
@@ -271,21 +268,35 @@ contract HelloWorldTaskManagerSetup is Test {
         IHelloWorldServiceManager.Task memory task,
         uint32 referenceTaskIndex
     ) internal {
-        // Create the message hash
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+        Operator[] memory operatorsMem = new Operator[](1);
+        operatorsMem[0] = operator;
 
-        bytes memory signature = signWithSigningKey(operator, messageHash);
-
-        address[] memory operators = new address[](1);
-        operators[0] = operator.key.addr;
-        bytes[] memory signatures = new bytes[](1);
-        signatures[0] = signature;
-
-        bytes memory signedTask = abi.encode(operators, signatures, uint32(block.number));
+        bytes memory signedResponse = makeTaskResponse(operatorsMem, task);
 
         IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager).respondToTask(
-            task, referenceTaskIndex, signedTask
+            task, referenceTaskIndex, signedResponse
         );
+    }
+
+    function makeTaskResponse(
+        Operator[] memory operatorsMem,
+        IHelloWorldServiceManager.Task memory task
+    ) internal returns (bytes memory) {
+        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+
+        address[] memory operatorAddrs = new address[](operatorsMem.length);
+        for (uint256 i = 0; i < operatorsMem.length; i++) {
+            operatorAddrs[i] = operatorsMem[i].key.addr;
+        }
+        bytes[] memory signatures = new bytes[](operatorsMem.length);
+        for (uint256 i = 0; i < operatorsMem.length; i++) {
+            signatures[i] = signWithSigningKey(operatorsMem[i], ethSignedMessageHash);
+        }
+
+        bytes memory signedTask = abi.encode(operatorAddrs, signatures, task.taskCreatedBlock);
+
+        return signedTask;
     }
 }
 
@@ -403,8 +414,6 @@ contract CreateTask is HelloWorldTaskManagerSetup {
 }
 
 contract RespondToTask is HelloWorldTaskManagerSetup {
-    using ECDSAUpgradeable for bytes32;
-
     uint256 internal constant INITIAL_BALANCE = 100 ether;
     uint256 internal constant DEPOSIT_AMOUNT = 1 ether;
     uint256 internal constant OPERATOR_COUNT = 4;
@@ -439,56 +448,13 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         }
     }
 
-    function _getOperators(uint256 numOperators) internal returns (Operator[] memory) {
-        Operator[] memory operatorsMem = new Operator[](numOperators);
-        for (uint256 i = 0; i < numOperators; i++) {
-            operatorsMem[i] = operators[i];
-        }
-        // Sort the operators by address
-        for (uint256 i = 0; i < numOperators - 1; i++) {
-            uint256 minIndex = i;
-            // Find the minimum operator by address
-            for (uint256 j = i + 1; j < numOperators; j++) {
-                if (operatorsMem[minIndex].key.addr > operatorsMem[j].key.addr) {
-                    minIndex = j;
-                }
-            }
-            // Swap the minimum operator with the ith operator
-            Operator memory temp = operatorsMem[i];
-            operatorsMem[i] = operatorsMem[minIndex];
-            operatorsMem[minIndex] = temp;
-        }
-        return operatorsMem;
-    }
-
-    function _makeTaskResponse(
-        Operator[] memory operatorsMem,
-        IHelloWorldServiceManager.Task memory task
-    ) internal returns (bytes memory) {
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
-        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-
-        address[] memory operatorAddrs = new address[](operatorsMem.length);
-        for (uint256 i = 0; i < operatorsMem.length; i++) {
-            operatorAddrs[i] = operatorsMem[i].key.addr;
-        }
-        bytes[] memory signatures = new bytes[](operatorsMem.length);
-        for (uint256 i = 0; i < operatorsMem.length; i++) {
-            signatures[i] = signWithSigningKey(operatorsMem[i], ethSignedMessageHash);
-        }
-
-        bytes memory signedTask = abi.encode(operatorAddrs, signatures, task.taskCreatedBlock);
-
-        return signedTask;
-    }
-
     function testRespondToTask() public {
         string memory taskName = "TestTask";
         uint32 taskIndex = sm.latestTaskNum();
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
 
-        Operator[] memory operatorsMem = _getOperators(1);
-        bytes memory signedResponse = _makeTaskResponse(operatorsMem, newTask);
+        Operator[] memory operatorsMem = getOperators(1);
+        bytes memory signedResponse = makeTaskResponse(operatorsMem, newTask);
 
         vm.roll(block.number + 1);
         sm.respondToTask(newTask, taskIndex, signedResponse);
@@ -500,8 +466,8 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
 
         // Generate aggregated response with two operators
-        Operator[] memory operatorsMem = _getOperators(2);
-        bytes memory signedResponse = _makeTaskResponse(operatorsMem, newTask);
+        Operator[] memory operatorsMem = getOperators(2);
+        bytes memory signedResponse = makeTaskResponse(operatorsMem, newTask);
 
         vm.roll(block.number + 1);
         sm.respondToTask(newTask, taskIndex, signedResponse);
@@ -513,8 +479,8 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
 
         // Generate aggregated response with three operators
-        Operator[] memory operatorsMem = _getOperators(3);
-        bytes memory signedResponse = _makeTaskResponse(operatorsMem, newTask);
+        Operator[] memory operatorsMem = getOperators(3);
+        bytes memory signedResponse = makeTaskResponse(operatorsMem, newTask);
 
         vm.roll(block.number + 1);
         sm.respondToTask(newTask, taskIndex, signedResponse);
