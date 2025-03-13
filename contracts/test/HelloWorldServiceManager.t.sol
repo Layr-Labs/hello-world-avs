@@ -229,7 +229,9 @@ contract HelloWorldTaskManagerSetup is Test {
         stakeRegistry.updateOperators(operatorAddresses);
     }
 
-    function getOperators(uint256 numOperators) internal returns (Operator[] memory) {
+    function getOperators(
+        uint256 numOperators
+    ) internal returns (Operator[] memory) {
         require(numOperators <= operators.length, "Not enough operators");
 
         Operator[] memory operatorsMem = new Operator[](numOperators);
@@ -253,7 +255,9 @@ contract HelloWorldTaskManagerSetup is Test {
         return operatorsMem;
     }
 
-    function createTask(string memory taskName) internal returns (IHelloWorldServiceManager.Task memory task, uint32 taskIndex) {
+    function createTask(
+        string memory taskName
+    ) internal returns (IHelloWorldServiceManager.Task memory task, uint32 taskIndex) {
         IHelloWorldServiceManager helloWorldServiceManager =
             IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
 
@@ -459,7 +463,8 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
     }
 
     function testRespondToTaskWith2OperatorsAggregatedSignature() public {
-        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestTask2Aggregated");
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) =
+            createTask("TestTask2Aggregated");
 
         // Generate aggregated response with two operators
         Operator[] memory operatorsMem = getOperators(2);
@@ -470,7 +475,8 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
     }
 
     function testRespondToTaskWith3OperatorsAggregatedSignature() public {
-        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestTask3Aggregated");
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) =
+            createTask("TestTask3Aggregated");
 
         // Generate aggregated response with three operators
         Operator[] memory operatorsMem = getOperators(3);
