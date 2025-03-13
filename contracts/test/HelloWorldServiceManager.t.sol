@@ -439,6 +439,28 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         }
     }
 
+    function _getOperators(uint256 numOperators) internal returns (Operator[] memory) {
+        Operator[] memory operatorsMem = new Operator[](numOperators);
+        for (uint256 i = 0; i < numOperators; i++) {
+            operatorsMem[i] = operators[i];
+        }
+        // Sort the operators by address
+        for (uint256 i = 0; i < numOperators - 1; i++) {
+            uint256 minIndex = i;
+            // Find the minimum operator by address
+            for (uint256 j = i + 1; j < numOperators; j++) {
+                if (operatorsMem[minIndex].key.addr > operatorsMem[j].key.addr) {
+                    minIndex = j;
+                }
+            }
+            // Swap the minimum operator with the ith operator
+            Operator memory temp = operatorsMem[i];
+            operatorsMem[i] = operatorsMem[minIndex];
+            operatorsMem[minIndex] = temp;
+        }
+        return operatorsMem;
+    }
+
     function _makeTaskResponse(
         Operator[] memory operatorsMem,
         IHelloWorldServiceManager.Task memory task
@@ -464,9 +486,21 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         string memory taskName = "TestTask";
         uint32 taskIndex = sm.latestTaskNum();
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
-        Operator[] memory operatorsMem = new Operator[](1);
-        operatorsMem[0] = operators[0];
 
+        Operator[] memory operatorsMem = _getOperators(1);
+        bytes memory signedResponse = _makeTaskResponse(operatorsMem, newTask);
+
+        vm.roll(block.number + 1);
+        sm.respondToTask(newTask, taskIndex, signedResponse);
+    }
+
+    function testRespondToTaskWithAggregatedSignature() public {
+        string memory taskName = "TestTaskAggregated";
+        uint32 taskIndex = sm.latestTaskNum();
+        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+
+        // Generate aggregated response with two operators
+        Operator[] memory operatorsMem = _getOperators(2);
         bytes memory signedResponse = _makeTaskResponse(operatorsMem, newTask);
 
         vm.roll(block.number + 1);
