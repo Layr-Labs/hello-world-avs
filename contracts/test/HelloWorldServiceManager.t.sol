@@ -449,9 +449,7 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
     }
 
     function testRespondToTask() public {
-        string memory taskName = "TestTask";
-        uint32 taskIndex = sm.latestTaskNum();
-        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestTask");
 
         Operator[] memory operatorsMem = getOperators(1);
         bytes memory signedResponse = makeTaskResponse(operatorsMem, newTask);
@@ -461,9 +459,7 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
     }
 
     function testRespondToTaskWith2OperatorsAggregatedSignature() public {
-        string memory taskName = "TestTask2Aggregated";
-        uint32 taskIndex = sm.latestTaskNum();
-        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestTask2Aggregated");
 
         // Generate aggregated response with two operators
         Operator[] memory operatorsMem = getOperators(2);
@@ -474,9 +470,7 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
     }
 
     function testRespondToTaskWith3OperatorsAggregatedSignature() public {
-        string memory taskName = "TestTask3Aggregated";
-        uint32 taskIndex = sm.latestTaskNum();
-        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestTask3Aggregated");
 
         // Generate aggregated response with three operators
         Operator[] memory operatorsMem = getOperators(3);
