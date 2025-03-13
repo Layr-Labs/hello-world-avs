@@ -439,23 +439,37 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         }
     }
 
+    function _makeTaskResponse(
+        Operator[] memory operatorsMem,
+        IHelloWorldServiceManager.Task memory task
+    ) internal returns (bytes memory) {
+        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+
+        address[] memory operatorAddrs = new address[](operatorsMem.length);
+        for (uint256 i = 0; i < operatorsMem.length; i++) {
+            operatorAddrs[i] = operatorsMem[i].key.addr;
+        }
+        bytes[] memory signatures = new bytes[](operatorsMem.length);
+        for (uint256 i = 0; i < operatorsMem.length; i++) {
+            signatures[i] = signWithSigningKey(operatorsMem[i], ethSignedMessageHash);
+        }
+
+        bytes memory signedTask = abi.encode(operatorAddrs, signatures, task.taskCreatedBlock);
+
+        return signedTask;
+    }
+
     function testRespondToTask() public {
         string memory taskName = "TestTask";
+        uint32 taskIndex = sm.latestTaskNum();
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
-        uint32 taskIndex = sm.latestTaskNum() - 1;
+        Operator[] memory operatorsMem = new Operator[](1);
+        operatorsMem[0] = operators[0];
 
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", taskName));
-        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-        bytes memory signature = signWithSigningKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
-
-        address[] memory operatorsMem = new address[](1);
-        operatorsMem[0] = operators[0].key.addr;
-        bytes[] memory signatures = new bytes[](1);
-        signatures[0] = signature;
-
-        bytes memory signedTask = abi.encode(operatorsMem, signatures, uint32(block.number));
+        bytes memory signedResponse = _makeTaskResponse(operatorsMem, newTask);
 
         vm.roll(block.number + 1);
-        sm.respondToTask(newTask, taskIndex, signedTask);
+        sm.respondToTask(newTask, taskIndex, signedResponse);
     }
 }
