@@ -494,13 +494,26 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         sm.respondToTask(newTask, taskIndex, signedResponse);
     }
 
-    function testRespondToTaskWithAggregatedSignature() public {
-        string memory taskName = "TestTaskAggregated";
+    function testRespondToTaskWith2OperatorsAggregatedSignature() public {
+        string memory taskName = "TestTask2Aggregated";
         uint32 taskIndex = sm.latestTaskNum();
         IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
 
         // Generate aggregated response with two operators
         Operator[] memory operatorsMem = _getOperators(2);
+        bytes memory signedResponse = _makeTaskResponse(operatorsMem, newTask);
+
+        vm.roll(block.number + 1);
+        sm.respondToTask(newTask, taskIndex, signedResponse);
+    }
+
+    function testRespondToTaskWith3OperatorsAggregatedSignature() public {
+        string memory taskName = "TestTask3Aggregated";
+        uint32 taskIndex = sm.latestTaskNum();
+        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+
+        // Generate aggregated response with three operators
+        Operator[] memory operatorsMem = _getOperators(3);
         bytes memory signedResponse = _makeTaskResponse(operatorsMem, newTask);
 
         vm.roll(block.number + 1);
