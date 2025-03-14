@@ -268,13 +268,10 @@ contract HelloWorldTaskManagerSetup is Test {
     }
 
     function respondToTask(
-        Operator memory operator,
+        Operator[] memory operatorsMem,
         IHelloWorldServiceManager.Task memory task,
         uint32 referenceTaskIndex
     ) internal {
-        Operator[] memory operatorsMem = new Operator[](1);
-        operatorsMem[0] = operator;
-
         bytes memory signedResponse = makeTaskResponse(operatorsMem, task);
 
         IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager).respondToTask(
@@ -301,6 +298,16 @@ contract HelloWorldTaskManagerSetup is Test {
         bytes memory signedTask = abi.encode(operatorAddrs, signatures, task.taskCreatedBlock);
 
         return signedTask;
+    }
+
+    function slashOperator(
+        IHelloWorldServiceManager.Task memory task,
+        uint32 referenceTaskIndex,
+        address operator
+    ) internal {
+        IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager).slashOperator(
+            task, referenceTaskIndex, operator
+        );
     }
 }
 
@@ -484,5 +491,53 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
 
         vm.roll(block.number + 1);
         sm.respondToTask(newTask, taskIndex, signedResponse);
+    }
+}
+
+
+contract SlashOperator is HelloWorldTaskManagerSetup {
+    uint256 internal constant INITIAL_BALANCE = 100 ether;
+    uint256 internal constant DEPOSIT_AMOUNT = 1 ether;
+    uint256 internal constant OPERATOR_COUNT = 4;
+
+    IDelegationManager internal delegationManager;
+    AVSDirectory internal avsDirectory;
+    IHelloWorldServiceManager internal sm;
+    ECDSAStakeRegistry internal stakeRegistry;
+
+    function setUp() public override {
+        super.setUp();
+
+        delegationManager = IDelegationManager(coreDeployment.delegationManager);
+        avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
+        sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
+        stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+
+        addStrategy(address(mockToken));
+
+        while (operators.length < OPERATOR_COUNT) {
+            createAndAddOperator();
+        }
+
+        for (uint256 i = 0; i < OPERATOR_COUNT; i++) {
+            mintMockTokens(operators[i], INITIAL_BALANCE);
+
+            depositTokenIntoStrategy(operators[i], address(mockToken), DEPOSIT_AMOUNT);
+
+            registerAsOperator(operators[i]);
+
+            registerOperatorToAVS(operators[i]);
+        }
+    }
+
+    function testValidResponseIsNotSlashable() public {
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestSlashing");
+
+        Operator[] memory operatorsMem = getOperators(1);
+
+        vm.roll(block.number + 1);
+        respondToTask(operatorsMem, newTask, taskIndex);
+
+        slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
     }
 }
