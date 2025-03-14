@@ -9,6 +9,7 @@ import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategy
 import {ECDSAServiceManagerBase} from
     "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {Vm} from "forge-std/Vm.sol";
+import {console} from "forge-std/console.sol";
 
 library SetupDistributionsLib {
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
@@ -92,6 +93,10 @@ library SetupDistributionsLib {
                 duration: duration,
                 description: "test"
             });
+            console.log("rrr");
+            console.log(startTimestamp);
+            console.log(duration);
+            console.log(block.timestamp);
 
             rewardsSubmissions[i] = rewardsSubmission;
         }
