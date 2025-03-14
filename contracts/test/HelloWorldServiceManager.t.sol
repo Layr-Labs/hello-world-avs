@@ -538,6 +538,7 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
         vm.roll(block.number + 1);
         respondToTask(operatorsMem, newTask, taskIndex);
 
+        vm.expectRevert("Task has already been responded to");
         slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
     }
 }
