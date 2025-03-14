@@ -40,7 +40,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
     // max interval in blocks for responding to a task
     // operators can be penalized if they don't respond in time
-    uint32 immutable _MAX_RESPONSE_INTERVAL_BLOCKS = 600;
+    uint32 public immutable MAX_RESPONSE_INTERVAL_BLOCKS = 600;
 
     modifier onlyOperator() {
         require(
@@ -127,7 +127,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             "supplied task does not match the one recorded in the contract"
         );
         require(
-            block.number <= task.taskCreatedBlock + _MAX_RESPONSE_INTERVAL_BLOCKS,
+            block.number <= task.taskCreatedBlock + MAX_RESPONSE_INTERVAL_BLOCKS,
             "Task response time has already expired"
         );
 
@@ -186,7 +186,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             "Operator has already responded to the task"
         );
         require(
-            block.number > task.taskCreatedBlock + _MAX_RESPONSE_INTERVAL_BLOCKS,
+            block.number > task.taskCreatedBlock + MAX_RESPONSE_INTERVAL_BLOCKS,
             "Task response time has not expired yet"
         );
         // check operator was registered when task was created

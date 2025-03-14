@@ -541,4 +541,16 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
         vm.expectRevert("Task has already been responded to");
         slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
     }
+
+    function testNoResponseIsSlashable() public {
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestSlashing");
+
+        Operator[] memory operatorsMem = getOperators(1);
+
+        uint32 maxResponseIntervalBlocks = HelloWorldServiceManager(address(sm)).MAX_RESPONSE_INTERVAL_BLOCKS();
+        vm.roll(block.number + maxResponseIntervalBlocks + 1);
+
+        // vm.expectRevert("Task has already been responded to");
+        slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
+    }
 }
