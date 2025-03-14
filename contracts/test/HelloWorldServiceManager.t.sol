@@ -531,7 +531,7 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
     }
 
     function testValidResponseIsNotSlashable() public {
-        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestSlashing");
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestValidResponseIsNotSlashable");
 
         Operator[] memory operatorsMem = getOperators(1);
 
@@ -543,14 +543,26 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
     }
 
     function testNoResponseIsSlashable() public {
-        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestSlashing");
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestNoResponseIsSlashable");
 
         Operator[] memory operatorsMem = getOperators(1);
 
         uint32 maxResponseIntervalBlocks = HelloWorldServiceManager(address(sm)).MAX_RESPONSE_INTERVAL_BLOCKS();
         vm.roll(block.number + maxResponseIntervalBlocks + 1);
 
-        // vm.expectRevert("Task has already been responded to");
         slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
+    }
+
+    function testMultipleSlashings() public {
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestMultipleSlashings");
+
+        Operator[] memory operatorsMem = getOperators(3);
+
+        uint32 maxResponseIntervalBlocks = HelloWorldServiceManager(address(sm)).MAX_RESPONSE_INTERVAL_BLOCKS();
+        vm.roll(block.number + maxResponseIntervalBlocks + 1);
+
+        slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
+        slashOperator(newTask, taskIndex, operatorsMem[1].key.addr);
+        slashOperator(newTask, taskIndex, operatorsMem[2].key.addr);
     }
 }
