@@ -16,6 +16,11 @@ Welcome to the Hello World AVS. This project shows you the simplest functionalit
 
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
+### Slashing
+
+The example includes a simple slashing condition: "a task MUST be responded by enough operators before N blocks have passed since the task creation".
+In case this condition isn't satisfied by some operator, anyone can permissionlessly slash them via calling `HelloWorldServiceManager.slashOperator`.
+
 # Local Devnet Deployment
 
 The following instructions explain how to manually deploy the AVS from scratch including EigenLayer and AVS specific contracts using Foundry (forge) to a local anvil chain, and start Typescript Operator application and tasks.
