@@ -6,7 +6,6 @@
     "start:operator": "ts-node operator/index.ts",
     "start:traffic": "ts-node operator/createNewTasks.ts",
     "start:anvil": "anvil",
-    "advance:anvil": "cast rpc --rpc-url http://localhost:8545 evm_increaseTime 172800 && cast rpc --rpc-url http://localhost:8545 anvil_mine 1",
     "deploy:core": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --optimize --optimizer-runs 200 --via-ir",
     "deploy:hello-world": "cd contracts && forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast --optimize --optimizer-runs 200 --via-ir",
     "deploy:core-debug": "cd contracts && forge script script/DeployEigenLayerCore.s.sol --rpc-url http://localhost:8545 --broadcast --revert-strings debug --optimize --optimizer-runs 200 --via-ir",

@@ -125,12 +125,6 @@ npm run create-operator-directed-distributions-root
 npm run claim-distributions
 ```
 
-To run either flow multiple times, run:
-```sh
-#Advances anvil chain by 2 days
-npm run advance:anvil
-```
-You can now run the root creation and payment claim flows once again.
 ### Help and Support
 
 For help and support deploying and modifying this repo for your AVS, please:
