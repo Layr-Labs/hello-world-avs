@@ -540,6 +540,8 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
 
         vm.expectRevert("Task has already been responded to");
         slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
+
+        // TODO: check the operator's balance was not reduced
     }
 
     function testNoResponseIsSlashable() public {
@@ -551,6 +553,8 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
         vm.roll(block.number + maxResponseIntervalBlocks + 1);
 
         slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
+
+        // TODO: check the operator's balance was reduced
     }
 
     function testMultipleSlashings() public {
@@ -564,5 +568,7 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
         slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
         slashOperator(newTask, taskIndex, operatorsMem[1].key.addr);
         slashOperator(newTask, taskIndex, operatorsMem[2].key.addr);
+
+        // TODO: check the operator's balance was reduced
     }
 }
