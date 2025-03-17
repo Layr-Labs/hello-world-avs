@@ -101,7 +101,7 @@ In a terminal, start a new instance of anvil and deploy the core and avs contrac
 
 ```sh
 # Start anvil
-npm run start:anvil-quick
+npm run start:anvil
 # Deploy the EigenLayer contracts
 npm run deploy:core
 
@@ -129,8 +129,6 @@ npm run create-operator-directed-distributions-root
 # Claim created rewards distribution
 npm run claim-distributions
 ```
-
-In order to create and claim multiple distributions (run the above two commands more than once), you must wait up to 5 minutes.
 
 ### Help and Support
 

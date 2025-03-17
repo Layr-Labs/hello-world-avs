@@ -35,7 +35,7 @@
     "defaultSplitBips": 1000,
     "calculationIntervalSeconds": 86400,
     "maxRewardsDuration": 864000,
-    "maxRetroactiveLength": 86400,
+    "maxRetroactiveLength": 432000,
     "maxFutureLength": 86400,
     "genesisRewardsTimestamp": 1672531200
   }
