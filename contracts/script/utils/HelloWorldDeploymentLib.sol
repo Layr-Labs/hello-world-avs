@@ -85,7 +85,8 @@ library HelloWorldDeploymentLib {
                 deployment.stakeRegistry,
                 core.rewardsCoordinator,
                 core.delegationManager,
-                core.allocationManager
+                core.allocationManager,
+                60
             )
         );
 

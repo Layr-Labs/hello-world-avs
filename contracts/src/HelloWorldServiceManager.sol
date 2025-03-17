@@ -40,7 +40,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
     // max interval in blocks for responding to a task
     // operators can be penalized if they don't respond in time
-    uint32 public immutable MAX_RESPONSE_INTERVAL_BLOCKS = 600;
+    uint32 public immutable MAX_RESPONSE_INTERVAL_BLOCKS;
 
     modifier onlyOperator() {
         require(
@@ -55,7 +55,8 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _stakeRegistry,
         address _rewardsCoordinator,
         address _delegationManager,
-        address _allocationManager
+        address _allocationManager,
+        uint32 _maxResponseIntervalBlocks
     )
         ECDSAServiceManagerBase(
             _avsDirectory,
@@ -64,7 +65,9 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             _delegationManager,
             _allocationManager
         )
-    {}
+    {
+        MAX_RESPONSE_INTERVAL_BLOCKS = _maxResponseIntervalBlocks;
+    }
 
     function initialize(address initialOwner, address _rewardsInitiator) external initializer {
         __ServiceManagerBase_init(initialOwner, _rewardsInitiator);
