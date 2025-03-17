@@ -494,7 +494,6 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
     }
 }
 
-
 contract SlashOperator is HelloWorldTaskManagerSetup {
     uint256 internal constant INITIAL_BALANCE = 100 ether;
     uint256 internal constant DEPOSIT_AMOUNT = 1 ether;
@@ -531,7 +530,8 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
     }
 
     function testValidResponseIsNotSlashable() public {
-        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestValidResponseIsNotSlashable");
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) =
+            createTask("TestValidResponseIsNotSlashable");
 
         Operator[] memory operatorsMem = getOperators(1);
 
@@ -545,11 +545,13 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
     }
 
     function testNoResponseIsSlashable() public {
-        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestNoResponseIsSlashable");
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) =
+            createTask("TestNoResponseIsSlashable");
 
         Operator[] memory operatorsMem = getOperators(1);
 
-        uint32 maxResponseIntervalBlocks = HelloWorldServiceManager(address(sm)).MAX_RESPONSE_INTERVAL_BLOCKS();
+        uint32 maxResponseIntervalBlocks =
+            HelloWorldServiceManager(address(sm)).MAX_RESPONSE_INTERVAL_BLOCKS();
         vm.roll(block.number + maxResponseIntervalBlocks + 1);
 
         slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
@@ -558,11 +560,13 @@ contract SlashOperator is HelloWorldTaskManagerSetup {
     }
 
     function testMultipleSlashings() public {
-        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) = createTask("TestMultipleSlashings");
+        (IHelloWorldServiceManager.Task memory newTask, uint32 taskIndex) =
+            createTask("TestMultipleSlashings");
 
         Operator[] memory operatorsMem = getOperators(3);
 
-        uint32 maxResponseIntervalBlocks = HelloWorldServiceManager(address(sm)).MAX_RESPONSE_INTERVAL_BLOCKS();
+        uint32 maxResponseIntervalBlocks =
+            HelloWorldServiceManager(address(sm)).MAX_RESPONSE_INTERVAL_BLOCKS();
         vm.roll(block.number + maxResponseIntervalBlocks + 1);
 
         slashOperator(newTask, taskIndex, operatorsMem[0].key.addr);
