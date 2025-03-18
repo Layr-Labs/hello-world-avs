@@ -80,30 +80,44 @@ artifacts:
         template: |
           {
             "strategyManager": {
-              "init_paused_status": 0,
-              "init_withdrawal_delay_blocks": 50400
+              "initPausedStatus": 0,
+              "initialOwner": "{{.deployer_address}}",
+              "initialStrategyWhitelister": "0x0000000000000000000000000000000000000000"
             },
-            "delegation": {
-              "init_paused_status": 0,
-              "init_withdrawal_delay_blocks": 50400
-            },
-            "slasher": {
-              "init_paused_status": 0
+            "delegationManager": {
+              "initPausedStatus": 0,
+              "initialOwner": "{{.deployer_address}}",
+              "minWithdrawalDelayBlocks": 50400
             },
             "eigenPodManager": {
-              "init_paused_status": 0
+              "initPausedStatus": 0,
+              "initialOwner": "{{.deployer_address}}"
+            },
+            "allocationManager": {
+              "initPausedStatus": 0,
+              "initialOwner": "{{.deployer_address}}",
+              "deallocationDelay": 0,
+              "allocationConfigurationDelay": 0
+            },
+            "strategyFactory": {
+              "initPausedStatus": 0,
+              "initialOwner": "{{.deployer_address}}"
+            },
+            "avsDirectory": {
+              "initPausedStatus": 0,
+              "initialOwner": "{{.deployer_address}}"
             },
             "rewardsCoordinator": {
-              "init_paused_status": 0,
-              "MAX_REWARDS_DURATION": 864000,
-              "MAX_RETROACTIVE_LENGTH": 86400,
-              "MAX_FUTURE_LENGTH": 86400,
-              "GENESIS_REWARDS_TIMESTAMP": 1672531200,
-              "rewards_updater_address": "{{.deployer_address}}",
-              "rewards_updater_key": "{{.deployer_private_key}}",
-              "activation_delay": 0,
-              "calculation_interval_seconds": 86400,
-              "global_operator_commission_bips": 1000
+              "initPausedStatus": 0,
+              "initialOwner": "{{.deployer_address}}",
+              "rewardsUpdater": "{{.deployer_address}}",
+              "activationDelay": 0,
+              "defaultSplitBips": 1000,
+              "calculationIntervalSeconds": 86400,
+              "maxRewardsDuration": 864000,
+              "maxRetroactiveLength": 86400,
+              "maxFutureLength": 86400,
+              "genesisRewardsTimestamp": 1672531200
             }
           }
 
