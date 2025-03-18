@@ -7,7 +7,10 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {Vm} from "forge-std/Vm.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "../script/utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib, CoreDeploymentParsingLib} from "../script/utils/CoreDeploymentLib.sol";
+import {
+    CoreDeploymentLib,
+    CoreDeploymentParsingLib
+} from "../script/utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 import {ERC20Mock} from "./ERC20Mock.sol";
 import {IERC20, StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";

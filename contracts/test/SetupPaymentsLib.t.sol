@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import "../script/utils/SetupDistributionsLib.sol";
-import "../script/utils/CoreDeploymentLib.sol";
+import "../script/utils/CoreDeploymentParsingLib.sol";
 import "../script/utils/HelloWorldDeploymentLib.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import "../src/IHelloWorldServiceManager.sol";

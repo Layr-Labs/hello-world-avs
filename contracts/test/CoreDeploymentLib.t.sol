@@ -3,7 +3,10 @@ pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
-import {CoreDeploymentLib, CoreDeploymentParsingLib} from "../script/utils/CoreDeploymentLib.sol";
+import {
+    CoreDeploymentLib,
+    CoreDeploymentParsingLib
+} from "../script/utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 
 contract CoreDeploymentLibTest is Test {
