@@ -23,7 +23,10 @@ import {
 } from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {DelegationManager} from "@eigenlayer/contracts/core/DelegationManager.sol";
 import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
-import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
+import {
+    ISignatureUtilsMixin,
+    ISignatureUtilsMixinTypes
+} from "@eigenlayer/contracts/interfaces/ISignatureUtilsMixin.sol";
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
 import {
     IAVSDirectory, IAVSDirectoryTypes
@@ -188,8 +191,12 @@ contract HelloWorldTaskManagerSetup is Test {
 
         bytes memory signature = signWithOperatorKey(operator, operatorRegistrationDigestHash);
 
-        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature = ISignatureUtils
-            .SignatureWithSaltAndExpiry({signature: signature, salt: salt, expiry: expiry});
+        ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry memory operatorSignature =
+        ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry({
+            signature: signature,
+            salt: salt,
+            expiry: expiry
+        });
 
         vm.prank(address(operator.key.addr));
         stakeRegistry.registerOperatorWithSignature(operatorSignature, operator.signingKey.addr);
