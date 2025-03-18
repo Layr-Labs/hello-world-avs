@@ -8,8 +8,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "../script/utils/HelloWorldDeploymentLib.sol";
 import {
-    CoreDeploymentLib,
-    CoreDeploymentParsingLib
+    CoreDeployLib, CoreDeploymentParsingLib
 } from "../script/utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 import {ERC20Mock} from "./ERC20Mock.sol";
@@ -63,8 +62,8 @@ contract HelloWorldTaskManagerSetup is Test {
     AVSOwner internal owner;
 
     HelloWorldDeploymentLib.DeploymentData internal helloWorldDeployment;
-    CoreDeploymentLib.DeploymentData internal coreDeployment;
-    CoreDeploymentLib.DeploymentConfigData coreConfigData;
+    CoreDeployLib.DeploymentData internal coreDeployment;
+    CoreDeployLib.DeploymentConfigData coreConfigData;
 
     address proxyAdmin;
 
@@ -80,7 +79,7 @@ contract HelloWorldTaskManagerSetup is Test {
 
         coreConfigData =
             CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
-        coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+        coreDeployment = CoreDeployLib.deployContracts(proxyAdmin, coreConfigData);
 
         vm.prank(coreConfigData.strategyManager.initialOwner);
         StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
@@ -116,7 +115,7 @@ contract HelloWorldTaskManagerSetup is Test {
     }
 
     function labelContracts(
-        CoreDeploymentLib.DeploymentData memory coreDeployment,
+        CoreDeployLib.DeploymentData memory coreDeployment,
         HelloWorldDeploymentLib.DeploymentData memory helloWorldDeployment
     ) internal {
         vm.label(coreDeployment.delegationManager, "DelegationManager");

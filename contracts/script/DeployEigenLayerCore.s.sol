@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 import {Script} from "forge-std/Script.sol";
 
-import {CoreDeploymentLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymentParsingLib.sol";
+import {CoreDeployLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
@@ -12,13 +12,13 @@ import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 import "forge-std/Test.sol";
 
 contract DeployEigenLayerCore is Script, Test {
-    using CoreDeploymentLib for *;
+    using CoreDeployLib for *;
     using UpgradeableProxyLib for address;
 
     address internal deployer;
     address internal proxyAdmin;
-    CoreDeploymentLib.DeploymentData internal deploymentData;
-    CoreDeploymentLib.DeploymentConfigData internal configData;
+    CoreDeployLib.DeploymentData internal deploymentData;
+    CoreDeployLib.DeploymentConfigData internal configData;
 
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
@@ -32,7 +32,7 @@ contract DeployEigenLayerCore is Script, Test {
             CoreDeploymentParsingLib.readDeploymentConfigValues("config/core/", block.chainid);
         configData.rewardsCoordinator.rewardsUpdater = deployer;
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
-        deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
+        deploymentData = CoreDeployLib.deployContracts(proxyAdmin, configData);
 
         // TODO: the deployer lib should probably do this
         StrategyManager(deploymentData.strategyManager).setStrategyWhitelister(

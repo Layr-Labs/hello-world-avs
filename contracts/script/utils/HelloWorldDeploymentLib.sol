@@ -14,7 +14,7 @@ import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationMa
 import {IECDSAStakeRegistryTypes} from
     "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
-import {CoreDeploymentLib, CoreDeploymentParsingLib} from "./CoreDeploymentParsingLib.sol";
+import {CoreDeployLib, CoreDeploymentParsingLib} from "./CoreDeploymentParsingLib.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 library HelloWorldDeploymentLib {
@@ -40,7 +40,7 @@ library HelloWorldDeploymentLib {
 
     function deployContracts(
         address proxyAdmin,
-        CoreDeploymentLib.DeploymentData memory core,
+        CoreDeployLib.DeploymentData memory core,
         IECDSAStakeRegistryTypes.Quorum memory quorum,
         address rewardsInitiator,
         address owner
@@ -60,7 +60,7 @@ library HelloWorldDeploymentLib {
 
     function deployAndUpgradeStakeRegistryImpl(
         DeploymentData memory deployment,
-        CoreDeploymentLib.DeploymentData memory core,
+        CoreDeployLib.DeploymentData memory core,
         IECDSAStakeRegistryTypes.Quorum memory quorum
     ) private {
         address stakeRegistryImpl =
@@ -74,7 +74,7 @@ library HelloWorldDeploymentLib {
 
     function deployAndUpgradeServiceManagerImpl(
         DeploymentData memory deployment,
-        CoreDeploymentLib.DeploymentData memory core,
+        CoreDeployLib.DeploymentData memory core,
         address owner,
         address rewardsInitiator
     ) private {

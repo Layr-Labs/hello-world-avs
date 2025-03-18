@@ -48,7 +48,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         coreConfigData =
             CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
-        coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+        coreDeployment = CoreDeployLib.deployContracts(proxyAdmin, coreConfigData);
 
         vm.prank(coreConfigData.strategyManager.initialOwner);
         StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(

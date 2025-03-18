@@ -4,17 +4,16 @@ pragma solidity ^0.8.0;
 import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
 import {
-    CoreDeploymentLib,
-    CoreDeploymentParsingLib
+    CoreDeployLib, CoreDeploymentParsingLib
 } from "../script/utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 
-contract CoreDeploymentLibTest is Test {
+contract CoreDeploymentParsingLibTest is Test {
     using UpgradeableProxyLib for address;
 
     address proxyAdmin;
-    CoreDeploymentLib.DeploymentData deploymentData;
-    CoreDeploymentLib.DeploymentConfigData configData;
+    CoreDeployLib.DeploymentData deploymentData;
+    CoreDeployLib.DeploymentConfigData configData;
 
     function setUp() public {
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
@@ -46,7 +45,7 @@ contract CoreDeploymentLibTest is Test {
     function test_DeployContracts() public {
         configData =
             CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
-        deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
+        deploymentData = CoreDeployLib.deployContracts(proxyAdmin, configData);
 
         assertTrue(deploymentData.delegationManager != address(0), "DelegationManager not deployed");
         assertTrue(deploymentData.avsDirectory != address(0), "AVSDirectory not deployed");
@@ -56,7 +55,7 @@ contract CoreDeploymentLibTest is Test {
     function test_WriteDeploymentJson() public {
         configData =
             CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
-        deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
+        deploymentData = CoreDeployLib.deployContracts(proxyAdmin, configData);
 
         string memory scratchPath = "test/mockData/scratch/test_WriteDeploymentJson/";
         CoreDeploymentParsingLib.writeDeploymentJson(scratchPath, block.chainid, deploymentData);
@@ -70,7 +69,7 @@ contract CoreDeploymentLibTest is Test {
     function test_WriteAndReadDeploymentJson() public {
         configData =
             CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
-        deploymentData = CoreDeploymentLib.deployContracts(proxyAdmin, configData);
+        deploymentData = CoreDeployLib.deployContracts(proxyAdmin, configData);
 
         string memory scratchPath = "test/mockData/scratch/test_WriteAndReadDeploymentJson/";
 
