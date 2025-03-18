@@ -34,6 +34,14 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(address => mapping(uint32 => bytes)) public allTaskResponses;
 
+    // mapping of task indices to task status (true if task has been responded to, false otherwise)
+    // TODO: use bitmap?
+    mapping(uint32 => bool) public taskWasResponded;
+
+    // max interval in blocks for responding to a task
+    // operators can be penalized if they don't respond in time
+    uint32 public immutable MAX_RESPONSE_INTERVAL_BLOCKS;
+
     modifier onlyOperator() {
         require(
             ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender),
@@ -47,7 +55,8 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _stakeRegistry,
         address _rewardsCoordinator,
         address _delegationManager,
-        address _allocationManager
+        address _allocationManager,
+        uint32 _maxResponseIntervalBlocks
     )
         ECDSAServiceManagerBase(
             _avsDirectory,
@@ -56,7 +65,9 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             _delegationManager,
             _allocationManager
         )
-    {}
+    {
+        MAX_RESPONSE_INTERVAL_BLOCKS = _maxResponseIntervalBlocks;
+    }
 
     function initialize(address initialOwner, address _rewardsInitiator) external initializer {
         __ServiceManagerBase_init(initialOwner, _rewardsInitiator);
@@ -113,29 +124,83 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         uint32 referenceTaskIndex,
         bytes memory signature
     ) external {
-        // check that the task is valid, hasn't been responsed yet, and is being responded in time
+        // check that the task is valid, hasn't been responded yet, and is being responded in time
         require(
             keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
             "supplied task does not match the one recorded in the contract"
         );
         require(
-            allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
-            "Operator has already responded to the task"
+            block.number <= task.taskCreatedBlock + MAX_RESPONSE_INTERVAL_BLOCKS,
+            "Task response time has already expired"
         );
 
         // The message that was signed
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
+
+        // Decode the signature data to get operators and their signatures
+        (address[] memory operators, bytes[] memory signatures, uint32 referenceBlock) =
+            abi.decode(signature, (address[], bytes[], uint32));
+
+        // Check that referenceBlock matches task creation block
+        require(
+            referenceBlock == task.taskCreatedBlock,
+            "Reference block must match task creation block"
+        );
+
+        // Store each operator's signature
+        for (uint256 i = 0; i < operators.length; i++) {
+            // Check that this operator hasn't already responded
+            require(
+                allTaskResponses[operators[i]][referenceTaskIndex].length == 0,
+                "Operator has already responded to the task"
+            );
+
+            // Store the operator's signature
+            allTaskResponses[operators[i]][referenceTaskIndex] = signatures[i];
+
+            // Emit event for this operator
+            emit TaskResponded(referenceTaskIndex, task, operators[i]);
+        }
+
+        taskWasResponded[referenceTaskIndex] = true;
+
+        // Verify all signatures at once
         bytes4 isValidSignatureResult =
             ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash, signature);
 
-        require(magicValue == isValidSignatureResult);
+        require(magicValue == isValidSignatureResult, "Invalid signature");
+    }
 
-        // updating the storage with task responses
-        allTaskResponses[msg.sender][referenceTaskIndex] = signature;
+    function slashOperator(
+        Task calldata task,
+        uint32 referenceTaskIndex,
+        address operator
+    ) external {
+        // check that the task is valid, hasn't been responsed yet
+        require(
+            keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
+            "supplied task does not match the one recorded in the contract"
+        );
+        require(!taskWasResponded[referenceTaskIndex], "Task has already been responded to");
+        require(
+            allTaskResponses[operator][referenceTaskIndex].length == 0,
+            "Operator has already responded to the task"
+        );
+        require(
+            block.number > task.taskCreatedBlock + MAX_RESPONSE_INTERVAL_BLOCKS,
+            "Task response time has not expired yet"
+        );
+        // check operator was registered when task was created
+        uint256 operatorWeight = ECDSAStakeRegistry(stakeRegistry).getOperatorWeightAtBlock(
+            operator, task.taskCreatedBlock
+        );
+        require(operatorWeight > 0, "Operator was not registered when task was created");
 
-        // emitting event
-        emit TaskResponded(referenceTaskIndex, task, msg.sender);
+        // we update the storage with a sentinel value
+        allTaskResponses[operator][referenceTaskIndex] = "slashed";
+
+        // TODO: slash operator
     }
 }
