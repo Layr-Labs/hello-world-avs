@@ -52,7 +52,6 @@ mod tests {
         let signer = PrivateKeySigner::from_str(private_key).unwrap();
         let wallet = EthereumWallet::from(signer.clone());
         let pr = ProviderBuilder::new()
-            .with_recommended_fillers()
             .wallet(wallet)
             .on_http(Url::from_str(&anvil_http).unwrap());
         let el_data = get_anvil_eigenlayer_deployment_data().unwrap();
