@@ -16,7 +16,7 @@ remappings = [
     "forge-std/=lib/forge-std/src/",
 ]
 
-# Ignore warnings from middleware test files
+# Ignore warnings from middleware
 ignored_warnings_from = ["lib/eigenlayer-middleware"]
 
 [rpc_endpoints]
