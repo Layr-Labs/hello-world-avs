@@ -151,131 +151,127 @@ contract SetupDistributions is Script, Test {
     }
 
     function createAVSRewardsSubmissions(
-        uint256 numPayments,
-        uint256 amountPerPayment,
-        uint32 startTimestamp
+        uint256 _numPayments,
+        uint256 _amountPerPayment,
+        uint32 _startTimestamp
     ) public {
         ERC20Mock(helloWorldDeployment.token).mint(
-            helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments
+            helloWorldConfig.rewardsInitiator, _amountPerPayment * _numPayments
         );
         ERC20Mock(helloWorldDeployment.token).increaseAllowance(
-            helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments
+            helloWorldDeployment.helloWorldServiceManager, _amountPerPayment * _numPayments
         );
         uint32 duration = rewardsCoordinator.MAX_REWARDS_DURATION();
         SetupDistributionsLib.createAVSRewardsSubmissions(
             helloWorldDeployment.helloWorldServiceManager,
             helloWorldDeployment.strategy,
-            numPayments,
-            amountPerPayment,
+            _numPayments,
+            _amountPerPayment,
             duration,
-            startTimestamp
+            _startTimestamp
         );
     }
 
     function createOperatorDirectedAVSRewardsSubmissions(
-        uint256 numPayments,
-        uint256 amountPerPayment,
-        uint32 startTimestamp,
+        uint256 _numPayments,
+        uint256 _amountPerPayment,
+        uint32 _startTimestamp,
         uint32 duration
     ) public {
         ERC20Mock(helloWorldDeployment.token).mint(
-            helloWorldConfig.rewardsInitiator, amountPerPayment * numPayments
+            helloWorldConfig.rewardsInitiator, _amountPerPayment * _numPayments
         );
         ERC20Mock(helloWorldDeployment.token).increaseAllowance(
-            helloWorldDeployment.helloWorldServiceManager, amountPerPayment * numPayments
+            helloWorldDeployment.helloWorldServiceManager, _amountPerPayment * _numPayments
         );
         address[] memory operators = new address[](2);
         operators[0] = operator1;
         operators[1] = operator2;
 
-        uint256 numOperators = operators.length;
-
         SetupDistributionsLib.createOperatorDirectedAVSRewardsSubmissions(
             helloWorldDeployment.helloWorldServiceManager,
             operators,
-            numOperators,
             helloWorldDeployment.strategy,
-            numPayments,
-            amountPerPayment,
+            _numPayments,
+            _amountPerPayment,
             duration,
-            startTimestamp
+            _startTimestamp
         );
     }
 
     function processClaim(
-        string memory filePath,
-        uint256 indexToProve,
-        address recipient,
-        IRewardsCoordinator.EarnerTreeMerkleLeaf memory earnerLeaf,
-        uint32 amountPerPayment
+        string memory _filePath,
+        uint256 _indexToProve,
+        address _recipient,
+        IRewardsCoordinator.EarnerTreeMerkleLeaf memory _earnerLeaf,
+        uint32 _amountPerPayment
     ) public {
         SetupDistributionsLib.processClaim(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
-            filePath,
-            indexToProve,
-            recipient,
-            earnerLeaf,
+            _filePath,
+            _indexToProve,
+            _recipient,
+            _earnerLeaf,
             NUM_TOKEN_EARNINGS,
             helloWorldDeployment.strategy,
-            amountPerPayment
+            _amountPerPayment
         );
     }
 
     function submitPaymentRoot(
-        address[] memory earners,
-        uint32 endTimestamp,
-        uint32 numPayments,
-        uint32 amountPerPayment
+        address[] memory _earners,
+        uint32 _endTimestamp,
+        uint32 _numPayments,
+        uint32 _amountPerPayment
     ) public {
         emit log_named_uint("cumumlativePaymentMultiplier", cumumlativePaymentMultiplier);
         bytes32[] memory tokenLeaves = SetupDistributionsLib.createTokenLeaves(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             NUM_TOKEN_EARNINGS,
-            amountPerPayment,
+            _amountPerPayment,
             helloWorldDeployment.strategy
         );
-        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
-            SetupDistributionsLib.createEarnerLeaves(earners, tokenLeaves);
-        emit log_named_uint("Earner Leaves Length", earnerLeaves.length);
-        emit log_named_uint("numPayments", numPayments);
+        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory _earnerLeaves =
+            SetupDistributionsLib.createEarnerLeaves(_earners, tokenLeaves);
+        emit log_named_uint("Earner Leaves Length", _earnerLeaves.length);
+        emit log_named_uint("numPayments", _numPayments);
 
         SetupDistributionsLib.submitRoot(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             tokenLeaves,
-            earnerLeaves,
-            helloWorldDeployment.strategy,
-            endTimestamp,
-            numPayments,
+            _earnerLeaves,
+            _endTimestamp,
+            _numPayments,
             NUM_TOKEN_EARNINGS,
             filePath
         );
     }
 
     function _getEarnerLeaves(
-        address[] memory earners,
-        uint32 amountPerPayment,
-        address strategy
+        address[] memory _earners,
+        uint32 _amountPerPayment,
+        address _strategy
     ) internal view returns (IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory) {
         bytes32[] memory tokenLeaves = SetupDistributionsLib.createTokenLeaves(
             IRewardsCoordinator(coreDeployment.rewardsCoordinator),
             NUM_TOKEN_EARNINGS,
-            amountPerPayment,
-            strategy
+            _amountPerPayment,
+            _strategy
         );
 
-        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory earnerLeaves =
-            SetupDistributionsLib.createEarnerLeaves(earners, tokenLeaves);
+        IRewardsCoordinator.EarnerTreeMerkleLeaf[] memory _earnerLeaves =
+            SetupDistributionsLib.createEarnerLeaves(_earners, tokenLeaves);
 
-        return earnerLeaves;
+        return _earnerLeaves;
     }
 
     function _getEarners(
-        address deployer
+        address _deployer
     ) internal pure returns (address[] memory) {
-        address[] memory earners = new address[](NUM_EARNERS);
-        for (uint256 i = 0; i < earners.length; i++) {
-            earners[i] = deployer;
+        address[] memory _earners = new address[](NUM_EARNERS);
+        for (uint256 i = 0; i < _earners.length; i++) {
+            _earners[i] = _deployer;
         }
-        return earners;
+        return _earners;
     }
 }

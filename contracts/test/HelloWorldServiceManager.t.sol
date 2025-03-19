@@ -115,20 +115,20 @@ contract HelloWorldTaskManagerSetup is Test {
     }
 
     function labelContracts(
-        CoreDeployLib.DeploymentData memory coreDeployment,
-        HelloWorldDeploymentLib.DeploymentData memory helloWorldDeployment
+        CoreDeployLib.DeploymentData memory _coreDeployment,
+        HelloWorldDeploymentLib.DeploymentData memory _helloWorldDeployment
     ) internal {
-        vm.label(coreDeployment.delegationManager, "DelegationManager");
-        vm.label(coreDeployment.avsDirectory, "AVSDirectory");
-        vm.label(coreDeployment.strategyManager, "StrategyManager");
-        vm.label(coreDeployment.eigenPodManager, "EigenPodManager");
-        vm.label(coreDeployment.rewardsCoordinator, "RewardsCoordinator");
-        vm.label(coreDeployment.eigenPodBeacon, "EigenPodBeacon");
-        vm.label(coreDeployment.pauserRegistry, "PauserRegistry");
-        vm.label(coreDeployment.strategyFactory, "StrategyFactory");
-        vm.label(coreDeployment.strategyBeacon, "StrategyBeacon");
-        vm.label(helloWorldDeployment.helloWorldServiceManager, "HelloWorldServiceManager");
-        vm.label(helloWorldDeployment.stakeRegistry, "StakeRegistry");
+        vm.label(_coreDeployment.delegationManager, "DelegationManager");
+        vm.label(_coreDeployment.avsDirectory, "AVSDirectory");
+        vm.label(_coreDeployment.strategyManager, "StrategyManager");
+        vm.label(_coreDeployment.eigenPodManager, "EigenPodManager");
+        vm.label(_coreDeployment.rewardsCoordinator, "RewardsCoordinator");
+        vm.label(_coreDeployment.eigenPodBeacon, "EigenPodBeacon");
+        vm.label(_coreDeployment.pauserRegistry, "PauserRegistry");
+        vm.label(_coreDeployment.strategyFactory, "StrategyFactory");
+        vm.label(_coreDeployment.strategyBeacon, "StrategyBeacon");
+        vm.label(_helloWorldDeployment.helloWorldServiceManager, "HelloWorldServiceManager");
+        vm.label(_helloWorldDeployment.stakeRegistry, "StakeRegistry");
     }
 
     function signWithOperatorKey(
@@ -240,7 +240,7 @@ contract HelloWorldTaskManagerSetup is Test {
 
     function getOperators(
         uint256 numOperators
-    ) internal returns (Operator[] memory) {
+    ) internal view returns (Operator[] memory) {
         require(numOperators <= operators.length, "Not enough operators");
 
         Operator[] memory operatorsMem = new Operator[](numOperators);
@@ -291,7 +291,7 @@ contract HelloWorldTaskManagerSetup is Test {
     function makeTaskResponse(
         Operator[] memory operatorsMem,
         IHelloWorldServiceManager.Task memory task
-    ) internal returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
 

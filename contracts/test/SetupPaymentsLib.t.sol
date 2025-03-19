@@ -97,14 +97,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupDistributionsLib.submitRoot(
-            rewardsCoordinator,
-            tokenLeaves,
-            earnerLeaves,
-            address(strategy),
-            endTimestamp,
-            NUM_EARNERS,
-            1,
-            filePath
+            rewardsCoordinator, tokenLeaves, earnerLeaves, endTimestamp, NUM_EARNERS, 1, filePath
         );
         cheats.stopPrank();
         vm.removeFile(filePath);
@@ -189,14 +182,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupDistributionsLib.submitRoot(
-            rewardsCoordinator,
-            tokenLeaves,
-            earnerLeaves,
-            address(strategy),
-            endTimestamp,
-            NUM_EARNERS,
-            1,
-            filePath
+            rewardsCoordinator, tokenLeaves, earnerLeaves, endTimestamp, NUM_EARNERS, 1, filePath
         );
         cheats.stopPrank();
 

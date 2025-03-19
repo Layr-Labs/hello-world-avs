@@ -16,6 +16,9 @@ remappings = [
     "forge-std/=lib/forge-std/src/",
 ]
 
+# Ignore warnings from middleware test files
+ignored_warnings_from = ["lib/eigenlayer-middleware"]
+
 [rpc_endpoints]
 mainnet = "${MAINNET_RPC_URL}"
 holesky = "${HOLESKY_RPC_URL}"
