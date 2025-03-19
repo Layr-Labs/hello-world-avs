@@ -25,14 +25,9 @@ import {
 } from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {DelegationManager} from "@eigenlayer/contracts/core/DelegationManager.sol";
 import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
-import {
-    ISignatureUtilsMixin,
-    ISignatureUtilsMixinTypes
-} from "@eigenlayer/contracts/interfaces/ISignatureUtilsMixin.sol";
+import {ISignatureUtilsMixinTypes} from "@eigenlayer/contracts/interfaces/ISignatureUtilsMixin.sol";
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
-import {
-    IAVSDirectory, IAVSDirectoryTypes
-} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
+import {IAVSDirectoryTypes} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {Test, console2 as console} from "forge-std/Test.sol";
 import {IHelloWorldServiceManager} from "../src/IHelloWorldServiceManager.sol";
 import {ECDSAUpgradeable} from
