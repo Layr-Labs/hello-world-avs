@@ -7,7 +7,9 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {Vm} from "forge-std/Vm.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "../script/utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib, CoreDeploymentParsingLib} from "../script/utils/CoreDeploymentLib.sol";
+import {
+    CoreDeployLib, CoreDeploymentParsingLib
+} from "../script/utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 import {ERC20Mock} from "./ERC20Mock.sol";
 import {IERC20, StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
@@ -23,11 +25,9 @@ import {
 } from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {DelegationManager} from "@eigenlayer/contracts/core/DelegationManager.sol";
 import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
-import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
+import {ISignatureUtilsMixinTypes} from "@eigenlayer/contracts/interfaces/ISignatureUtilsMixin.sol";
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
-import {
-    IAVSDirectory, IAVSDirectoryTypes
-} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
+import {IAVSDirectoryTypes} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {Test, console2 as console} from "forge-std/Test.sol";
 import {IHelloWorldServiceManager} from "../src/IHelloWorldServiceManager.sol";
 import {ECDSAUpgradeable} from
@@ -57,8 +57,8 @@ contract HelloWorldTaskManagerSetup is Test {
     AVSOwner internal owner;
 
     HelloWorldDeploymentLib.DeploymentData internal helloWorldDeployment;
-    CoreDeploymentLib.DeploymentData internal coreDeployment;
-    CoreDeploymentLib.DeploymentConfigData coreConfigData;
+    CoreDeployLib.DeploymentData internal coreDeployment;
+    CoreDeployLib.DeploymentConfigData coreConfigData;
 
     address proxyAdmin;
 
@@ -74,7 +74,7 @@ contract HelloWorldTaskManagerSetup is Test {
 
         coreConfigData =
             CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
-        coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+        coreDeployment = CoreDeployLib.deployContracts(proxyAdmin, coreConfigData);
 
         vm.prank(coreConfigData.strategyManager.initialOwner);
         StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
@@ -110,20 +110,20 @@ contract HelloWorldTaskManagerSetup is Test {
     }
 
     function labelContracts(
-        CoreDeploymentLib.DeploymentData memory coreDeployment,
-        HelloWorldDeploymentLib.DeploymentData memory helloWorldDeployment
+        CoreDeployLib.DeploymentData memory _coreDeployment,
+        HelloWorldDeploymentLib.DeploymentData memory _helloWorldDeployment
     ) internal {
-        vm.label(coreDeployment.delegationManager, "DelegationManager");
-        vm.label(coreDeployment.avsDirectory, "AVSDirectory");
-        vm.label(coreDeployment.strategyManager, "StrategyManager");
-        vm.label(coreDeployment.eigenPodManager, "EigenPodManager");
-        vm.label(coreDeployment.rewardsCoordinator, "RewardsCoordinator");
-        vm.label(coreDeployment.eigenPodBeacon, "EigenPodBeacon");
-        vm.label(coreDeployment.pauserRegistry, "PauserRegistry");
-        vm.label(coreDeployment.strategyFactory, "StrategyFactory");
-        vm.label(coreDeployment.strategyBeacon, "StrategyBeacon");
-        vm.label(helloWorldDeployment.helloWorldServiceManager, "HelloWorldServiceManager");
-        vm.label(helloWorldDeployment.stakeRegistry, "StakeRegistry");
+        vm.label(_coreDeployment.delegationManager, "DelegationManager");
+        vm.label(_coreDeployment.avsDirectory, "AVSDirectory");
+        vm.label(_coreDeployment.strategyManager, "StrategyManager");
+        vm.label(_coreDeployment.eigenPodManager, "EigenPodManager");
+        vm.label(_coreDeployment.rewardsCoordinator, "RewardsCoordinator");
+        vm.label(_coreDeployment.eigenPodBeacon, "EigenPodBeacon");
+        vm.label(_coreDeployment.pauserRegistry, "PauserRegistry");
+        vm.label(_coreDeployment.strategyFactory, "StrategyFactory");
+        vm.label(_coreDeployment.strategyBeacon, "StrategyBeacon");
+        vm.label(_helloWorldDeployment.helloWorldServiceManager, "HelloWorldServiceManager");
+        vm.label(_helloWorldDeployment.stakeRegistry, "StakeRegistry");
     }
 
     function signWithOperatorKey(
@@ -188,8 +188,12 @@ contract HelloWorldTaskManagerSetup is Test {
 
         bytes memory signature = signWithOperatorKey(operator, operatorRegistrationDigestHash);
 
-        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature = ISignatureUtils
-            .SignatureWithSaltAndExpiry({signature: signature, salt: salt, expiry: expiry});
+        ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry memory operatorSignature =
+        ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry({
+            signature: signature,
+            salt: salt,
+            expiry: expiry
+        });
 
         vm.prank(address(operator.key.addr));
         stakeRegistry.registerOperatorWithSignature(operatorSignature, operator.signingKey.addr);
@@ -231,7 +235,7 @@ contract HelloWorldTaskManagerSetup is Test {
 
     function getOperators(
         uint256 numOperators
-    ) internal returns (Operator[] memory) {
+    ) internal view returns (Operator[] memory) {
         require(numOperators <= operators.length, "Not enough operators");
 
         Operator[] memory operatorsMem = new Operator[](numOperators);
@@ -282,7 +286,7 @@ contract HelloWorldTaskManagerSetup is Test {
     function makeTaskResponse(
         Operator[] memory operatorsMem,
         IHelloWorldServiceManager.Task memory task
-    ) internal returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
 

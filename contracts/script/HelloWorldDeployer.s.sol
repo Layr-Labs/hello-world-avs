@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymentLib.sol";
+import {CoreDeployLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
 import {ERC20Mock} from "../test/ERC20Mock.sol";
@@ -22,7 +22,7 @@ import {
 import "forge-std/Test.sol";
 
 contract HelloWorldDeployer is Script, Test {
-    using CoreDeploymentLib for *;
+    using CoreDeployLib for *;
     using UpgradeableProxyLib for address;
 
     address private deployer;
@@ -30,7 +30,7 @@ contract HelloWorldDeployer is Script, Test {
     address rewardsOwner;
     address rewardsInitiator;
     IStrategy helloWorldStrategy;
-    CoreDeploymentLib.DeploymentData coreDeployment;
+    CoreDeployLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     HelloWorldDeploymentLib.DeploymentConfigData helloWorldConfig;
     IECDSAStakeRegistryTypes.Quorum internal quorum;

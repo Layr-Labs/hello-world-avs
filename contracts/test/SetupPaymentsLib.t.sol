@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import "../script/utils/SetupDistributionsLib.sol";
-import "../script/utils/CoreDeploymentLib.sol";
+import "../script/utils/CoreDeploymentParsingLib.sol";
 import "../script/utils/HelloWorldDeploymentLib.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import "../src/IHelloWorldServiceManager.sol";
@@ -48,7 +48,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         coreConfigData =
             CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
-        coreDeployment = CoreDeploymentLib.deployContracts(proxyAdmin, coreConfigData);
+        coreDeployment = CoreDeployLib.deployContracts(proxyAdmin, coreConfigData);
 
         vm.prank(coreConfigData.strategyManager.initialOwner);
         StrategyManager(coreDeployment.strategyManager).setStrategyWhitelister(
@@ -97,14 +97,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupDistributionsLib.submitRoot(
-            rewardsCoordinator,
-            tokenLeaves,
-            earnerLeaves,
-            address(strategy),
-            endTimestamp,
-            NUM_EARNERS,
-            1,
-            filePath
+            rewardsCoordinator, tokenLeaves, earnerLeaves, endTimestamp, NUM_EARNERS, 1, filePath
         );
         cheats.stopPrank();
         vm.removeFile(filePath);
@@ -189,14 +182,7 @@ contract SetupDistributionsLibTest is Test, TestConstants, HelloWorldTaskManager
 
         cheats.startPrank(rewardsCoordinator.rewardsUpdater());
         SetupDistributionsLib.submitRoot(
-            rewardsCoordinator,
-            tokenLeaves,
-            earnerLeaves,
-            address(strategy),
-            endTimestamp,
-            NUM_EARNERS,
-            1,
-            filePath
+            rewardsCoordinator, tokenLeaves, earnerLeaves, endTimestamp, NUM_EARNERS, 1, filePath
         );
         cheats.stopPrank();
 

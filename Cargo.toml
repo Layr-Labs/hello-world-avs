@@ -40,8 +40,5 @@ serde = "1.0.214"
 hello-world-avs-operator = { path = "operator/rust/crates/operator" }
 hello-world-utils = { path = "operator/rust/crates/utils" }
 
-alloy = { version = "0.9", features = ["full"] }
-eigensdk = { git = "https://github.com/Layr-Labs/eigensdk-rs.git", rev = "565a48a", features = [
-    "full",
-    "utils",
-] }
+alloy = { version = "0.12", features = ["full"] }
+eigensdk = { version = "0.5.0", features = ["full"] }

@@ -20,7 +20,7 @@ import {StrategyBaseTVLLimits} from "@eigenlayer/contracts/strategies/StrategyBa
 import {PauserRegistry} from "@eigenlayer/contracts/permissions/PauserRegistry.sol";
 import {IStrategy} from "@eigenlayer/contracts/interfaces/IStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
+import {ISignatureUtilsMixin} from "@eigenlayer/contracts/interfaces/ISignatureUtilsMixin.sol";
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {IBeacon} from "@openzeppelin/contracts/proxy/beacon/IBeacon.sol";
 import {IStrategyManager} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
@@ -32,7 +32,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
-import {CoreDeploymentLib} from "@eigenlayer-middleware/test/utils/CoreDeployLib.sol";
+import {CoreDeployLib} from "@eigenlayer-middleware/test/utils/CoreDeployLib.sol";
 
 library CoreDeploymentParsingLib {
     using stdJson for *;
@@ -44,14 +44,14 @@ library CoreDeploymentParsingLib {
     function readDeploymentConfigValues(
         string memory directoryPath,
         string memory fileName
-    ) internal view returns (CoreDeploymentLib.DeploymentConfigData memory) {
+    ) internal view returns (CoreDeployLib.DeploymentConfigData memory) {
         string memory pathToFile = string.concat(directoryPath, fileName);
 
         require(vm.exists(pathToFile), "CoreDeployment: Deployment config file does not exist");
 
         string memory json = vm.readFile(pathToFile);
 
-        CoreDeploymentLib.DeploymentConfigData memory data;
+        CoreDeployLib.DeploymentConfigData memory data;
 
         // StrategyManager start
         data.strategyManager.initPausedStatus = json.readUint(".strategyManager.initPausedStatus");
@@ -124,7 +124,7 @@ library CoreDeploymentParsingLib {
     function readDeploymentConfigValues(
         string memory directoryPath,
         uint256 chainId
-    ) internal view returns (CoreDeploymentLib.DeploymentConfigData memory) {
+    ) internal view returns (CoreDeployLib.DeploymentConfigData memory) {
         return
             readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
@@ -132,21 +132,21 @@ library CoreDeploymentParsingLib {
     function readDeploymentJson(
         string memory directoryPath,
         uint256 chainId
-    ) internal view returns (CoreDeploymentLib.DeploymentData memory) {
+    ) internal view returns (CoreDeployLib.DeploymentData memory) {
         return readDeploymentJson(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
 
     function readDeploymentJson(
         string memory path,
         string memory fileName
-    ) internal view returns (CoreDeploymentLib.DeploymentData memory) {
+    ) internal view returns (CoreDeployLib.DeploymentData memory) {
         string memory pathToFile = string.concat(path, fileName);
 
         require(vm.exists(pathToFile), "CoreDeployment: Deployment file does not exist");
 
         string memory json = vm.readFile(pathToFile);
 
-        CoreDeploymentLib.DeploymentData memory data;
+        CoreDeployLib.DeploymentData memory data;
         data.delegationManager = json.readAddress(".addresses.delegationManager");
         data.avsDirectory = json.readAddress(".addresses.avsDirectory");
         data.strategyManager = json.readAddress(".addresses.strategyManager");
@@ -164,7 +164,7 @@ library CoreDeploymentParsingLib {
 
     /// TODO: Need to be able to read json from eigenlayer-contracts repo for holesky/mainnet and output the json here
     function writeDeploymentJson(
-        CoreDeploymentLib.DeploymentData memory data
+        CoreDeployLib.DeploymentData memory data
     ) internal {
         writeDeploymentJson("deployments/core/", block.chainid, data);
     }
@@ -172,7 +172,7 @@ library CoreDeploymentParsingLib {
     function writeDeploymentJson(
         string memory path,
         uint256 chainId,
-        CoreDeploymentLib.DeploymentData memory data
+        CoreDeployLib.DeploymentData memory data
     ) internal {
         address proxyAdmin = address(UpgradeableProxyLib.getProxyAdmin(data.strategyManager));
 
@@ -188,7 +188,7 @@ library CoreDeploymentParsingLib {
     }
 
     function _generateDeploymentJson(
-        CoreDeploymentLib.DeploymentData memory data,
+        CoreDeployLib.DeploymentData memory data,
         address proxyAdmin
     ) private view returns (string memory) {
         return string.concat(
@@ -203,7 +203,7 @@ library CoreDeploymentParsingLib {
     }
 
     function _generateContractsJson(
-        CoreDeploymentLib.DeploymentData memory data,
+        CoreDeployLib.DeploymentData memory data,
         address proxyAdmin
     ) private view returns (string memory) {
         /// TODO: namespace contracts -> {avs, core}

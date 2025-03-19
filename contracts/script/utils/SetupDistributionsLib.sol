@@ -56,18 +56,17 @@ library SetupDistributionsLib {
     function createOperatorDirectedAVSRewardsSubmissions(
         address helloWorldServiceManager,
         address[] memory operators,
-        uint256 numOperators,
         address strategy,
         uint256 numPayments,
         uint256 amountPerPayment,
         uint32 duration,
         uint32 startTimestamp
     ) internal {
-        uint256 operatorRewardAmount = amountPerPayment / numOperators;
+        uint256 operatorRewardAmount = amountPerPayment / operators.length;
 
         IRewardsCoordinatorTypes.OperatorReward[] memory operatorRewards =
-            new IRewardsCoordinatorTypes.OperatorReward[](2);
-        for (uint256 i = 0; i < 2; i++) {
+            new IRewardsCoordinatorTypes.OperatorReward[](operators.length);
+        for (uint256 i = 0; i < operators.length; i++) {
             operatorRewards[i] = IRewardsCoordinatorTypes.OperatorReward({
                 operator: operators[i],
                 amount: operatorRewardAmount
@@ -150,7 +149,6 @@ library SetupDistributionsLib {
         IRewardsCoordinator rewardsCoordinator,
         bytes32[] memory tokenLeaves,
         IRewardsCoordinatorTypes.EarnerTreeMerkleLeaf[] memory earnerLeaves,
-        address strategy,
         uint32 rewardsCalculationEndTimestamp,
         uint256 NUM_PAYMENTS,
         uint256 NUM_TOKEN_EARNINGS,
