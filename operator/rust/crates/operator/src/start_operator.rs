@@ -1,5 +1,7 @@
 #![allow(missing_docs)]
 use alloy::dyn_abi::DynSolValue;
+use alloy::providers::ext::AnvilApi;
+use alloy::rpc::types::anvil::MineOptions;
 use alloy::{
     primitives::{eip191_hash_message, keccak256, Address, FixedBytes, U256},
     providers::Provider,
@@ -18,7 +20,7 @@ use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{
-    ecdsastakeregistry::ISignatureUtils::SignatureWithSaltAndExpiry,
+    ecdsastakeregistry::ISignatureUtilsMixinTypes::SignatureWithSaltAndExpiry,
     helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
 };
 use hello_world_utils::{
@@ -88,6 +90,15 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
     let pr = get_signer(private_key, rpc_url);
     let hello_world_contract_address: Address = get_hello_world_service_manager()?;
     let mut latest_processed_block = pr.get_block_number().await?;
+    dbg!(latest_processed_block);
+
+    let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
+
+    let max_response_interval_blocks = hello_world_contract
+        .MAX_RESPONSE_INTERVAL_BLOCKS()
+        .call()
+        .await?;
+    dbg!(max_response_interval_blocks._0);
 
     loop {
         get_logger().info("Monitoring for new tasks...", "");
@@ -107,20 +118,27 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
                     .data;
                 get_logger().info(&format!("New task detected: Hello, {}", task.name), "");
 
-                let _ = sign_and_respond_to_task(
-                    rpc_url,
-                    private_key,
-                    taskIndex,
-                    task.taskCreatedBlock,
-                    task.name,
-                )
-                .await;
+                // let _ = sign_and_respond_to_task(
+                //     rpc_url,
+                //     private_key,
+                //     taskIndex,
+                //     task.taskCreatedBlock,
+                //     task.name,
+                // )
+                // .await;
+                pr.anvil_mine(Some((max_response_interval_blocks._0 as u64) + 1), None)
+                    .await?;
+
+                slash_operator(rpc_url, private_key, task, taskIndex)
+                    .await
+                    .unwrap();
             }
         }
 
         tokio::time::sleep(tokio::time::Duration::from_secs(12)).await;
         let current_block = pr.get_block_number().await?;
         latest_processed_block = current_block;
+        dbg!(latest_processed_block);
     }
 }
 
@@ -224,6 +242,59 @@ pub async fn register_operator(rpc_url: &str, private_key: &str) -> Result<()> {
         ),
         "",
     );
+
+    contract_ecdsa_stake_registry
+        .updateMinimumWeight(U256::from(100000000), vec![signer.address()])
+        .send()
+        .await
+        .unwrap()
+        .get_receipt()
+        .await
+        .unwrap();
+
+    Ok(())
+}
+
+async fn slash_operator(
+    rpc_url: &str,
+    private_key: &str,
+    task: Task,
+    task_index: u32,
+) -> Result<()> {
+    let pr = get_signer(private_key, rpc_url);
+    let signer = PrivateKeySigner::from_str(private_key)?;
+
+    let hello_world_contract_address: Address = get_hello_world_service_manager()?;
+    let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
+
+    let ecdsa_contract = ECDSAStakeRegistry::new(get_stake_registry_address()?, &pr);
+    let operator_weight = ecdsa_contract
+        .getOperatorWeight(signer.address())
+        .call()
+        .await?;
+    dbg!(operator_weight._0);
+
+    let operator_weight_at_block = ecdsa_contract
+        .getOperatorWeightAtBlock(signer.address(), task.taskCreatedBlock)
+        .call()
+        .await?;
+    dbg!(operator_weight_at_block._0);
+
+    let operator_weight_at_block = ecdsa_contract
+        .getOperatorWeightAtBlock(signer.address(), task.taskCreatedBlock + 10)
+        .call()
+        .await?;
+    dbg!(operator_weight_at_block._0);
+
+    let tx = hello_world_contract
+        .slashOperator(task, task_index, signer.address())
+        .send()
+        .await?
+        .get_receipt()
+        .await?
+        .transaction_hash;
+
+    get_logger().info(&format!("Slashed operator with tx hash {}", tx), "");
 
     Ok(())
 }
