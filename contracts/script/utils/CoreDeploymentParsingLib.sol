@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import {TransparentUpgradeableProxy} from
-    "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {console2} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -41,10 +40,11 @@ library CoreDeploymentParsingLib {
 
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
-    function readDeploymentConfigValues(
-        string memory directoryPath,
-        string memory fileName
-    ) internal view returns (CoreDeployLib.DeploymentConfigData memory) {
+    function readDeploymentConfigValues(string memory directoryPath, string memory fileName)
+        internal
+        view
+        returns (CoreDeployLib.DeploymentConfigData memory)
+    {
         string memory pathToFile = string.concat(directoryPath, fileName);
 
         require(vm.exists(pathToFile), "CoreDeployment: Deployment config file does not exist");
@@ -61,8 +61,7 @@ library CoreDeploymentParsingLib {
         // StrategyManager config end
 
         // DelegationManager config start
-        data.delegationManager.initPausedStatus =
-            json.readUint(".delegationManager.initPausedStatus");
+        data.delegationManager.initPausedStatus = json.readUint(".delegationManager.initPausedStatus");
         data.delegationManager.initialOwner = json.readAddress(".delegationManager.initialOwner");
         data.delegationManager.minWithdrawalDelayBlocks =
             uint32(json.readUint(".delegationManager.minWithdrawalDelayBlocks"));
@@ -74,11 +73,9 @@ library CoreDeploymentParsingLib {
         // EigenPodManager config end
 
         // AllocationManager config start
-        data.allocationManager.initPausedStatus =
-            json.readUint(".allocationManager.initPausedStatus");
+        data.allocationManager.initPausedStatus = json.readUint(".allocationManager.initPausedStatus");
         data.allocationManager.initialOwner = json.readAddress(".allocationManager.initialOwner");
-        data.allocationManager.deallocationDelay =
-            uint32(json.readUint(".allocationManager.deallocationDelay"));
+        data.allocationManager.deallocationDelay = uint32(json.readUint(".allocationManager.deallocationDelay"));
         data.allocationManager.allocationConfigurationDelay =
             uint32(json.readUint(".allocationManager.allocationConfigurationDelay"));
         // AllocationManager config end
@@ -94,24 +91,17 @@ library CoreDeploymentParsingLib {
         // AVSDirectory config end
 
         // RewardsCoordinator config start
-        data.rewardsCoordinator.initPausedStatus =
-            json.readUint(".rewardsCoordinator.initPausedStatus");
+        data.rewardsCoordinator.initPausedStatus = json.readUint(".rewardsCoordinator.initPausedStatus");
         data.rewardsCoordinator.initialOwner = json.readAddress(".rewardsCoordinator.initialOwner");
-        data.rewardsCoordinator.rewardsUpdater =
-            json.readAddress(".rewardsCoordinator.rewardsUpdater");
+        data.rewardsCoordinator.rewardsUpdater = json.readAddress(".rewardsCoordinator.rewardsUpdater");
 
-        data.rewardsCoordinator.activationDelay =
-            uint32(json.readUint(".rewardsCoordinator.activationDelay"));
-        data.rewardsCoordinator.defaultSplitBips =
-            uint16(json.readUint(".rewardsCoordinator.defaultSplitBips"));
+        data.rewardsCoordinator.activationDelay = uint32(json.readUint(".rewardsCoordinator.activationDelay"));
+        data.rewardsCoordinator.defaultSplitBips = uint16(json.readUint(".rewardsCoordinator.defaultSplitBips"));
         data.rewardsCoordinator.calculationIntervalSeconds =
             uint32(json.readUint(".rewardsCoordinator.calculationIntervalSeconds"));
-        data.rewardsCoordinator.maxRewardsDuration =
-            uint32(json.readUint(".rewardsCoordinator.maxRewardsDuration"));
-        data.rewardsCoordinator.maxRetroactiveLength =
-            uint32(json.readUint(".rewardsCoordinator.maxRetroactiveLength"));
-        data.rewardsCoordinator.maxFutureLength =
-            uint32(json.readUint(".rewardsCoordinator.maxFutureLength"));
+        data.rewardsCoordinator.maxRewardsDuration = uint32(json.readUint(".rewardsCoordinator.maxRewardsDuration"));
+        data.rewardsCoordinator.maxRetroactiveLength = uint32(json.readUint(".rewardsCoordinator.maxRetroactiveLength"));
+        data.rewardsCoordinator.maxFutureLength = uint32(json.readUint(".rewardsCoordinator.maxFutureLength"));
         data.rewardsCoordinator.genesisRewardsTimestamp =
             uint32(json.readUint(".rewardsCoordinator.genesisRewardsTimestamp"));
         // RewardsCoordinator config end
@@ -121,25 +111,27 @@ library CoreDeploymentParsingLib {
         return data;
     }
 
-    function readDeploymentConfigValues(
-        string memory directoryPath,
-        uint256 chainId
-    ) internal view returns (CoreDeployLib.DeploymentConfigData memory) {
-        return
-            readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
+    function readDeploymentConfigValues(string memory directoryPath, uint256 chainId)
+        internal
+        view
+        returns (CoreDeployLib.DeploymentConfigData memory)
+    {
+        return readDeploymentConfigValues(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
 
-    function readDeploymentJson(
-        string memory directoryPath,
-        uint256 chainId
-    ) internal view returns (CoreDeployLib.DeploymentData memory) {
+    function readDeploymentJson(string memory directoryPath, uint256 chainId)
+        internal
+        view
+        returns (CoreDeployLib.DeploymentData memory)
+    {
         return readDeploymentJson(directoryPath, string.concat(vm.toString(chainId), ".json"));
     }
 
-    function readDeploymentJson(
-        string memory path,
-        string memory fileName
-    ) internal view returns (CoreDeployLib.DeploymentData memory) {
+    function readDeploymentJson(string memory path, string memory fileName)
+        internal
+        view
+        returns (CoreDeployLib.DeploymentData memory)
+    {
         string memory pathToFile = string.concat(path, fileName);
 
         require(vm.exists(pathToFile), "CoreDeployment: Deployment file does not exist");
@@ -163,17 +155,13 @@ library CoreDeploymentParsingLib {
     }
 
     /// TODO: Need to be able to read json from eigenlayer-contracts repo for holesky/mainnet and output the json here
-    function writeDeploymentJson(
-        CoreDeployLib.DeploymentData memory data
-    ) internal {
+    function writeDeploymentJson(CoreDeployLib.DeploymentData memory data) internal {
         writeDeploymentJson("deployments/core/", block.chainid, data);
     }
 
-    function writeDeploymentJson(
-        string memory path,
-        uint256 chainId,
-        CoreDeployLib.DeploymentData memory data
-    ) internal {
+    function writeDeploymentJson(string memory path, uint256 chainId, CoreDeployLib.DeploymentData memory data)
+        internal
+    {
         address proxyAdmin = address(UpgradeableProxyLib.getProxyAdmin(data.strategyManager));
 
         string memory deploymentData = _generateDeploymentJson(data, proxyAdmin);
@@ -187,10 +175,11 @@ library CoreDeploymentParsingLib {
         console2.log("Deployment artifacts written to:", fileName);
     }
 
-    function _generateDeploymentJson(
-        CoreDeployLib.DeploymentData memory data,
-        address proxyAdmin
-    ) private view returns (string memory) {
+    function _generateDeploymentJson(CoreDeployLib.DeploymentData memory data, address proxyAdmin)
+        private
+        view
+        returns (string memory)
+    {
         return string.concat(
             '{"lastUpdate":{"timestamp":"',
             vm.toString(block.timestamp),
@@ -202,10 +191,11 @@ library CoreDeploymentParsingLib {
         );
     }
 
-    function _generateContractsJson(
-        CoreDeployLib.DeploymentData memory data,
-        address proxyAdmin
-    ) private view returns (string memory) {
+    function _generateContractsJson(CoreDeployLib.DeploymentData memory data, address proxyAdmin)
+        private
+        view
+        returns (string memory)
+    {
         /// TODO: namespace contracts -> {avs, core}
         return string.concat(
             '{"proxyAdmin":"',

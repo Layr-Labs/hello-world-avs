@@ -3,9 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
-import {
-    CoreDeployLib, CoreDeploymentParsingLib
-} from "../script/utils/CoreDeploymentParsingLib.sol";
+import {CoreDeployLib, CoreDeploymentParsingLib} from "../script/utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 
 contract CoreDeploymentParsingLibTest is Test {
@@ -43,8 +41,7 @@ contract CoreDeploymentParsingLibTest is Test {
     }
 
     function test_DeployContracts() public {
-        configData =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
+        configData = CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         deploymentData = CoreDeployLib.deployContracts(proxyAdmin, configData);
 
         assertTrue(deploymentData.delegationManager != address(0), "DelegationManager not deployed");
@@ -53,8 +50,7 @@ contract CoreDeploymentParsingLibTest is Test {
     }
 
     function test_WriteDeploymentJson() public {
-        configData =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
+        configData = CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         deploymentData = CoreDeployLib.deployContracts(proxyAdmin, configData);
 
         string memory scratchPath = "test/mockData/scratch/test_WriteDeploymentJson/";
@@ -67,8 +63,7 @@ contract CoreDeploymentParsingLibTest is Test {
     }
 
     function test_WriteAndReadDeploymentJson() public {
-        configData =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
+        configData = CoreDeploymentParsingLib.readDeploymentConfigValues("test/mockData/config/core/", 1337);
         deploymentData = CoreDeployLib.deployContracts(proxyAdmin, configData);
 
         string memory scratchPath = "test/mockData/scratch/test_WriteAndReadDeploymentJson/";
@@ -86,8 +81,7 @@ contract CoreDeploymentParsingLibTest is Test {
         /// TODO: Deployment json is missing the strategy factory
         vm.skip(true);
         // Path to the M2 deployment data JSON file
-        string memory m2DeploymentDataPath =
-            "lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/output/devnet/";
+        string memory m2DeploymentDataPath = "lib/eigenlayer-middleware/lib/eigenlayer-contracts/script/output/devnet/";
         string memory m2DeploymentFilename = "M2_from_scratch_deployment_data.json";
 
         CoreDeploymentParsingLib.readDeploymentJson(m2DeploymentDataPath, m2DeploymentFilename);

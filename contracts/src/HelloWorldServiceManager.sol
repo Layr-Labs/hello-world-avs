@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import {ECDSAServiceManagerBase} from
-    "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
+import {ECDSAServiceManagerBase} from "@eigenlayer-middleware/src/unaudited/ECDSAServiceManagerBase.sol";
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
-import {ECDSAUpgradeable} from
-    "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
-import {IERC1271Upgradeable} from
-    "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
+import {ECDSAUpgradeable} from "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
+import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {IAllocationManager} from "@eigenlayer/contracts/interfaces/IAllocationManager.sol";
-import {TransparentUpgradeableProxy} from
-    "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
@@ -43,10 +39,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     uint32 public immutable MAX_RESPONSE_INTERVAL_BLOCKS;
 
     modifier onlyOperator() {
-        require(
-            ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender),
-            "Operator must be the caller"
-        );
+        require(ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender), "Operator must be the caller");
         _;
     }
 
@@ -58,13 +51,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _allocationManager,
         uint32 _maxResponseIntervalBlocks
     )
-        ECDSAServiceManagerBase(
-            _avsDirectory,
-            _stakeRegistry,
-            _rewardsCoordinator,
-            _delegationManager,
-            _allocationManager
-        )
+        ECDSAServiceManagerBase(_avsDirectory, _stakeRegistry, _rewardsCoordinator, _delegationManager, _allocationManager)
     {
         MAX_RESPONSE_INTERVAL_BLOCKS = _maxResponseIntervalBlocks;
     }
@@ -74,38 +61,23 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     }
 
     // These are just to comply with IServiceManager interface
-    function addPendingAdmin(
-        address admin
-    ) external onlyOwner {}
+    function addPendingAdmin(address admin) external onlyOwner {}
 
-    function removePendingAdmin(
-        address pendingAdmin
-    ) external onlyOwner {}
+    function removePendingAdmin(address pendingAdmin) external onlyOwner {}
 
-    function removeAdmin(
-        address admin
-    ) external onlyOwner {}
+    function removeAdmin(address admin) external onlyOwner {}
 
     function setAppointee(address appointee, address target, bytes4 selector) external onlyOwner {}
 
-    function removeAppointee(
-        address appointee,
-        address target,
-        bytes4 selector
-    ) external onlyOwner {}
+    function removeAppointee(address appointee, address target, bytes4 selector) external onlyOwner {}
 
-    function deregisterOperatorFromOperatorSets(
-        address operator,
-        uint32[] memory operatorSetIds
-    ) external {
+    function deregisterOperatorFromOperatorSets(address operator, uint32[] memory operatorSetIds) external {
         // unused
     }
 
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
-    function createNewTask(
-        string memory name
-    ) external returns (Task memory) {
+    function createNewTask(string memory name) external returns (Task memory) {
         // create a new task struct
         Task memory newTask;
         newTask.name = name;
@@ -119,11 +91,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         return newTask;
     }
 
-    function respondToTask(
-        Task calldata task,
-        uint32 referenceTaskIndex,
-        bytes memory signature
-    ) external {
+    function respondToTask(Task calldata task, uint32 referenceTaskIndex, bytes memory signature) external {
         // check that the task is valid, hasn't been responded yet, and is being responded in time
         require(
             keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
@@ -144,10 +112,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             abi.decode(signature, (address[], bytes[], uint32));
 
         // Check that referenceBlock matches task creation block
-        require(
-            referenceBlock == task.taskCreatedBlock,
-            "Reference block must match task creation block"
-        );
+        require(referenceBlock == task.taskCreatedBlock, "Reference block must match task creation block");
 
         // Store each operator's signature
         for (uint256 i = 0; i < operators.length; i++) {
@@ -173,11 +138,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         require(magicValue == isValidSignatureResult, "Invalid signature");
     }
 
-    function slashOperator(
-        Task calldata task,
-        uint32 referenceTaskIndex,
-        address operator
-    ) external {
+    function slashOperator(Task calldata task, uint32 referenceTaskIndex, address operator) external {
         // check that the task is valid, hasn't been responsed yet
         require(
             keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
@@ -185,17 +146,15 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         );
         require(!taskWasResponded[referenceTaskIndex], "Task has already been responded to");
         require(
-            allTaskResponses[operator][referenceTaskIndex].length == 0,
-            "Operator has already responded to the task"
+            allTaskResponses[operator][referenceTaskIndex].length == 0, "Operator has already responded to the task"
         );
         require(
             block.number > task.taskCreatedBlock + MAX_RESPONSE_INTERVAL_BLOCKS,
             "Task response time has not expired yet"
         );
         // check operator was registered when task was created
-        uint256 operatorWeight = ECDSAStakeRegistry(stakeRegistry).getOperatorWeightAtBlock(
-            operator, task.taskCreatedBlock
-        );
+        uint256 operatorWeight =
+            ECDSAStakeRegistry(stakeRegistry).getOperatorWeightAtBlock(operator, task.taskCreatedBlock);
         require(operatorWeight > 0, "Operator was not registered when task was created");
 
         // we update the storage with a sentinel value

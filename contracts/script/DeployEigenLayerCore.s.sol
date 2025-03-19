@@ -28,16 +28,13 @@ contract DeployEigenLayerCore is Script, Test {
     function run() external {
         vm.startBroadcast(deployer);
         //set the rewards updater to the deployer address for payment flow
-        configData =
-            CoreDeploymentParsingLib.readDeploymentConfigValues("config/core/", block.chainid);
+        configData = CoreDeploymentParsingLib.readDeploymentConfigValues("config/core/", block.chainid);
         configData.rewardsCoordinator.rewardsUpdater = deployer;
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
         deploymentData = CoreDeployLib.deployContracts(proxyAdmin, configData);
 
         // TODO: the deployer lib should probably do this
-        StrategyManager(deploymentData.strategyManager).setStrategyWhitelister(
-            deploymentData.strategyFactory
-        );
+        StrategyManager(deploymentData.strategyManager).setStrategyWhitelister(deploymentData.strategyFactory);
         vm.stopBroadcast();
         string memory deploymentPath = "deployments/core/";
         CoreDeploymentParsingLib.writeDeploymentJson(deploymentPath, block.chainid, deploymentData);
