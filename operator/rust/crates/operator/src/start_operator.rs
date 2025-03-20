@@ -90,15 +90,6 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
     let hello_world_contract_address: Address = get_hello_world_service_manager()?;
     let mut latest_processed_block = pr.get_block_number().await?;
 
-    let hello_world_contract = HelloWorldServiceManager::new(hello_world_contract_address, &pr);
-
-    // The time that an operator has to respond to a task in blocks
-    let max_response_interval_blocks = hello_world_contract
-        .MAX_RESPONSE_INTERVAL_BLOCKS()
-        .call()
-        .await?
-        ._0;
-
     loop {
         get_logger().info("Monitoring for new tasks...", "");
 
@@ -133,18 +124,6 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
                 } else {
                     get_logger().info(
                         &format!("Operator did not respond to task {}", taskIndex),
-                        "",
-                    );
-
-                    // Mine blocks to advance beyond the response period
-                    pr.anvil_mine(Some((max_response_interval_blocks as u64) + 1), None)
-                        .await?;
-
-                    get_logger().info(
-                        &format!(
-                            "Mined {} blocks to advance beyond the response period",
-                            max_response_interval_blocks
-                        ),
                         "",
                     );
                 }
