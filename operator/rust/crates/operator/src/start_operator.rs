@@ -1,6 +1,5 @@
 #![allow(missing_docs)]
 use alloy::dyn_abi::DynSolValue;
-use alloy::providers::ext::AnvilApi;
 use alloy::{
     primitives::{eip191_hash_message, keccak256, Address, FixedBytes, U256},
     providers::Provider,
