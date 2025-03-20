@@ -11,7 +11,8 @@ use rand::Rng;
 use std::env;
 use tokio::time::{self, Duration};
 
-pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
+static RPC_URL: Lazy<String> =
+    Lazy::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
@@ -64,7 +65,7 @@ async fn start_creating_tasks() {
             &format!("Creating new task with name: {random_name}"),
             "start_creating_tasks",
         );
-        let _ = create_new_task(ANVIL_RPC_URL, &random_name).await;
+        let _ = create_new_task(&RPC_URL, &random_name).await;
     }
 }
 

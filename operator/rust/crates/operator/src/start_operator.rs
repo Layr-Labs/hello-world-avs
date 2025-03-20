@@ -29,7 +29,8 @@ use once_cell::sync::Lazy;
 use rand::TryRngCore;
 use std::{env, str::FromStr};
 
-pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
+static RPC_URL: Lazy<String> =
+    Lazy::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
@@ -233,7 +234,7 @@ pub async fn main() {
     use tokio::signal;
     dotenv().ok();
     init_logger(LogLevel::Info);
-    let rpc_url = ANVIL_RPC_URL;
+    let rpc_url = &RPC_URL;
     if let Err(e) = register_operator(rpc_url, &KEY).await {
         eprintln!("Failed to register operator: {:?}", e);
         return;
