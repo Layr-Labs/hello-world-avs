@@ -3578,7 +3578,6 @@ dependencies = [
  "hello-world-utils",
  "hex",
  "num-bigint 0.4.6",
- "once_cell",
  "rand 0.9.0",
  "reqwest 0.12.12",
  "serde",
