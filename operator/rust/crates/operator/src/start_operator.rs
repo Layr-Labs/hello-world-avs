@@ -34,6 +34,13 @@ pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 static KEY: Lazy<String> =
     Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
+static OPERATOR_RESPONSE_PERCENTAGE: Lazy<f64> = Lazy::new(|| {
+    env::var("OPERATOR_RESPONSE_PERCENTAGE")
+        .expect("failed to retrieve operator response percentage")
+        .parse::<f64>()
+        .expect("failed to parse operator response percentage")
+});
+
 async fn sign_and_respond_to_task(
     rpc_url: &str,
     private_key: &str,
@@ -107,9 +114,9 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
                     .data;
                 get_logger().info(&format!("New task detected: Hello, {}", task.name), "");
 
-                // There is a 80% chance that the operator will respond to the task.
+                // There is a `OPERATOR_RESPONSE_PERCENTAGE` chance that the operator will respond to the task.
                 // If the operator does not respond, the operator will be slashed.
-                let should_respond = rand::rng().random_bool(0.8);
+                let should_respond = rand::rng().random_bool(*OPERATOR_RESPONSE_PERCENTAGE / 100.0);
 
                 if should_respond {
                     let _ = sign_and_respond_to_task(
