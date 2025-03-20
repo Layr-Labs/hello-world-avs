@@ -257,6 +257,7 @@ pub async fn register_operator(rpc_url: &str, private_key: &str) -> Result<()> {
         ),
         "",
     );
+
     Ok(())
 }
 

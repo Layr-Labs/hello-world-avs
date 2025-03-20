@@ -196,7 +196,6 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         uint256 operatorWeight = ECDSAStakeRegistry(stakeRegistry).getOperatorWeightAtBlock(
             operator, task.taskCreatedBlock
         );
-
         require(operatorWeight > 0, "Operator was not registered when task was created");
 
         // we update the storage with a sentinel value
