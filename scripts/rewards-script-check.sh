@@ -5,7 +5,7 @@
 set -e -o nounset
 
 # Execute anvil in background
-#anvil -q &
+anvil -q &
 
 # Deploy contracts
 make deploy-eigenlayer-contracts
