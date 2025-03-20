@@ -7,14 +7,15 @@ use alloy::{
 };
 use dotenv::dotenv;
 use eigensdk::{
-    common::get_ws_provider,
+    common::{get_provider, get_ws_provider},
     logging::{get_logger, init_logger, log_level::LogLevel},
     testing_utils::anvil_constants::ANVIL_WS_URL,
 };
 use eyre::Result;
 use futures::StreamExt;
 use hello_world_utils::{
-    get_hello_world_service_manager, helloworldservicemanager::HelloWorldServiceManager,
+    get_hello_world_service_manager,
+    helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
 };
 use once_cell::sync::Lazy;
 
@@ -29,19 +30,29 @@ pub struct Challenger {
     rpc_url: String,
     ws_url: String,
     private_key: String,
+    max_response_interval_blocks: u32,
 }
 
-///
+/// Challenger implementation
 impl Challenger {
     /// Create a new challenger
-    pub fn new(rpc_url: String, ws_url: String, private_key: String) -> Self {
+    pub async fn new(rpc_url: String, ws_url: String, private_key: String) -> Result<Self> {
         let service_manager_address = get_hello_world_service_manager().unwrap();
-        Self {
+        let service_manager_contract =
+            HelloWorldServiceManager::new(service_manager_address, get_provider(&rpc_url));
+        let max_response_interval_blocks = service_manager_contract
+            .MAX_RESPONSE_INTERVAL_BLOCKS()
+            .call()
+            .await?
+            ._0;
+
+        Ok(Self {
             service_manager_address,
             rpc_url,
             ws_url,
             private_key,
-        }
+            max_response_interval_blocks,
+        })
     }
 
     /// Start the challenger
@@ -50,6 +61,7 @@ impl Challenger {
 
         let wa = get_ws_provider(&self.ws_url).await?;
 
+        // Subscribe to NewTaskCreated event
         let new_task_created_filter = Filter::new()
             .address(self.service_manager_address)
             .event_signature(HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH)
@@ -58,6 +70,7 @@ impl Challenger {
 
         let mut new_task_created_stream = new_task_created_sub.into_stream();
 
+        // Subscribe to TaskResponded event
         let task_responded_filter = Filter::new()
             .address(self.service_manager_address)
             .event_signature(HelloWorldServiceManager::TaskResponded::SIGNATURE_HASH)
@@ -69,8 +82,8 @@ impl Challenger {
         loop {
             tokio::select! {
                 Some(log) = task_responded_stream.next() => {
-                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::TaskResponded>() {
-                        let event = decoded.inner.data;
+                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::TaskResponded>().inspect_err(|_| get_logger().info("Error decoding TaskResponded event", "")) {
+                        let event = decoded.data();
                         get_logger().info(
                             &format!("TaskResponded: taskIndex={}, name={}, createdBlock={}, operator={}",
                             event.taskIndex,
@@ -83,21 +96,28 @@ impl Challenger {
                     }
                 },
                 Some(log) = new_task_created_stream.next() => {
-                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>() {
-                        let event = decoded.inner.data;
+                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>().inspect_err(|_| get_logger().info("Error decoding NewTaskCreated event", "")) {
+                        let task_event = decoded.data();
+
                         get_logger().info(
                             &format!("NewTaskCreated: taskIndex={}, name={}, createdBlock={}",
-                            event.taskIndex,
-                            event.task.name,
-                            event.task.taskCreatedBlock
+                            task_event.taskIndex.clone(),
+                            task_event.task.name.clone(),
+                            task_event.task.taskCreatedBlock.clone()
                         ),
                             "",
                         );
+
+                        let new_task = Task {
+                            name: task_event.task.name.clone(),
+                            taskCreatedBlock: task_event.task.taskCreatedBlock,
+                        };
+
                     }
                 },
                 else => {
                     // If both streams are exhausted, break the loop.
-                    get_logger().info("No more logs to process, exiting loop.", "");
+                    get_logger().info("challenger:No more logs to process, exiting loop.", "");
                     break;
                 }
             };
@@ -112,10 +132,14 @@ impl Challenger {
 async fn main() {
     dotenv().ok();
     init_logger(LogLevel::Info);
+
     let challenger = Challenger::new(
         ANVIL_RPC_URL.to_string(),
         ANVIL_WS_URL.to_string(),
         KEY.clone(),
-    );
+    )
+    .await
+    .unwrap();
+
     challenger.start_challenger().await.unwrap();
 }
