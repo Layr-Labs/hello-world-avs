@@ -65,3 +65,22 @@ spam-rust-tasks:  ## start tasks spamming (part of quickstart)
 
 start-rust-challenger: ## start challenger (part of quickstart)
 	cargo run --bin challenger
+
+__REWARDS__: ##
+
+TOKEN_ADDRESS=$(shell jq -r '.addresses.token' contracts/deployments/hello-world/31337.json)
+
+create-avs-distributions-root:
+	npm run create-distributions-root
+
+claim-distributions:
+	npm run claim-distributions
+
+create-operator-directed-distributions-root:
+	npm run create-operator-directed-distributions-root
+
+get-deployed-token-address:
+	@echo "Deployed token Address: $(TOKEN_ADDRESS)"
+
+claimer-account-token-balance:
+	cast balance --erc20 $(TOKEN_ADDRESS) 0x0000000000000000000000000000000000000001

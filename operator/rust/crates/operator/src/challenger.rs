@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use std::{collections::HashMap, str::FromStr, time::Duration};
+use std::{collections::HashMap, env, str::FromStr, sync::LazyLock, time::Duration};
 
 use alloy::{
     eips::BlockNumberOrTag,
@@ -11,11 +11,11 @@ use alloy::{
 };
 use dotenv::dotenv;
 use eigensdk::{
-    common::{get_provider, get_signer, get_ws_provider},
+    common::{get_provider, get_ws_provider},
     logging::{get_logger, init_logger, log_level::LogLevel},
     testing_utils::anvil_constants::ANVIL_WS_URL,
 };
-use eyre::Result;
+use eyre::{Ok, Result};
 use futures::StreamExt;
 use hello_world_utils::{
     get_hello_world_service_manager,
@@ -24,9 +24,16 @@ use hello_world_utils::{
         IHelloWorldServiceManager::Task,
     },
 };
-use tokio::sync::oneshot;
+use tokio::{
+    signal::{self},
+    sync::oneshot,
+};
 
-pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
+static RPC_URL: LazyLock<String> =
+    LazyLock::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
+
+static KEY: LazyLock<String> =
+    LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
 /// Challenger struct
 #[derive(Debug)]
@@ -98,18 +105,20 @@ impl Challenger {
         loop {
             tokio::select! {
                 Some(log) = new_task_stream.next() => {
-                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>() {
+                    let decode = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>().ok();
+                    if let Some(decoded) = decode {
                         self.handle_task_creation(decoded).await;
                     }
                 },
                 Some(log) = responded_stream.next() => {
-                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::TaskResponded>() {
+                    let decode = log.log_decode::<HelloWorldServiceManager::TaskResponded>().ok();
+                    if let Some(decoded) = decode {
                         self.handle_task_response(decoded).await;
                     }
                 },
                 else => {
                     // If both streams are exhausted, break the loop.
-                    get_logger().info("challenger:No more logs to process, exiting loop.", "");
+                    get_logger().info("challenger:No more logs to process, exiting loop.", "")
                 }
             }
         }
@@ -120,7 +129,7 @@ impl Challenger {
         &mut self,
         decoded: Log<HelloWorldServiceManager::NewTaskCreated>,
     ) {
-        let event = decoded.data();
+        let event = decoded.data().clone();
         let task_index = event.taskIndex;
         get_logger().info(&format!("New task received: {}", task_index), "");
 
@@ -131,13 +140,17 @@ impl Challenger {
 
         // Calculate timeout based on max_response_interval_blocks (assuming 12 seconds per block)
         let timeout_duration = Duration::from_secs(self.max_response_interval_blocks as u64 * 12);
+        let operator_address = self.operator_address;
+        let rpc_url = self.rpc_url.clone();
+        let service_manager_address = self.service_manager_address;
+
+        dbg!(get_provider(&rpc_url).get_block_number().await.unwrap());
 
         tokio::spawn(async move {
             tokio::select! {
                 _ = tokio::time::sleep(timeout_duration) => {
                     get_logger().info(&format!("Timeout expired for task {}", task_index), "");
-                    // TODO: Call the slash operator logic here
-                    self.slash_operator(event.task, task_index, self.operator_address).await.unwrap();
+                    slash_operator(rpc_url, service_manager_address, operator_address, event.task, task_index).await.unwrap();
                 },
                 _ = cancel_rx => {
                     get_logger().info(&format!("Task {} responded in time. Timer cancelled.", task_index), "");
@@ -162,43 +175,60 @@ impl Challenger {
             }
         }
     }
+}
 
-    /// Execute the slashing of an operator
-    async fn slash_operator(&self, task: Task, task_index: u32, operator: Address) -> Result<()> {
-        let pr = get_provider(&self.rpc_url);
-        let hello_world_contract = HelloWorldServiceManager::new(self.service_manager_address, &pr);
+/// Execute the slashing of an operator
+async fn slash_operator(
+    rpc_url: String,
+    service_manager_address: Address,
+    operator: Address,
+    task: Task,
+    task_index: u32,
+) -> Result<()> {
+    let pr = get_provider(&rpc_url);
+    let hello_world_contract = HelloWorldServiceManager::new(service_manager_address, &pr);
 
-        get_logger().info(
-            &format!("Slashing operator {} in task {}", operator, task_index),
-            "",
-        );
+    get_logger().info(
+        &format!("Slashing operator {} in task {}", operator, task_index),
+        "",
+    );
 
-        let tx_result = hello_world_contract
-            .slashOperator(task, task_index, operator)
-            .gas(500000)
-            .send()
-            .await?;
+    dbg!(&format!(
+        "SLASHING: BLOCK NUMBER {}",
+        pr.get_block_number().await.unwrap()
+    ));
+    let tx_result = hello_world_contract
+        .slashOperator(task, task_index, operator)
+        .send()
+        .await?;
 
-        get_logger().info(
-            &format!("Slashing transaction sent: {}", tx_result.tx_hash()),
-            "",
-        );
+    get_logger().info(
+        &format!("Slashing transaction sent: {}", tx_result.tx_hash()),
+        "",
+    );
 
-        Ok(())
-    }
+    Ok(())
 }
 
 #[allow(dead_code)]
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    init_logger(LogLevel::Debug);
+    init_logger(LogLevel::Info);
 
-    let mut challenger = Challenger::new(ANVIL_RPC_URL.to_string(), ANVIL_WS_URL.to_string())
-        .await
-        .unwrap();
+    let mut challenger = Challenger::new(
+        RPC_URL.to_string(),
+        ANVIL_WS_URL.to_string(),
+        KEY.to_string(),
+    )
+    .await
+    .unwrap();
 
     if let Err(e) = challenger.start_challenger().await {
         get_logger().error(&format!("Error en el challenger: {}", e), "");
     }
+
+    // Wait for a Ctrl+C signal to gracefully shut down
+    let _ = signal::ctrl_c().await;
+    get_logger().info("Received Ctrl+C, shutting down...", "");
 }

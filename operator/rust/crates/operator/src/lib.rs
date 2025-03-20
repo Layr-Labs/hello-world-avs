@@ -32,14 +32,14 @@ mod tests {
     use hello_world_utils::{
         get_anvil_eigenlayer_deployment_data, get_anvil_hello_world_deployment_data,
     };
-    use once_cell::sync::Lazy;
     use reqwest::Url;
     use serial_test::serial;
     use std::env;
     use std::str::FromStr;
+    use std::sync::LazyLock;
 
-    static KEY: Lazy<String> =
-        Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+    static KEY: LazyLock<String> =
+        LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
     #[tokio::test]
     #[serial]
