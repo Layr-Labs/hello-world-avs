@@ -25,15 +25,15 @@ use hello_world_utils::{
     get_anvil_eigenlayer_deployment_data, get_hello_world_service_manager,
     get_stake_registry_address,
 };
-use once_cell::sync::Lazy;
 use rand::TryRngCore;
+use std::sync::LazyLock;
 use std::{env, str::FromStr};
 
-static RPC_URL: Lazy<String> =
-    Lazy::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
+static RPC_URL: LazyLock<String> =
+    LazyLock::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
-static KEY: Lazy<String> =
-    Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+static KEY: LazyLock<String> =
+    LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
 async fn sign_and_respond_to_task(
     rpc_url: &str,
