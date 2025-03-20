@@ -18,7 +18,7 @@ use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{
-    ecdsastakeregistry::ISignatureUtils::SignatureWithSaltAndExpiry,
+    ecdsastakeregistry::ISignatureUtilsMixinTypes::SignatureWithSaltAndExpiry,
     helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
 };
 use hello_world_utils::{
