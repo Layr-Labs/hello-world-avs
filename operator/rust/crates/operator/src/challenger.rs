@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, time::Duration};
 
 use alloy::{
     eips::BlockNumberOrTag, primitives::Address, providers::Provider, rpc::types::Filter,
@@ -15,32 +15,35 @@ use eyre::Result;
 use futures::StreamExt;
 use hello_world_utils::{
     get_hello_world_service_manager,
-    helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
+    helloworldservicemanager::{
+        HelloWorldServiceManager::{self, TaskResponded},
+        IHelloWorldServiceManager::Task,
+    },
 };
-use once_cell::sync::Lazy;
+use tokio::sync::oneshot;
 
 pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
 
-static KEY: Lazy<String> =
-    Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
-
 /// Challenger struct
+#[derive(Debug)]
 pub struct Challenger {
     service_manager_address: Address,
     rpc_url: String,
     ws_url: String,
-    private_key: String,
     tasks: HashMap<u32, Task>,
+    task_responses: HashMap<u32, TaskResponded>,
     max_response_interval_blocks: u32,
+    task_cancellers: HashMap<u32, oneshot::Sender<()>>,
 }
 
 /// Challenger implementation
 impl Challenger {
     /// Create a new challenger
-    pub async fn new(rpc_url: String, ws_url: String, private_key: String) -> Result<Self> {
+    pub async fn new(rpc_url: String, ws_url: String) -> Result<Self> {
         let service_manager_address = get_hello_world_service_manager().unwrap();
-        let service_manager_contract =
-            HelloWorldServiceManager::new(service_manager_address, get_provider(&rpc_url));
+
+        let pr = get_provider(&rpc_url);
+        let service_manager_contract = HelloWorldServiceManager::new(service_manager_address, &pr);
         let max_response_interval_blocks = service_manager_contract
             .MAX_RESPONSE_INTERVAL_BLOCKS()
             .call()
@@ -51,81 +54,104 @@ impl Challenger {
             service_manager_address,
             rpc_url,
             ws_url,
-            private_key,
             tasks: HashMap::new(),
+            task_responses: HashMap::new(),
+            task_cancellers: HashMap::new(),
             max_response_interval_blocks,
         })
     }
 
-    /// Start the challenger
     pub async fn start_challenger(&mut self) -> Result<()> {
-        get_logger().info("challenger crate launched", "");
+        get_logger().info("Challenger started: monitoring tasks", "");
 
-        let wa = get_ws_provider(&self.ws_url).await?;
+        let ws_provider = get_ws_provider(&self.ws_url).await?;
 
-        // Subscribe to NewTaskCreated event
-        let new_task_created_filter = Filter::new()
+        // Subscribe to NewTaskCreated and TaskResponded events
+        let new_task_filter = Filter::new()
             .address(self.service_manager_address)
             .event_signature(HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH)
             .from_block(BlockNumberOrTag::Latest);
-        let new_task_created_sub = wa.subscribe_logs(&new_task_created_filter).await?;
+        let mut new_task_stream = ws_provider
+            .subscribe_logs(&new_task_filter)
+            .await?
+            .into_stream();
 
-        let mut new_task_created_stream = new_task_created_sub.into_stream();
-
-        // Subscribe to TaskResponded event
-        let task_responded_filter = Filter::new()
+        let responded_filter = Filter::new()
             .address(self.service_manager_address)
             .event_signature(HelloWorldServiceManager::TaskResponded::SIGNATURE_HASH)
             .from_block(BlockNumberOrTag::Latest);
-        let task_responded_sub = wa.subscribe_logs(&task_responded_filter).await?;
-
-        let mut task_responded_stream = task_responded_sub.into_stream();
+        let mut responded_stream = ws_provider
+            .subscribe_logs(&responded_filter)
+            .await?
+            .into_stream();
 
         loop {
             tokio::select! {
-                Some(log) = task_responded_stream.next() => {
-                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::TaskResponded>().inspect_err(|_| get_logger().info("Error decoding TaskResponded event", "")) {
+                Some(log) = new_task_stream.next() => {
+                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>() {
                         let event = decoded.data();
-                        get_logger().info(
-                            &format!("TaskResponded: taskIndex={}, name={}, createdBlock={}, operator={}",
-                            event.taskIndex,
-                            event.task.name,
-                            event.task.taskCreatedBlock,
-                            event.operator
-                        ),
-                            "",
-                        );
+                        let task_index = event.taskIndex;
+                        get_logger().info(&format!("New task received: {}", task_index), "");
+
+                        // Save the task and create a cancellation channel
+                        self.tasks.insert(task_index, event.task.clone());
+                        let (cancel_tx, cancel_rx) = oneshot::channel();
+                        self.task_cancellers.insert(task_index, cancel_tx);
+
+                        // Calculate timeout based on max_response_interval_blocks (assuming 12 seconds per block)
+                        let timeout_duration = Duration::from_secs(self.max_response_interval_blocks as u64 * 12);
+
+                        tokio::spawn(async move {
+                            tokio::select! {
+                                _ = tokio::time::sleep(timeout_duration) => {
+                                    get_logger().info(&format!("Timeout expired for task {}", task_index), "");
+                                    // TODO: Call the slash operator logic here
+                                },
+                                _ = cancel_rx => {
+                                    get_logger().info(&format!("Task {} responded in time. Timer cancelled.", task_index), "");
+                                }
+                            }
+                        });
                     }
                 },
-                Some(log) = new_task_created_stream.next() => {
-                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>().inspect_err(|_| get_logger().info("Error decoding NewTaskCreated event", "")) {
-                        let task_event = decoded.data();
+                Some(log) = responded_stream.next() => {
+                    if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::TaskResponded>() {
+                        let event = decoded.data();
+                        let task_index = event.taskIndex;
+                        get_logger().info(&format!("Response received for task {}", task_index), "");
 
-                        get_logger().info(
-                            &format!("NewTaskCreated: taskIndex={}, name={}, createdBlock={}",
-                            task_event.taskIndex.clone(),
-                            task_event.task.name.clone(),
-                            task_event.task.taskCreatedBlock.clone()
-                        ),
-                            "",
-                        );
-
-                        let new_task = Task {
-                            name: task_event.task.name.clone(),
-                            taskCreatedBlock: task_event.task.taskCreatedBlock,
-                        };
-
-                        self.tasks.insert(task_event.taskIndex, new_task);
-
+                        if self.tasks.contains_key(&task_index) {
+                            self.task_responses.insert(task_index, event.clone());
+                            if let Some(cancel_tx) = self.task_cancellers.remove(&task_index) {
+                                let _ = cancel_tx.send(());
+                            }
+                        }
                     }
                 },
-                else => {
-                    // If both streams are exhausted, break the loop.
-                    get_logger().info("challenger:No more logs to process, exiting loop.", "");
-                    break;
-                }
-            };
+            }
         }
+    }
+
+    /// Execute the slashing of an operator
+    async fn slash_operator(&self, task: Task, task_index: u32, operator: Address) -> Result<()> {
+        let pr = get_provider(&self.rpc_url);
+        let hello_world_contract = HelloWorldServiceManager::new(self.service_manager_address, &pr);
+
+        get_logger().info(
+            &format!("Slashing operator {} in task {}", operator, task_index),
+            "",
+        );
+
+        let tx_result = hello_world_contract
+            .slashOperator(task, task_index, operator)
+            .gas(500000)
+            .send()
+            .await?;
+
+        get_logger().info(
+            &format!("Slashing transaction sent: {}", tx_result.tx_hash()),
+            "",
+        );
 
         Ok(())
     }
@@ -135,15 +161,13 @@ impl Challenger {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    init_logger(LogLevel::Info);
+    init_logger(LogLevel::Debug);
 
-    let mut challenger = Challenger::new(
-        ANVIL_RPC_URL.to_string(),
-        ANVIL_WS_URL.to_string(),
-        KEY.clone(),
-    )
-    .await
-    .unwrap();
+    let mut challenger = Challenger::new(ANVIL_RPC_URL.to_string(), ANVIL_WS_URL.to_string())
+        .await
+        .unwrap();
 
-    challenger.start_challenger().await.unwrap();
+    if let Err(e) = challenger.start_challenger().await {
+        get_logger().error(&format!("Error en el challenger: {}", e), "");
+    }
 }

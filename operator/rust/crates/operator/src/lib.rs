@@ -1,6 +1,6 @@
 //! Start creating tasks and respond appropriately
 //! testing utils
-/// Challenger struct
+/// Challenger struct for monitoring task completions and performing slashing
 pub mod challenger;
 /// Create createNewTask at regular intervals with random task names
 pub mod spam_tasks;
