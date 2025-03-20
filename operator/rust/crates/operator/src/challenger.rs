@@ -80,11 +80,6 @@ impl Challenger {
                         ),
                             "",
                         );
-                    } else {
-                        get_logger().info(
-                            "Error decoding TaskResponded event",
-                            "",
-                        );
                     }
                 },
                 Some(log) = new_task_created_stream.next() => {
@@ -96,11 +91,6 @@ impl Challenger {
                             event.task.name,
                             event.task.taskCreatedBlock
                         ),
-                            "",
-                        );
-                    } else {
-                        get_logger().info(
-                            "Error decoding NewTaskCreated event",
                             "",
                         );
                     }
