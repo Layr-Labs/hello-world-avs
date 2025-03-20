@@ -18,14 +18,14 @@ use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{
-    ecdsastakeregistry::ISignatureUtils::SignatureWithSaltAndExpiry,
+    ecdsastakeregistry::ISignatureUtilsMixinTypes::SignatureWithSaltAndExpiry,
     helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
 };
 use hello_world_utils::{
     get_anvil_eigenlayer_deployment_data, get_hello_world_service_manager,
     get_stake_registry_address,
 };
-use rand::TryRngCore;
+use rand::{Rng, TryRngCore};
 use std::sync::LazyLock;
 use std::{env, str::FromStr};
 
@@ -34,6 +34,13 @@ static RPC_URL: LazyLock<String> =
 
 static KEY: LazyLock<String> =
     LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+
+static OPERATOR_RESPONSE_PERCENTAGE: LazyLock<f64> = LazyLock::new(|| {
+    env::var("OPERATOR_RESPONSE_PERCENTAGE")
+        .expect("failed to retrieve operator response percentage")
+        .parse::<f64>()
+        .expect("failed to parse operator response percentage")
+});
 
 async fn sign_and_respond_to_task(
     rpc_url: &str,
@@ -108,14 +115,25 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
                     .data;
                 get_logger().info(&format!("New task detected: Hello, {}", task.name), "");
 
-                let _ = sign_and_respond_to_task(
-                    rpc_url,
-                    private_key,
-                    taskIndex,
-                    task.taskCreatedBlock,
-                    task.name,
-                )
-                .await;
+                // There is a `OPERATOR_RESPONSE_PERCENTAGE` chance that the operator will respond to the task.
+                // If the operator does not respond, the operator will be slashed.
+                let should_respond = rand::rng().random_bool(*OPERATOR_RESPONSE_PERCENTAGE / 100.0);
+
+                if should_respond {
+                    let _ = sign_and_respond_to_task(
+                        rpc_url,
+                        private_key,
+                        taskIndex,
+                        task.taskCreatedBlock,
+                        task.name,
+                    )
+                    .await;
+                } else {
+                    get_logger().info(
+                        &format!("Operator did not respond to task {}", taskIndex),
+                        "",
+                    );
+                }
             }
         }
 
