@@ -2,7 +2,10 @@
 use std::{collections::HashMap, time::Duration};
 
 use alloy::{
-    eips::BlockNumberOrTag, primitives::Address, providers::Provider, rpc::types::Filter,
+    eips::BlockNumberOrTag,
+    primitives::Address,
+    providers::Provider,
+    rpc::types::{Filter, Log},
     sol_types::SolEvent,
 };
 use dotenv::dotenv;
@@ -89,45 +92,63 @@ impl Challenger {
             tokio::select! {
                 Some(log) = new_task_stream.next() => {
                     if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>() {
-                        let event = decoded.data();
-                        let task_index = event.taskIndex;
-                        get_logger().info(&format!("New task received: {}", task_index), "");
-
-                        // Save the task and create a cancellation channel
-                        self.tasks.insert(task_index, event.task.clone());
-                        let (cancel_tx, cancel_rx) = oneshot::channel();
-                        self.task_cancellers.insert(task_index, cancel_tx);
-
-                        // Calculate timeout based on max_response_interval_blocks (assuming 12 seconds per block)
-                        let timeout_duration = Duration::from_secs(self.max_response_interval_blocks as u64 * 12);
-
-                        tokio::spawn(async move {
-                            tokio::select! {
-                                _ = tokio::time::sleep(timeout_duration) => {
-                                    get_logger().info(&format!("Timeout expired for task {}", task_index), "");
-                                    // TODO: Call the slash operator logic here
-                                },
-                                _ = cancel_rx => {
-                                    get_logger().info(&format!("Task {} responded in time. Timer cancelled.", task_index), "");
-                                }
-                            }
-                        });
+                        self.handle_task_creation(decoded).await;
                     }
                 },
                 Some(log) = responded_stream.next() => {
                     if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::TaskResponded>() {
-                        let event = decoded.data();
-                        let task_index = event.taskIndex;
-                        get_logger().info(&format!("Response received for task {}", task_index), "");
-
-                        if self.tasks.contains_key(&task_index) {
-                            self.task_responses.insert(task_index, event.clone());
-                            if let Some(cancel_tx) = self.task_cancellers.remove(&task_index) {
-                                let _ = cancel_tx.send(());
-                            }
-                        }
+                        self.handle_task_response(decoded).await;
                     }
                 },
+                else => {
+                    // If both streams are exhausted, break the loop.
+                    get_logger().info("challenger:No more logs to process, exiting loop.", "");
+                }
+            }
+        }
+    }
+
+    async fn handle_task_creation(
+        &mut self,
+        decoded: Log<HelloWorldServiceManager::NewTaskCreated>,
+    ) {
+        let event = decoded.data();
+        let task_index = event.taskIndex;
+        get_logger().info(&format!("New task received: {}", task_index), "");
+
+        // Save the task and create a cancellation channel
+        self.tasks.insert(task_index, event.task.clone());
+        let (cancel_tx, cancel_rx) = oneshot::channel();
+        self.task_cancellers.insert(task_index, cancel_tx);
+
+        // Calculate timeout based on max_response_interval_blocks (assuming 12 seconds per block)
+        let timeout_duration = Duration::from_secs(self.max_response_interval_blocks as u64 * 12);
+
+        tokio::spawn(async move {
+            tokio::select! {
+                _ = tokio::time::sleep(timeout_duration) => {
+                    get_logger().info(&format!("Timeout expired for task {}", task_index), "");
+                    // TODO: Call the slash operator logic here
+                },
+                _ = cancel_rx => {
+                    get_logger().info(&format!("Task {} responded in time. Timer cancelled.", task_index), "");
+                }
+            }
+        });
+    }
+
+    async fn handle_task_response(
+        &mut self,
+        decoded: Log<HelloWorldServiceManager::TaskResponded>,
+    ) {
+        let event = decoded.data();
+        let task_index = event.taskIndex;
+        get_logger().info(&format!("Response received for task {}", task_index), "");
+
+        if self.tasks.contains_key(&task_index) {
+            self.task_responses.insert(task_index, event.clone());
+            if let Some(cancel_tx) = self.task_cancellers.remove(&task_index) {
+                let _ = cancel_tx.send(());
             }
         }
     }
