@@ -15,7 +15,6 @@ import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {IAllocationManager} from "@eigenlayer/contracts/interfaces/IAllocationManager.sol";
 import {TransparentUpgradeableProxy} from
     "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {console2} from "forge-std/console2.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
@@ -197,8 +196,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         uint256 operatorWeight = ECDSAStakeRegistry(stakeRegistry).getOperatorWeightAtBlock(
             operator, task.taskCreatedBlock
         );
-        console2.log("operatorWeight", operatorWeight);
-        console2.log("create block", task.taskCreatedBlock);
+
         require(operatorWeight > 0, "Operator was not registered when task was created");
 
         // we update the storage with a sentinel value
