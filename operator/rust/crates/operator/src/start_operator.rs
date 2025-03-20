@@ -25,16 +25,17 @@ use hello_world_utils::{
     get_anvil_eigenlayer_deployment_data, get_hello_world_service_manager,
     get_stake_registry_address,
 };
-use once_cell::sync::Lazy;
 use rand::{Rng, TryRngCore};
+use std::sync::LazyLock;
 use std::{env, str::FromStr};
 
-pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
+static RPC_URL: LazyLock<String> =
+    LazyLock::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
-static KEY: Lazy<String> =
-    Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+static KEY: LazyLock<String> =
+    LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
-static OPERATOR_RESPONSE_PERCENTAGE: Lazy<f64> = Lazy::new(|| {
+static OPERATOR_RESPONSE_PERCENTAGE: LazyLock<f64> = LazyLock::new(|| {
     env::var("OPERATOR_RESPONSE_PERCENTAGE")
         .expect("failed to retrieve operator response percentage")
         .parse::<f64>()
@@ -251,7 +252,7 @@ pub async fn main() {
     use tokio::signal;
     dotenv().ok();
     init_logger(LogLevel::Info);
-    let rpc_url = ANVIL_RPC_URL;
+    let rpc_url = &RPC_URL;
     if let Err(e) = register_operator(rpc_url, &KEY).await {
         eprintln!("Failed to register operator: {:?}", e);
         return;

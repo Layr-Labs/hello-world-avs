@@ -7,7 +7,7 @@ on:
     branches: ["**"]
 
 env:
-  RUST_VERSION: 1.79
+  RUST_VERSION: 1.80
 
 jobs:
   build:

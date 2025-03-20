@@ -6,15 +6,16 @@ use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
 use hello_world_utils::get_anvil_hello_world_deployment_data;
 use hello_world_utils::helloworldservicemanager::HelloWorldServiceManager;
-use once_cell::sync::Lazy;
 use rand::Rng;
 use std::env;
+use std::sync::LazyLock;
 use tokio::time::{self, Duration};
 
-pub const ANVIL_RPC_URL: &str = "http://localhost:8545";
+static RPC_URL: LazyLock<String> =
+    LazyLock::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
-static KEY: Lazy<String> =
-    Lazy::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+static KEY: LazyLock<String> =
+    LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
 
 /// Generate random task names from the given adjectives and nouns
 fn generate_random_name() -> String {
@@ -64,7 +65,7 @@ async fn start_creating_tasks() {
             &format!("Creating new task with name: {random_name}"),
             "start_creating_tasks",
         );
-        let _ = create_new_task(ANVIL_RPC_URL, &random_name).await;
+        let _ = create_new_task(&RPC_URL, &random_name).await;
     }
 }
 
