@@ -1,16 +1,17 @@
 #![allow(missing_docs)]
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, str::FromStr, time::Duration};
 
 use alloy::{
     eips::BlockNumberOrTag,
     primitives::Address,
     providers::Provider,
     rpc::types::{Filter, Log},
+    signers::local::PrivateKeySigner,
     sol_types::SolEvent,
 };
 use dotenv::dotenv;
 use eigensdk::{
-    common::{get_provider, get_ws_provider},
+    common::{get_provider, get_signer, get_ws_provider},
     logging::{get_logger, init_logger, log_level::LogLevel},
     testing_utils::anvil_constants::ANVIL_WS_URL,
 };
@@ -37,12 +38,16 @@ pub struct Challenger {
     task_responses: HashMap<u32, TaskResponded>,
     max_response_interval_blocks: u32,
     task_cancellers: HashMap<u32, oneshot::Sender<()>>,
+    operator_address: Address,
 }
 
 /// Challenger implementation
 impl Challenger {
     /// Create a new challenger
-    pub async fn new(rpc_url: String, ws_url: String) -> Result<Self> {
+    pub async fn new(rpc_url: String, ws_url: String, private_key: String) -> Result<Self> {
+        let signer = PrivateKeySigner::from_str(&private_key)?;
+        let operator_address = signer.address();
+
         let service_manager_address = get_hello_world_service_manager().unwrap();
 
         let pr = get_provider(&rpc_url);
@@ -61,6 +66,7 @@ impl Challenger {
             task_responses: HashMap::new(),
             task_cancellers: HashMap::new(),
             max_response_interval_blocks,
+            operator_address,
         })
     }
 
@@ -69,7 +75,7 @@ impl Challenger {
 
         let ws_provider = get_ws_provider(&self.ws_url).await?;
 
-        // Subscribe to NewTaskCreated and TaskResponded events
+        // Subscribe to NewTaskCreated events
         let new_task_filter = Filter::new()
             .address(self.service_manager_address)
             .event_signature(HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH)
@@ -79,6 +85,7 @@ impl Challenger {
             .await?
             .into_stream();
 
+        // Subscribe to TaskResponded events
         let responded_filter = Filter::new()
             .address(self.service_manager_address)
             .event_signature(HelloWorldServiceManager::TaskResponded::SIGNATURE_HASH)
@@ -108,6 +115,7 @@ impl Challenger {
         }
     }
 
+    /// Handle a new task creation and handle the time that an operator has to respond to the task
     async fn handle_task_creation(
         &mut self,
         decoded: Log<HelloWorldServiceManager::NewTaskCreated>,
@@ -129,6 +137,7 @@ impl Challenger {
                 _ = tokio::time::sleep(timeout_duration) => {
                     get_logger().info(&format!("Timeout expired for task {}", task_index), "");
                     // TODO: Call the slash operator logic here
+                    self.slash_operator(event.task, task_index, self.operator_address).await.unwrap();
                 },
                 _ = cancel_rx => {
                     get_logger().info(&format!("Task {} responded in time. Timer cancelled.", task_index), "");
@@ -137,6 +146,7 @@ impl Challenger {
         });
     }
 
+    /// Handle a task response and cancel the timeout timer
     async fn handle_task_response(
         &mut self,
         decoded: Log<HelloWorldServiceManager::TaskResponded>,
