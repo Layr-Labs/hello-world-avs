@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use std::env;
+use std::{collections::HashMap, env};
 
 use alloy::{
     eips::BlockNumberOrTag, primitives::Address, providers::Provider, rpc::types::Filter,
@@ -30,6 +30,7 @@ pub struct Challenger {
     rpc_url: String,
     ws_url: String,
     private_key: String,
+    tasks: HashMap<u32, Task>,
     max_response_interval_blocks: u32,
 }
 
@@ -51,12 +52,13 @@ impl Challenger {
             rpc_url,
             ws_url,
             private_key,
+            tasks: HashMap::new(),
             max_response_interval_blocks,
         })
     }
 
     /// Start the challenger
-    pub async fn start_challenger(&self) -> Result<()> {
+    pub async fn start_challenger(&mut self) -> Result<()> {
         get_logger().info("challenger crate launched", "");
 
         let wa = get_ws_provider(&self.ws_url).await?;
@@ -113,6 +115,8 @@ impl Challenger {
                             taskCreatedBlock: task_event.task.taskCreatedBlock,
                         };
 
+                        self.tasks.insert(task_event.taskIndex, new_task);
+
                     }
                 },
                 else => {
@@ -133,7 +137,7 @@ async fn main() {
     dotenv().ok();
     init_logger(LogLevel::Info);
 
-    let challenger = Challenger::new(
+    let mut challenger = Challenger::new(
         ANVIL_RPC_URL.to_string(),
         ANVIL_WS_URL.to_string(),
         KEY.clone(),
