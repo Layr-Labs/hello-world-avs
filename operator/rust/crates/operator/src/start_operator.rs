@@ -13,9 +13,11 @@ use eigensdk::client_elcontracts::{
     reader::ELChainReader,
     writer::{ELChainWriter, Operator},
 };
-use eigensdk::common::{get_provider, get_signer};
+use eigensdk::common::{get_provider, get_signer, get_ws_provider};
 use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
+use eigensdk::testing_utils::anvil_constants::ANVIL_WS_URL;
 use eyre::Result;
+use futures::StreamExt;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
 use hello_world_utils::{
     ecdsastakeregistry::ISignatureUtilsMixinTypes::SignatureWithSaltAndExpiry,
@@ -93,64 +95,52 @@ async fn sign_and_respond_to_task(
 
 /// Monitor new tasks
 async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
-    let pr = get_signer(private_key, rpc_url);
     let hello_world_contract_address: Address = get_hello_world_service_manager()?;
-    let mut latest_processed_block = pr.get_block_number().await?;
 
-    loop {
-        let current_block = pr.get_block_number().await?;
-        get_logger().info(
-            &format!(
-                "Monitoring for new tasks from block {} to {}",
-                latest_processed_block, current_block
-            ),
-            "",
-        );
+    let ws_provider = get_ws_provider(ANVIL_WS_URL).await?;
 
-        let filter = Filter::new()
-            .address(hello_world_contract_address)
-            .from_block(BlockNumberOrTag::Number(latest_processed_block))
-            .to_block(BlockNumberOrTag::Number(current_block));
+    // Subscribe to NewTaskCreated events
+    let filter = Filter::new()
+        .address(hello_world_contract_address)
+        .event_signature(HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH)
+        .from_block(BlockNumberOrTag::Latest);
+    let mut new_task_stream = ws_provider.subscribe_logs(&filter).await?.into_stream();
 
-        let logs = pr.get_logs(&filter).await?;
+    // Process tasks when a new event is detected
+    while let Some(log) = new_task_stream.next().await {
+        if let Ok(decoded) = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>() {
+            let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = decoded.inner.data;
+            get_logger().info(
+                &format!(
+                    "New task {} detected at block {}",
+                    taskIndex, task.taskCreatedBlock
+                ),
+                "",
+            );
 
-        for log in logs {
-            if let Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) = log.topic0() {
-                let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
-                    .log_decode()
-                    .expect("Failed to decode log new task created")
-                    .inner
-                    .data;
+            // There is a `OPERATOR_RESPONSE_PERCENTAGE` chance that the operator will respond to the task.
+            // If the operator does not respond, the operator will be slashed.
+            let should_respond = rand::rng().random_bool(*OPERATOR_RESPONSE_PERCENTAGE / 100.0);
+
+            if should_respond {
+                let _ = sign_and_respond_to_task(
+                    rpc_url,
+                    private_key,
+                    taskIndex,
+                    task.taskCreatedBlock,
+                    task.name,
+                )
+                .await;
+            } else {
                 get_logger().info(
-                    &format!("New task {} detected: Hello, {}", taskIndex, task.name),
+                    &format!("Operator did not respond to task {}", taskIndex),
                     "",
                 );
-
-                // There is a `OPERATOR_RESPONSE_PERCENTAGE` chance that the operator will respond to the task.
-                // If the operator does not respond, the operator will be slashed.
-                let should_respond = rand::rng().random_bool(*OPERATOR_RESPONSE_PERCENTAGE / 100.0);
-
-                if should_respond {
-                    let _ = sign_and_respond_to_task(
-                        rpc_url,
-                        private_key,
-                        taskIndex,
-                        task.taskCreatedBlock,
-                        task.name,
-                    )
-                    .await;
-                } else {
-                    get_logger().info(
-                        &format!("Operator did not respond to task {}", taskIndex),
-                        "",
-                    );
-                }
             }
         }
-
-        tokio::time::sleep(tokio::time::Duration::from_secs(12)).await;
-        latest_processed_block = current_block + 1;
     }
+
+    Ok(())
 }
 
 pub async fn register_operator(rpc_url: &str, private_key: &str) -> Result<()> {

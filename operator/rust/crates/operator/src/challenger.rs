@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use std::{collections::HashMap, env, str::FromStr, sync::LazyLock, time::Duration};
+use std::{collections::HashMap, env, str::FromStr, sync::LazyLock};
 
 use alloy::{
     eips::BlockNumberOrTag,
@@ -15,20 +15,22 @@ use eigensdk::{
     logging::{get_logger, init_logger, log_level::LogLevel},
     testing_utils::anvil_constants::ANVIL_WS_URL,
 };
-use eyre::Result;
-use futures::{channel::oneshot, StreamExt};
+use eyre::{Ok, Result};
+use futures::StreamExt;
 use hello_world_utils::{
     get_hello_world_service_manager,
-    helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
+    helloworldservicemanager::{
+        HelloWorldServiceManager::{self},
+        IHelloWorldServiceManager::Task,
+    },
 };
+use tokio::signal::{self};
 
 static RPC_URL: LazyLock<String> =
     LazyLock::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
 static KEY: LazyLock<String> =
     LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
-
-const BLOCK_TIME: u64 = 12;
 
 /// Challenger struct
 #[derive(Debug)]
@@ -37,7 +39,6 @@ pub struct Challenger {
     rpc_url: String,
     ws_url: String,
     tasks: HashMap<u32, Task>,
-    task_cancellers: HashMap<u32, oneshot::Sender<()>>,
     max_response_interval_blocks: u32,
     operator_address: Address,
 }
@@ -48,9 +49,9 @@ impl Challenger {
     pub async fn new(rpc_url: String, ws_url: String, private_key: String) -> Result<Self> {
         let signer = PrivateKeySigner::from_str(&private_key)?;
         let operator_address = signer.address();
+
         let service_manager_address = get_hello_world_service_manager().unwrap();
 
-        // Get the max response interval blocks that the operator has to respond to the task
         let pr = get_provider(&rpc_url);
         let service_manager_contract = HelloWorldServiceManager::new(service_manager_address, &pr);
         let max_response_interval_blocks = service_manager_contract
@@ -64,13 +65,11 @@ impl Challenger {
             rpc_url,
             ws_url,
             tasks: HashMap::new(),
-            task_cancellers: HashMap::new(),
             max_response_interval_blocks,
             operator_address,
         })
     }
 
-    /// Start the challenger to monitor new tasks and respond to them
     pub async fn start_challenger(&mut self) -> Result<()> {
         get_logger().info("Challenger started: monitoring tasks", "");
 
@@ -96,6 +95,9 @@ impl Challenger {
             .await?
             .into_stream();
 
+        // Subscribe to new block events
+        let mut block_stream = ws_provider.subscribe_blocks().await?.into_stream();
+
         loop {
             tokio::select! {
                 Some(log) = new_task_stream.next() => {
@@ -110,9 +112,11 @@ impl Challenger {
                         self.handle_task_response(decoded).await;
                     }
                 },
-                else => {
-                    // If both streams are exhausted, break the loop.
-                    get_logger().info("challenger:No more logs to process, exiting loop.", "");
+                Some(block) = block_stream.next() => {
+                    self.check_tasks_timeout(block.number).await?;
+                },
+                _ = signal::ctrl_c() => {
+                    get_logger().info("Received Ctrl+C, shutting down...", "");
                     break;
                 }
             }
@@ -130,7 +134,7 @@ impl Challenger {
         let task_index = event.taskIndex;
         get_logger().info(
             &format!(
-                "New task received: {} in block {}",
+                "New task received: {} at block {}",
                 task_index, event.task.taskCreatedBlock
             ),
             "",
@@ -138,30 +142,6 @@ impl Challenger {
 
         // Save the task and create a cancellation channel
         self.tasks.insert(task_index, event.task.clone());
-        let (cancel_tx, cancel_rx) = oneshot::channel();
-        self.task_cancellers.insert(task_index, cancel_tx);
-
-        // Calculate timeout based on max_response_interval_blocks
-        let timeout_duration =
-            Duration::from_secs((self.max_response_interval_blocks + 1) as u64 * BLOCK_TIME);
-
-        let operator_address = self.operator_address;
-        let rpc_url = self.rpc_url.clone();
-        let service_manager_address = self.service_manager_address;
-
-        tokio::spawn(async move {
-            tokio::select! {
-                _ = tokio::time::sleep(timeout_duration) => {
-                    // If the timeout expires, slash the operator
-                    get_logger().info(&format!("Timeout expired for task {}", task_index), "");
-                    slash_operator(rpc_url, service_manager_address, operator_address, event.task, task_index).await.unwrap();
-                },
-                _ = cancel_rx => {
-                    // If the task is responded in time, cancel the timeout timer
-                    get_logger().info(&format!("Task {} responded in time. Timer cancelled.", task_index), "");
-                }
-            }
-        });
     }
 
     /// Handle a task response and cancel the timeout timer
@@ -171,52 +151,66 @@ impl Challenger {
     ) {
         let event = decoded.data();
         let task_index = event.taskIndex;
+
+        get_logger().info(&format!("Task {} responded", task_index), "");
+        self.tasks.remove(&task_index);
+    }
+
+    /// Handle the expiration of a task and slash the operator if so.
+    /// This function is called when a new block is received, iterates over all tasks and checks if they have expired
+    /// If so, it slashes the operator and removes the task from the list.
+    async fn check_tasks_timeout(&mut self, current_block: u64) -> Result<()> {
+        let mut tasks_to_slash = Vec::new();
+
+        for (task_index, task) in self.tasks.clone() {
+            let task_created_block = task.taskCreatedBlock;
+            let expiration_block = (task_created_block + self.max_response_interval_blocks) as u64;
+
+            if current_block > expiration_block {
+                get_logger().info(
+                    &format!(
+                        "Task {} expired at {}, operator didn't respond",
+                        task_index, expiration_block
+                    ),
+                    "",
+                );
+                tasks_to_slash.push(task_index);
+                self.slash_operator(task.clone(), task_index).await?;
+            }
+        }
+
+        for task_index in tasks_to_slash {
+            self.tasks.remove(&task_index);
+        }
+
+        Ok(())
+    }
+
+    /// Execute the slashing of an operator
+    async fn slash_operator(&self, task: Task, task_index: u32) -> Result<()> {
+        let pr = get_signer(&KEY.to_string(), &self.rpc_url);
+        let hello_world_contract = HelloWorldServiceManager::new(self.service_manager_address, &pr);
+
         get_logger().info(
             &format!(
-                "Response received for task {} in block {}",
-                task_index, event.task.taskCreatedBlock
+                "Slashing operator {} in task {}",
+                self.operator_address, task_index
             ),
             "",
         );
 
-        if self.tasks.contains_key(&task_index) {
-            if let Some(cancel_tx) = self.task_cancellers.remove(&task_index) {
-                let _ = cancel_tx.send(());
-            }
-        }
+        let tx_result = hello_world_contract
+            .slashOperator(task, task_index, self.operator_address)
+            .send()
+            .await?;
+
+        get_logger().info(
+            &format!("Slashing transaction sent: {}", tx_result.tx_hash()),
+            "",
+        );
+
+        Ok(())
     }
-}
-
-/// Execute the slashing of an operator
-async fn slash_operator(
-    rpc_url: String,
-    service_manager_address: Address,
-    operator_address: Address,
-    task: Task,
-    task_index: u32,
-) -> Result<()> {
-    let pr = get_signer(&KEY.to_string(), &rpc_url);
-    let hello_world_contract = HelloWorldServiceManager::new(service_manager_address, &pr);
-
-    get_logger().info(
-        &format!(
-            "Slashing operator {} in task {}",
-            operator_address, task_index
-        ),
-        "",
-    );
-
-    let tx_result = hello_world_contract
-        .slashOperator(task, task_index, operator_address)
-        .send()
-        .await?;
-
-    get_logger().info(
-        &format!("Slashing transaction sent: {}", tx_result.tx_hash()),
-        "",
-    );
-
-    Ok(())
 }
 
 #[allow(dead_code)]
