@@ -204,7 +204,7 @@ impl Challenger {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+pub async fn main() -> Result<()> {
     dotenv().ok();
     init_logger(LogLevel::Info);
 
