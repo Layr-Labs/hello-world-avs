@@ -203,7 +203,6 @@ impl Challenger {
     }
 }
 
-#[allow(dead_code)]
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
