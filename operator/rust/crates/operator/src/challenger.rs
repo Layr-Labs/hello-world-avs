@@ -13,7 +13,6 @@ use dotenv::dotenv;
 use eigensdk::{
     common::{get_provider, get_signer, get_ws_provider},
     logging::{get_logger, init_logger, log_level::LogLevel},
-    testing_utils::anvil_constants::ANVIL_WS_URL,
 };
 use eyre::{Ok, Result};
 use futures::StreamExt;
@@ -28,6 +27,9 @@ use tokio::signal::{self};
 
 static RPC_URL: LazyLock<String> =
     LazyLock::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
+
+static WS_URL: LazyLock<String> =
+    LazyLock::new(|| env::var("WS_URL").expect("failed to retrieve WS URL"));
 
 static KEY: LazyLock<String> =
     LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
@@ -219,13 +221,9 @@ async fn main() -> Result<()> {
     dotenv().ok();
     init_logger(LogLevel::Info);
 
-    let mut challenger = Challenger::new(
-        RPC_URL.to_string(),
-        ANVIL_WS_URL.to_string(),
-        KEY.to_string(),
-    )
-    .await
-    .unwrap();
+    let mut challenger = Challenger::new(RPC_URL.to_string(), WS_URL.to_string(), KEY.to_string())
+        .await
+        .unwrap();
 
     challenger.start_challenger().await?;
 

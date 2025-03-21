@@ -15,7 +15,6 @@ use eigensdk::client_elcontracts::{
 };
 use eigensdk::common::{get_provider, get_signer, get_ws_provider};
 use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
-use eigensdk::testing_utils::anvil_constants::ANVIL_WS_URL;
 use eyre::Result;
 use futures::StreamExt;
 use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
@@ -33,6 +32,9 @@ use std::{env, str::FromStr};
 
 static RPC_URL: LazyLock<String> =
     LazyLock::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
+
+static WS_URL: LazyLock<String> =
+    LazyLock::new(|| env::var("WS_URL").expect("failed to retrieve WS URL"));
 
 static KEY: LazyLock<String> =
     LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
@@ -97,7 +99,7 @@ async fn sign_and_respond_to_task(
 async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
     let hello_world_contract_address: Address = get_hello_world_service_manager()?;
 
-    let ws_provider = get_ws_provider(ANVIL_WS_URL).await?;
+    let ws_provider = get_ws_provider(&WS_URL).await?;
 
     // Subscribe to NewTaskCreated events
     let filter = Filter::new()
