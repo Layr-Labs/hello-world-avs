@@ -162,8 +162,6 @@ impl Challenger {
     /// This function is called when a new block is received, iterates over all tasks and checks if they have expired
     /// If so, it slashes the operator and removes the task from the list.
     async fn check_tasks_timeout(&mut self, current_block: u64) -> Result<()> {
-        let mut tasks_to_slash = Vec::new();
-
         for (task_index, task) in self.tasks.clone() {
             let task_created_block = task.taskCreatedBlock;
             let expiration_block = (task_created_block + self.max_response_interval_blocks) as u64;
@@ -176,13 +174,9 @@ impl Challenger {
                     ),
                     "",
                 );
-                tasks_to_slash.push(task_index);
                 self.slash_operator(task.clone(), task_index).await?;
+                self.tasks.remove(&task_index);
             }
-        }
-
-        for task_index in tasks_to_slash {
-            self.tasks.remove(&task_index);
         }
 
         Ok(())
