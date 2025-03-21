@@ -98,11 +98,19 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
     let mut latest_processed_block = pr.get_block_number().await?;
 
     loop {
-        get_logger().info("Monitoring for new tasks...", "");
+        let current_block = pr.get_block_number().await?;
+        get_logger().info(
+            &format!(
+                "Monitoring for new tasks from block {} to {}",
+                latest_processed_block, current_block
+            ),
+            "",
+        );
 
         let filter = Filter::new()
             .address(hello_world_contract_address)
-            .from_block(BlockNumberOrTag::Number(latest_processed_block));
+            .from_block(BlockNumberOrTag::Number(latest_processed_block))
+            .to_block(BlockNumberOrTag::Number(current_block));
 
         let logs = pr.get_logs(&filter).await?;
 
@@ -113,7 +121,10 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
                     .expect("Failed to decode log new task created")
                     .inner
                     .data;
-                get_logger().info(&format!("New task detected: Hello, {}", task.name), "");
+                get_logger().info(
+                    &format!("New task {} detected: Hello, {}", taskIndex, task.name),
+                    "",
+                );
 
                 // There is a `OPERATOR_RESPONSE_PERCENTAGE` chance that the operator will respond to the task.
                 // If the operator does not respond, the operator will be slashed.
@@ -138,8 +149,7 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
         }
 
         tokio::time::sleep(tokio::time::Duration::from_secs(12)).await;
-        let current_block = pr.get_block_number().await?;
-        latest_processed_block = current_block;
+        latest_processed_block = current_block + 1;
     }
 }
 
