@@ -56,7 +56,7 @@ pub async fn create_new_task(rpc_url: &str, task_name: &str) -> Result<()> {
 
 /// Start creating tasks at every 15 seconds
 async fn start_creating_tasks() {
-    let mut interval = time::interval(Duration::from_secs(15));
+    let mut interval = time::interval(Duration::from_secs(6));
     init_logger(LogLevel::Info);
     loop {
         interval.tick().await;

@@ -171,6 +171,8 @@ The architecture can be further enhanced via:
 
 ## Rust Operator instructions
 
+For Rust example, we have a simple operator that monitors new tasks and responds to them, a spammer that generates random tasks and a challeger that listens for new tasks and checks the operators response, [if found that operator did not respond to the task](#slashing), it will slash the operator.
+
 ### Anvil Deployment
 
 1. Start Anvil Chain
@@ -200,9 +202,18 @@ make deploy-eigenlayer-contracts
 make deploy-helloworld-contracts
 ```
 
-3. Start Rust Operator
+3. Start Challenge Manager
 
 In terminal window #2, execute the following command
+
+```sh
+# Start the Challenge Manager
+make start-challenge-manager
+```
+
+4. Start Rust Operator
+
+In terminal window #3, execute the following command
 
 ```sh
 # Start the Operator
@@ -211,7 +222,7 @@ make start-rust-operator
 
 4. Spam Tasks
 
-Open a separate terminal window #3, execute the following command
+Open a separate terminal window #4, execute the following command
 
 ```sh
 # Start sending tasks

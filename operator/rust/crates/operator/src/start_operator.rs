@@ -125,14 +125,14 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
             let should_respond = rand::rng().random_bool(*OPERATOR_RESPONSE_PERCENTAGE / 100.0);
 
             if should_respond {
-                let _ = sign_and_respond_to_task(
+                sign_and_respond_to_task(
                     rpc_url,
                     private_key,
                     taskIndex,
                     task.taskCreatedBlock,
                     task.name,
                 )
-                .await;
+                .await?;
             } else {
                 get_logger().info(
                     &format!("Operator did not respond to task {}", taskIndex),
