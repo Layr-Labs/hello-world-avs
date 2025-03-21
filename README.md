@@ -208,7 +208,7 @@ In terminal window #2, execute the following command
 
 ```sh
 # Start the Challenge Manager
-make start-challenge-manager
+make start-rust-challenger
 ```
 
 4. Start Rust Operator
