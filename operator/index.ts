@@ -52,7 +52,7 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
     const signatures = [signature];
     const signedTask = ethers.AbiCoder.defaultAbiCoder().encode(
         ["address[]", "bytes[]", "uint32"],
-        [operators, signatures, ethers.toBigInt(await provider.getBlockNumber() - 1)]
+        [operators, signatures, taskCreatedBlock]
     );
 
     const tx = await helloWorldServiceManager.respondToTask(
