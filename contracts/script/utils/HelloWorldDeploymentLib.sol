@@ -86,7 +86,7 @@ library HelloWorldDeploymentLib {
                 core.rewardsCoordinator,
                 core.delegationManager,
                 core.allocationManager,
-                2
+                4
             )
         );
 
