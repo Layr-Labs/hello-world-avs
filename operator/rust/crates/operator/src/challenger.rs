@@ -105,13 +105,13 @@ impl Challenger {
                 Some(log) = new_task_stream.next() => {
                     let decode = log.log_decode::<HelloWorldServiceManager::NewTaskCreated>().ok();
                     if let Some(decoded) = decode {
-                        self.handle_task_creation(decoded).await;
+                        self.handle_task_creation(decoded);
                     }
                 },
                 Some(log) = responded_stream.next() => {
                     let decode = log.log_decode::<HelloWorldServiceManager::TaskResponded>().ok();
                     if let Some(decoded) = decode {
-                        self.handle_task_response(decoded).await;
+                        self.handle_task_response(decoded);
                     }
                 },
                 Some(block) = block_stream.next() => {
@@ -128,10 +128,7 @@ impl Challenger {
     }
 
     /// Handle a new task creation and handle the time that an operator has to respond to the task
-    async fn handle_task_creation(
-        &mut self,
-        decoded: Log<HelloWorldServiceManager::NewTaskCreated>,
-    ) {
+    fn handle_task_creation(&mut self, decoded: Log<HelloWorldServiceManager::NewTaskCreated>) {
         let event = decoded.data().clone();
         let task_index = event.taskIndex;
         get_logger().info(
@@ -147,10 +144,7 @@ impl Challenger {
     }
 
     /// Handle a task response and cancel the timeout timer
-    async fn handle_task_response(
-        &mut self,
-        decoded: Log<HelloWorldServiceManager::TaskResponded>,
-    ) {
+    fn handle_task_response(&mut self, decoded: Log<HelloWorldServiceManager::TaskResponded>) {
         let event = decoded.data();
         let task_index = event.taskIndex;
 
