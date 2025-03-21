@@ -3478,7 +3478,7 @@ pub mod HelloWorldServiceManager {
         clippy::pub_underscore_fields,
         clippy::style
     )]
-    #[derive(Clone, Debug)]
+    #[derive(Clone)]
     pub struct TaskResponded {
         #[allow(missing_docs)]
         pub taskIndex: u32,
