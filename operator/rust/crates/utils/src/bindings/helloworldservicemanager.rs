@@ -20,7 +20,7 @@ pub mod IHelloWorldServiceManager {
     struct Task { string name; uint32 taskCreatedBlock; }
     ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     pub struct Task {
         #[allow(missing_docs)]
         pub name: alloy::sol_types::private::String,
