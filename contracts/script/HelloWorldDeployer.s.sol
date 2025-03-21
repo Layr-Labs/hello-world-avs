@@ -64,6 +64,12 @@ contract HelloWorldDeployer is Script, Test {
             })
         );
 
+        token.mint(deployer, 2_000);
+        token.increaseAllowance(address(coreDeployment.strategyManager), 1_000);
+        StrategyManager(coreDeployment.strategyManager).depositIntoStrategy(
+            helloWorldStrategy, token, 1_000
+        );
+
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
         helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
