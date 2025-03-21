@@ -145,6 +145,69 @@ async fn monitor_new_tasks(rpc_url: &str, private_key: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
+/// Monitor new tasks using polling
+async fn monitor_new_tasks_polling(rpc_url: &str, private_key: &str) -> Result<()> {
+    let pr = get_signer(private_key, rpc_url);
+    let hello_world_contract_address: Address = get_hello_world_service_manager()?;
+    let mut latest_processed_block = pr.get_block_number().await?;
+
+    loop {
+        let current_block = pr.get_block_number().await?;
+        get_logger().info(
+            &format!(
+                "Monitoring for new tasks from block {} to {}",
+                latest_processed_block, current_block
+            ),
+            "",
+        );
+
+        let filter = Filter::new()
+            .address(hello_world_contract_address)
+            .from_block(BlockNumberOrTag::Number(latest_processed_block))
+            .to_block(BlockNumberOrTag::Number(current_block));
+
+        let logs = pr.get_logs(&filter).await?;
+
+        for log in logs {
+            if let Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) = log.topic0() {
+                let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
+                    .log_decode()
+                    .expect("Failed to decode log new task created")
+                    .inner
+                    .data;
+                get_logger().info(
+                    &format!("New task {} detected: Hello, {}", taskIndex, task.name),
+                    "",
+                );
+
+                // There is a `OPERATOR_RESPONSE_PERCENTAGE` chance that the operator will respond to the task.
+                // If the operator does not respond, the operator will be slashed.
+                let should_respond = rand::rng().random_bool(*OPERATOR_RESPONSE_PERCENTAGE / 100.0);
+
+                if should_respond {
+                    let _ = sign_and_respond_to_task(
+                        rpc_url,
+                        private_key,
+                        taskIndex,
+                        task.taskCreatedBlock,
+                        task.name,
+                    )
+                    .await;
+                } else {
+                    get_logger().info(
+                        &format!("Operator did not respond to task {}", taskIndex),
+                        "",
+                    );
+                }
+            }
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_secs(12)).await;
+        latest_processed_block = current_block + 1;
+    }
+}
+
 pub async fn register_operator(rpc_url: &str, private_key: &str) -> Result<()> {
     let pr = get_signer(private_key, rpc_url);
     let signer = PrivateKeySigner::from_str(private_key)?;
