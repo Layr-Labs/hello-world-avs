@@ -63,6 +63,9 @@ start-rust-operator: ## start operator (part of quickstart)
 spam-rust-tasks:  ## start tasks spamming (part of quickstart)
 	cargo run --bin spam_tasks
 
+start-rust-challenger: ## start challenger (part of quickstart)
+	cargo run --bin challenger
+
 __REWARDS__: ##
 
 TOKEN_ADDRESS=$(shell jq -r '.addresses.token' contracts/deployments/hello-world/31337.json)

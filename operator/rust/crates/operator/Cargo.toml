@@ -47,3 +47,7 @@ path = "src/start_operator.rs"
 [[bin]]
 name = "spam_tasks"
 path = "src/spam_tasks.rs"
+
+[[bin]]
+name = "challenger"
+path = "src/challenger.rs"
