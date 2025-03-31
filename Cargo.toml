@@ -1,7 +1,5 @@
 [workspace]
-members = ["operator/rust/crates/operator/",
-"operator/rust/crates/utils/"
-]
+members = ["operator/rust/crates/operator/", "operator/rust/crates/utils/"]
 
 resolver = "2"
 
@@ -9,37 +7,38 @@ resolver = "2"
 version = "0.0.1-alpha"
 edition = "2021"
 authors = ["Eigen Layer contributors"]
-rust-version = "1.79"
+rust-version = "1.80"
 repository = "https://github.com/Layr-Labs/hello-world-avs"
 homepage = ""
 license-file = "LICENSE"
 
+[workspace.lints.rust]
+missing_debug_implementations = "warn"
+missing_docs = "warn"
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = { level = "deny", priority = -1 }
+
 
 [workspace.lints]
-rust.missing_debug_implementations = "warn"
-rust.missing_docs = "warn"
-rust.unreachable_pub = "warn"
-rust.unused_must_use = "deny"
-rust.rust_2018_idioms = "deny"
 rustdoc.all = "warn"
 
 
 [workspace.dependencies]
 
 #tokio
-tokio = {version = "1.37.0" , features = ["test-util", "full","sync","rt-multi-thread", "macros"] }
+tokio = { version = "1.37.0", features = [
+    "test-util",
+    "full",
+    "sync",
+    "rt-multi-thread",
+    "macros",
+] }
 
 serde = "1.0.214"
 
-hello-world-avs-operator = {path = "operator/rust/crates/operator"}
-hello-world-utils = {path = "operator/rust/crates/utils"}
-#eigensdk-rs
-eigen-client-elcontracts = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32"}
-eigen-types = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32"}
-eigen-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32"}
-eigen-logging = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32"}
-eigen-testing-utils = {git = "https://github.com/Layr-labs/eigensdk-rs", rev = "f3a9f32"}
+hello-world-avs-operator = { path = "operator/rust/crates/operator" }
+hello-world-utils = { path = "operator/rust/crates/utils" }
 
-
-
-
+alloy = { version = "0.12", features = ["full"] }
+eigensdk = { version = "0.5.0", features = ["full"] }

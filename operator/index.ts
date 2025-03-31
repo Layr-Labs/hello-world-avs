@@ -20,7 +20,7 @@ const avsDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `..
 const coreDeploymentData = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../contracts/deployments/core/${chainId}.json`), 'utf8'));
 
 
-const delegationManagerAddress = coreDeploymentData.addresses.delegation; // todo: reminder to fix the naming of this contract in the deployment file, change to delegationManager
+const delegationManagerAddress = coreDeploymentData.addresses.delegationManager; // todo: reminder to fix the naming of this contract in the deployment file, change to delegationManager
 const avsDirectoryAddress = coreDeploymentData.addresses.avsDirectory;
 const helloWorldServiceManagerAddress = avsDeploymentData.addresses.helloWorldServiceManager;
 const ecdsaStakeRegistryAddress = avsDeploymentData.addresses.stakeRegistry;
@@ -52,7 +52,7 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
     const signatures = [signature];
     const signedTask = ethers.AbiCoder.defaultAbiCoder().encode(
         ["address[]", "bytes[]", "uint32"],
-        [operators, signatures, ethers.toBigInt(await provider.getBlockNumber()-1)]
+        [operators, signatures, taskCreatedBlock]
     );
 
     const tx = await helloWorldServiceManager.respondToTask(
@@ -65,20 +65,20 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
 };
 
 const registerOperator = async () => {
-    
+
     // Registers as an Operator in EigenLayer.
     try {
-        const tx1 = await delegationManager.registerAsOperator({
-            __deprecated_earningsReceiver: await wallet.address,
-            delegationApprover: "0x0000000000000000000000000000000000000000",
-            stakerOptOutWindowBlocks: 0
-        }, "");
+        const tx1 = await delegationManager.registerAsOperator(
+            "0x0000000000000000000000000000000000000000", // initDelegationApprover
+            0, // allocationDelay
+            "", // metadataURI
+        );
         await tx1.wait();
         console.log("Operator registered to Core EigenLayer contracts");
     } catch (error) {
         console.error("Error in registering as operator:", error);
     }
-    
+
     const salt = ethers.hexlify(ethers.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
 
@@ -91,13 +91,13 @@ const registerOperator = async () => {
 
     // Calculate the digest hash, which is a unique value representing the operator, avs, unique value (salt) and expiration date.
     const operatorDigestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
-        wallet.address, 
-        await helloWorldServiceManager.getAddress(), 
-        salt, 
+        wallet.address,
+        await helloWorldServiceManager.getAddress(),
+        salt,
         expiry
     );
     console.log(operatorDigestHash);
-    
+
     // Sign the digest hash with the operator's private key
     console.log("Signing digest hash with operator's private key");
     const operatorSigningKey = new ethers.SigningKey(process.env.PRIVATE_KEY!);
@@ -108,7 +108,7 @@ const registerOperator = async () => {
 
     console.log("Registering Operator to AVS Registry contract");
 
-    
+
     // Register Operator to AVS
     // Per release here: https://github.com/Layr-Labs/eigenlayer-middleware/blob/v0.2.1-mainnet-rewards/src/unaudited/ECDSAStakeRegistry.sol#L49
     const tx2 = await ecdsaRegistryContract.registerOperatorWithSignature(

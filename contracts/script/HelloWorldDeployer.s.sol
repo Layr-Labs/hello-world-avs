@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/Test.sol";
 import {HelloWorldDeploymentLib} from "./utils/HelloWorldDeploymentLib.sol";
-import {CoreDeploymentLib} from "./utils/CoreDeploymentLib.sol";
+import {CoreDeployLib, CoreDeploymentParsingLib} from "./utils/CoreDeploymentParsingLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
 import {ERC20Mock} from "../test/ERC20Mock.sol";
@@ -14,18 +14,15 @@ import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.
 import {StrategyManager} from "@eigenlayer/contracts/core/StrategyManager.sol";
 import {IRewardsCoordinator} from "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 
-
-
 import {
-    Quorum,
-    StrategyParams,
+    IECDSAStakeRegistryTypes,
     IStrategy
-} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistry.sol";
 
 import "forge-std/Test.sol";
 
 contract HelloWorldDeployer is Script, Test {
-    using CoreDeploymentLib for *;
+    using CoreDeployLib for *;
     using UpgradeableProxyLib for address;
 
     address private deployer;
@@ -33,19 +30,21 @@ contract HelloWorldDeployer is Script, Test {
     address rewardsOwner;
     address rewardsInitiator;
     IStrategy helloWorldStrategy;
-    CoreDeploymentLib.DeploymentData coreDeployment;
+    CoreDeployLib.DeploymentData coreDeployment;
     HelloWorldDeploymentLib.DeploymentData helloWorldDeployment;
     HelloWorldDeploymentLib.DeploymentConfigData helloWorldConfig;
-    Quorum internal quorum;
+    IECDSAStakeRegistryTypes.Quorum internal quorum;
     ERC20Mock token;
+
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         vm.label(deployer, "Deployer");
 
-        helloWorldConfig = HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
+        helloWorldConfig =
+            HelloWorldDeploymentLib.readDeploymentConfigValues("config/hello-world/", block.chainid);
 
-
-        coreDeployment = CoreDeploymentLib.readDeploymentJson("deployments/core/", block.chainid);
+        coreDeployment =
+            CoreDeploymentParsingLib.readDeploymentJson("deployments/core/", block.chainid);
     }
 
     function run() external {
@@ -54,19 +53,28 @@ contract HelloWorldDeployer is Script, Test {
         rewardsInitiator = helloWorldConfig.rewardsInitiator;
 
         token = new ERC20Mock();
-        helloWorldStrategy = IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
-
+        // NOTE: if this fails, it's because the initialStrategyWhitelister is not set to be the StrategyFactory
+        helloWorldStrategy =
+            IStrategy(StrategyFactory(coreDeployment.strategyFactory).deployNewStrategy(token));
 
         quorum.strategies.push(
-            StrategyParams({strategy: helloWorldStrategy, multiplier: 10_000})
+            IECDSAStakeRegistryTypes.StrategyParams({
+                strategy: helloWorldStrategy,
+                multiplier: 10_000
+            })
         );
 
+        token.mint(deployer, 2000);
+        token.increaseAllowance(address(coreDeployment.strategyManager), 1000);
+        StrategyManager(coreDeployment.strategyManager).depositIntoStrategy(
+            helloWorldStrategy, token, 1000
+        );
 
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
 
-
-        helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner);
+        helloWorldDeployment = HelloWorldDeploymentLib.deployContracts(
+            proxyAdmin, coreDeployment, quorum, rewardsInitiator, rewardsOwner
+        );
 
         helloWorldDeployment.strategy = address(helloWorldStrategy);
         helloWorldDeployment.token = address(token);

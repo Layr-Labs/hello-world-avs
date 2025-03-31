@@ -1,0 +1,65 @@
+name: Build Rust CI
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["**"]
+
+env:
+  RUST_VERSION: 1.80
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Rustup toolchain install
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - name: Caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo build
+        run: |
+          cargo build
+      
+      - name: Run cargo clippy
+        run: |
+          cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run cargo fmt
+        run: |
+          cargo fmt --all -- --check
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Rustup toolchain install
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+    
+      - name: Caching
+        uses: Swatinem/rust-cache@v2
+          
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v0.3.0
+
+      - name: Run anvil with deployed contracts
+        run: |
+          make build-anvil-state-with-deployed-contracts
+
+      - name: Run tests
+        run: cargo test --workspace

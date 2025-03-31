@@ -9,34 +9,29 @@ repository.workspace = true
 license-file.workspace = true
 
 [dependencies]
-alloy = { version = "0.4.2", features = ["full"] }
+alloy.workspace = true
 serde_json = "1.0.121"
 num-bigint = "0.4.4"
 reqwest = "0.12.9"
 hex = "0.4.3"
-once_cell = "1.19.0"
 futures = "0.3.30"
 serde = "1.0.214"
-
+testcontainers = "0.23"
 
 #eigensdk-rs
-eigen-client-elcontracts.workspace = true
-eigen-types.workspace = true
-eigen-utils.workspace = true
-eigen-logging.workspace = true
-eigen-testing-utils.workspace = true
+eigensdk.workspace = true
 
 hello-world-utils.workspace = true
 
 #misc 
 dotenv = "0.15.0"
-rand = "0.8.5"
+rand = "0.9"
 chrono = "0.4.38"
 tracing = "0.1.40"
 futures-util = "0.3"
 eyre = "0.6.12"
 #tokio
-tokio = {workspace = true, features =["full"]}
+tokio = { workspace = true, features = ["full"] }
 [lints]
 workspace = true
 
@@ -52,3 +47,7 @@ path = "src/start_operator.rs"
 [[bin]]
 name = "spam_tasks"
 path = "src/spam_tasks.rs"
+
+[[bin]]
+name = "challenger"
+path = "src/challenger.rs"

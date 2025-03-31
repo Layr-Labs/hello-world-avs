@@ -23,6 +23,7 @@ dist/*.d.ts
 
 # Ignore local anvil state
 # utils/anvil/*.json
+contracts/anvil/state.json
 
 oldUtils
 
@@ -31,3 +32,5 @@ debug/
 
 yarn.lock
 contracts/deployments/
+
+**/.DS_Store

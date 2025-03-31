@@ -16,6 +16,17 @@ Welcome to the Hello World AVS. This project shows you the simplest functionalit
 
 That's it. This simple flow highlights some of the core mechanics of how AVSs work.
 
+### Slashing
+
+> [!WARNING]
+> This example does not use the new operator-sets workflow. Please refer to [ELIP-002](https://github.com/eigenfoundation/ELIPs/blob/main/ELIPs/ELIP-002.md) for more details. 
+> For an example of the new workflow, check out the Incredible Squaring examples ([Go version here](https://github.com/Layr-Labs/incredible-squaring-avs), [Rust version here](https://github.com/Layr-Labs/incredible-squaring-avs-rs)).
+
+The example includes a simple slashing condition: "a task MUST be responded by enough operators before N blocks have passed since the task creation". You can modify the `OPERATOR_RESPONSE_PERCENTAGE` value in the `.env` file to adjust the chance of an operator responding to a task.
+In case this condition isn't satisfied by some operator, anyone can permissionlessly slash them via calling `HelloWorldServiceManager.slashOperator`.
+
+For the [Rust example](#rust-operator-instructions), we have a `challenger` that listens for new tasks and checks whether the operators have responded. If not, `challenger` is authorized to slash the operator.
+
 # Local Devnet Deployment
 
 The following instructions explain how to manually deploy the AVS from scratch including EigenLayer and AVS specific contracts using Foundry (forge) to a local anvil chain, and start Typescript Operator application and tasks.
@@ -66,7 +77,7 @@ cp .env.example .env
 cp contracts/.env.example contracts/.env
 
 # Updates dependencies if necessary and builds the contracts 
-npm run build
+npm run build:forge
 
 # Deploy the EigenLayer contracts
 npm run deploy:core
@@ -79,15 +90,24 @@ npm run extract:abis
 
 # Start the Operator application
 npm run start:operator
-
 ```
 
-### Create and Claim Payments
+### Create Hello-World-AVS Tasks
+
+Open a separate terminal window #3, execute the following commands
+
+```sh
+# Start the createNewTasks application 
+npm run start:traffic
+```
+
+### Create and Claim Distribution
 
 In a terminal, start a new instance of anvil and deploy the core and avs contracts
+
 ```sh
 # Start anvil
-npm run start:anvil-quick
+npm run start:anvil
 # Deploy the EigenLayer contracts
 npm run deploy:core
 
@@ -99,34 +119,21 @@ npm run deploy:hello-world
 In another terminal, run:
 
 ```sh
-# Create payment roots
-npm run create-payments-root
+# Create distribution roots
+npm run create-distributions-root
 
-# Claim created payment
-npm run claim-payments
+# Claim created distribution
+npm run claim-distributions
 ```
 
-To run operator directed payments, run:
-```sh
-#Create payment roots
-npm run create-operator-directed-payments-root
-
-# Claim created payment
-npm run claim-payments
-```
-
-In order to create and claim multiple payments (run the above two commands more than once), you must wait up to 5 minutes.
-
-
-
-
-### Create Hello-World-AVS Tasks
-
-Open a separate terminal window #3, execute the following commands
+To run operator directed rewards distribution, run:
 
 ```sh
-# Start the createNewTasks application 
-npm run start:traffic
+#Create distribution roots
+npm run create-operator-directed-distributions-root
+
+# Claim created rewards distribution
+npm run claim-distributions
 ```
 
 ### Help and Support
@@ -170,12 +177,15 @@ The architecture can be further enhanced via:
 
 ## Rust Operator instructions
 
+For Rust example, we have a simple operator that monitors new tasks and responds to them, a spammer that generates random tasks and a challeger that listens for new tasks and checks the operators response, [if found that operator did not respond to the task](#slashing), it will slash the operator.
+
 ### Anvil Deployment
 
 1. Start Anvil Chain
 
 In terminal window #1, execute the following commands:
 ```sh
+# Start local anvil chain
 anvil
 ```
 
@@ -183,44 +193,63 @@ anvil
 
 Open a separate terminal window #2, execute the following commands
 
-```
+```sh
+# Setup .env file
+cp .env.example .env
+cp contracts/.env.example contracts/.env
+
+# Builds the contracts
+make build-contracts
+
+# Deploy the EigenLayer contracts
 make deploy-eigenlayer-contracts
 
+# Deploy the Hello World AVS contracts
 make deploy-helloworld-contracts
 ```
 
-3. Start Operator
+3. Start Challenge Manager
+
+In terminal window #2, execute the following command
 
 ```sh
+# Start the Challenge Manager
+make start-rust-challenger
+```
+
+4. Start Rust Operator
+
+In terminal window #3, execute the following command
+
+```sh
+# Start the Operator
 make start-rust-operator
 ```
+
 4. Spam Tasks
 
+Open a separate terminal window #4, execute the following command
+
 ```sh
+# Start sending tasks
 make spam-rust-tasks
 ```
 
 ### Testing
 
-1. Start Anvil Chain
+1. Build anvil state with deployed contracts
 
-In terminal window #1, execute the following commands:
 ```sh
-anvil
-```
+# Build contracts
+make build-contracts
 
-2. Deploy Contracts
+# Starts anvil in the background with the --dump-state flag, builds and deploys the 
+# contracts, and generates a state.json file for use in tests.
+make build-anvil-state-with-deployed-contracts
+````
 
-Open a separate terminal window #2, execute the following commands
+2. Run tests
 
-```
-make deploy-eigenlayer-contracts
-
-make deploy-helloworld-contracts
-```
-
-3. Run this command
-
-```
+```sh
 cargo test --workspace
 ```
