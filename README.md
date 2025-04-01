@@ -221,7 +221,7 @@ make build-anvil-state-with-deployed-contracts
 cargo test --workspace
 ```
 
-### Help and Support
+## Help and Support
 
 For help and support deploying and modifying this repo for your AVS, please:
 
@@ -236,11 +236,11 @@ For help and support deploying and modifying this repo for your AVS, please:
     * Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
     * Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
 
-### Contact Us
+## Contact Us
 
 If you're planning to build an AVS and would like to speak with a member of the EigenLayer DevRel team to discuss your ideas or architecture, please fill out this form and we'll be in touch shortly: [EigenLayer AVS Intro Call](https://share.hsforms.com/1BksFoaPjSk2l3pQ5J4EVCAein6l)
 
-### Disclaimers
+## Disclaimers
 
 - This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
 - Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `HelloWorldServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
