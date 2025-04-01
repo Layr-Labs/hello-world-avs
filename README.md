@@ -19,22 +19,24 @@ That's it. This simple flow highlights some of the core mechanics of how AVSs wo
 ### Slashing
 
 > [!WARNING]
-> This example does not use the new operator-sets workflow. Please refer to [ELIP-002](https://github.com/eigenfoundation/ELIPs/blob/main/ELIPs/ELIP-002.md) for more details. 
+> This example does not use the new operator-sets workflow. Please refer to [ELIP-002](https://github.com/eigenfoundation/ELIPs/blob/main/ELIPs/ELIP-002.md) for more details.
 > For an example of the new workflow, check out the Incredible Squaring examples ([Go version here](https://github.com/Layr-Labs/incredible-squaring-avs), [Rust version here](https://github.com/Layr-Labs/incredible-squaring-avs-rs)).
 
 The example includes a simple slashing condition: "a task MUST be responded by enough operators before N blocks have passed since the task creation". You can modify the `OPERATOR_RESPONSE_PERCENTAGE` value in the `.env` file to adjust the chance of an operator responding to a task.
 In case this condition isn't satisfied by some operator, anyone can permissionlessly slash them via calling `HelloWorldServiceManager.slashOperator`.
 
-For the [Rust example](#rust-operator-instructions), we have a `challenger` that listens for new tasks and checks whether the operators have responded. If not, `challenger` is authorized to slash the operator.
+For the [Rust example](#quick-start-rust), we have a `challenger` that listens for new tasks and checks whether the operators have responded. If not, `challenger` is authorized to slash the operator.
 
-# Local Devnet Deployment
+## Local Devnet Deployment
 
 The following instructions explain how to manually deploy the AVS from scratch including EigenLayer and AVS specific contracts using Foundry (forge) to a local anvil chain, and start Typescript Operator application and tasks.
 
 ## Development Environment
+
 This section describes the tooling required for local development.
 
 ### Non-Nix Environment
+
 Install dependencies:
 
 - [Node](https://nodejs.org/en/download/)
@@ -46,13 +48,16 @@ Install dependencies:
 - [ethers](https://www.npmjs.com/package/ethers)
 
 ### Nix Environment 
-On [Nix](https://nixos.org/) platforms, if you already have the proper Nix configuration, you can build the project’s artifacts inside a `nix develop` shell
+
+On [Nix](https://nixos.org/) platforms, if you already have the proper Nix configuration, you can build the project's artifacts inside a `nix develop` shell
+
 ``` sh
 nix develop
 ```
+
 Otherwise, please refer to [installed and configured](./docs/nix-setup-guide.md) section.
 
-## Quick start
+## Quick start (TypeScript)
 
 ### Start Anvil Chain
 
@@ -136,46 +141,7 @@ npm run create-operator-directed-distributions-root
 npm run claim-distributions
 ```
 
-### Help and Support
-
-For help and support deploying and modifying this repo for your AVS, please:
-
-1. Open a ticket via the intercom link at [support.eigenlayer.xyz](https://support.eigenlayer.xyz).
-2. Include the necessary troubleshooting information for your environment:
-  * Local anvil testing:
-    * Redeploy your local test using `--revert-strings debug` flag via the following commands and retest: `npm run deploy:core-debug && npm run deploy:hello-world-debug`
-    * Include the full stacktrace from your error as a .txt file attachment.
-    * Create a minimal repo that demonstrates the behavior (fork or otherwise)
-    * Steps require to reproduce issue (compile and cause the error)
-  * Holesky testing:
-    * Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
-    * Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
-
-
-### Contact Us
-
-If you're planning to build an AVS and would like to speak with a member of the EigenLayer DevRel team to discuss your ideas or architecture, please fill out this form and we'll be in touch shortly: [EigenLayer AVS Intro Call](https://share.hsforms.com/1BksFoaPjSk2l3pQ5J4EVCAein6l)
-
-
-### Disclaimers
-
-- This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
-- Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `HelloWorldServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
-
-# Appendix (Future Capabilities In Progress)
-
-## Adding a New Strategy
-
-## Potential Enhancements to the AVS (for learning purposes)
-
-The architecture can be further enhanced via:
-
-- the nature of the request is more sophisticated than generating a constant string
-- the operators might need to coordinate with each other
-- the type of signature is different based on the constraints of the service
-- the type and amount of security used to secure the AVS
-
-## Rust Operator instructions
+## Quick start (Rust)
 
 For Rust example, we have a simple operator that monitors new tasks and responds to them, a spammer that generates random tasks and a challeger that listens for new tasks and checks the operators response, [if found that operator did not respond to the task](#slashing), it will slash the operator.
 
@@ -184,6 +150,7 @@ For Rust example, we have a simple operator that monitors new tasks and responds
 1. Start Anvil Chain
 
 In terminal window #1, execute the following commands:
+
 ```sh
 # Start local anvil chain
 anvil
@@ -226,7 +193,7 @@ In terminal window #3, execute the following command
 make start-rust-operator
 ```
 
-4. Spam Tasks
+5. Spam Tasks
 
 Open a separate terminal window #4, execute the following command
 
@@ -246,10 +213,47 @@ make build-contracts
 # Starts anvil in the background with the --dump-state flag, builds and deploys the 
 # contracts, and generates a state.json file for use in tests.
 make build-anvil-state-with-deployed-contracts
-````
+```
 
 2. Run tests
 
 ```sh
 cargo test --workspace
 ```
+
+### Help and Support
+
+For help and support deploying and modifying this repo for your AVS, please:
+
+1. Open a ticket via the intercom link at [support.eigenlayer.xyz](https://support.eigenlayer.xyz).
+2. Include the necessary troubleshooting information for your environment:
+  * Local anvil testing:
+    * Redeploy your local test using `--revert-strings debug` flag via the following commands and retest: `npm run deploy:core-debug && npm run deploy:hello-world-debug`
+    * Include the full stacktrace from your error as a .txt file attachment.
+    * Create a minimal repo that demonstrates the behavior (fork or otherwise)
+    * Steps require to reproduce issue (compile and cause the error)
+  * Holesky testing:
+    * Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
+    * Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
+
+### Contact Us
+
+If you're planning to build an AVS and would like to speak with a member of the EigenLayer DevRel team to discuss your ideas or architecture, please fill out this form and we'll be in touch shortly: [EigenLayer AVS Intro Call](https://share.hsforms.com/1BksFoaPjSk2l3pQ5J4EVCAein6l)
+
+### Disclaimers
+
+- This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
+- Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `HelloWorldServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
+
+## Appendix (Future Capabilities In Progress)
+
+### Adding a New Strategy
+
+### Potential Enhancements to the AVS (for learning purposes)
+
+The architecture can be further enhanced via:
+
+- the nature of the request is more sophisticated than generating a constant string
+- the operators might need to coordinate with each other
+- the type of signature is different based on the constraints of the service
+- the type and amount of security used to secure the AVS
