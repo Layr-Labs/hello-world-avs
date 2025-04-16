@@ -15,7 +15,6 @@ pub mod anvil;
 mod tests {
     use crate::anvil::start_anvil_container;
     use crate::spam_tasks::create_new_task;
-    use crate::start_operator::register_operator;
 
     use alloy::network::EthereumWallet;
     use alloy::primitives::Address;
@@ -31,6 +30,7 @@ mod tests {
     };
     use hello_world_utils::{
         get_anvil_eigenlayer_deployment_data, get_anvil_hello_world_deployment_data,
+        register_operator,
     };
     use reqwest::Url;
     use serial_test::serial;
@@ -39,7 +39,7 @@ mod tests {
     use std::sync::LazyLock;
 
     static KEY: LazyLock<String> =
-        LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+        LazyLock::new(|| env::var("OPERATOR_PRIVATE_KEY").expect("failed to retrieve private key"));
 
     #[tokio::test]
     #[serial]
