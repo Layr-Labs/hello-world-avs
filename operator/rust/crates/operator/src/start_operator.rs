@@ -1,32 +1,22 @@
 #![allow(missing_docs)]
 use alloy::dyn_abi::DynSolValue;
 use alloy::{
-    primitives::{eip191_hash_message, keccak256, Address, FixedBytes, U256},
+    primitives::{eip191_hash_message, keccak256, Address, U256},
     providers::Provider,
     rpc::types::{BlockNumberOrTag, Filter},
     signers::{local::PrivateKeySigner, SignerSync},
     sol_types::{SolEvent, SolValue},
 };
-use chrono::Utc;
 use dotenv::dotenv;
-use eigensdk::client_elcontracts::{
-    reader::ELChainReader,
-    writer::{ELChainWriter, Operator},
-};
 use eigensdk::common::{get_provider, get_signer, get_ws_provider};
 use eigensdk::logging::{get_logger, init_logger, log_level::LogLevel};
 use eyre::Result;
 use futures::StreamExt;
-use hello_world_utils::ecdsastakeregistry::ECDSAStakeRegistry;
-use hello_world_utils::{
-    ecdsastakeregistry::ISignatureUtilsMixinTypes::SignatureWithSaltAndExpiry,
-    helloworldservicemanager::{HelloWorldServiceManager, IHelloWorldServiceManager::Task},
+use hello_world_utils::helloworldservicemanager::{
+    HelloWorldServiceManager, IHelloWorldServiceManager::Task,
 };
-use hello_world_utils::{
-    get_anvil_eigenlayer_deployment_data, get_hello_world_service_manager,
-    get_stake_registry_address,
-};
-use rand::{Rng, TryRngCore};
+use hello_world_utils::{get_hello_world_service_manager, register_operator};
+use rand::Rng;
 use std::sync::LazyLock;
 use std::{env, str::FromStr};
 
