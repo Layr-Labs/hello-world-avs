@@ -15,7 +15,7 @@ static RPC_URL: LazyLock<String> =
     LazyLock::new(|| env::var("RPC_URL").expect("failed to retrieve RPC URL"));
 
 static KEY: LazyLock<String> =
-    LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+    LazyLock::new(|| env::var("OPERATOR_PRIVATE_KEY").expect("failed to retrieve private key"));
 
 /// Generate random task names from the given adjectives and nouns
 fn generate_random_name() -> String {

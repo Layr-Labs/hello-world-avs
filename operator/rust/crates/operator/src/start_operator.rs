@@ -27,7 +27,7 @@ static WS_URL: LazyLock<String> =
     LazyLock::new(|| env::var("WS_URL").expect("failed to retrieve WS URL"));
 
 static KEY: LazyLock<String> =
-    LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+    LazyLock::new(|| env::var("OPERATOR_PRIVATE_KEY").expect("failed to retrieve private key"));
 
 static OPERATOR_RESPONSE_PERCENTAGE: LazyLock<f64> = LazyLock::new(|| {
     env::var("OPERATOR_RESPONSE_PERCENTAGE")

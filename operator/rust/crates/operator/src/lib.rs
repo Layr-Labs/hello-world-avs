@@ -39,7 +39,7 @@ mod tests {
     use std::sync::LazyLock;
 
     static KEY: LazyLock<String> =
-        LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+        LazyLock::new(|| env::var("OPERATOR_PRIVATE_KEY").expect("failed to retrieve private key"));
 
     #[tokio::test]
     #[serial]

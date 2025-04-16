@@ -32,7 +32,7 @@ static WS_URL: LazyLock<String> =
     LazyLock::new(|| env::var("WS_URL").expect("failed to retrieve WS URL"));
 
 static KEY: LazyLock<String> =
-    LazyLock::new(|| env::var("PRIVATE_KEY").expect("failed to retrieve private key"));
+    LazyLock::new(|| env::var("CHALLENGER_PRIVATE_KEY").expect("failed to retrieve private key"));
 
 /// Challenger struct
 #[derive(Debug)]
