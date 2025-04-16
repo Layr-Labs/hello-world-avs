@@ -22,6 +22,7 @@ use hello_world_utils::{
         HelloWorldServiceManager::{self},
         IHelloWorldServiceManager::Task,
     },
+    register_operator,
 };
 use tokio::signal::{self};
 
@@ -31,8 +32,12 @@ static RPC_URL: LazyLock<String> =
 static WS_URL: LazyLock<String> =
     LazyLock::new(|| env::var("WS_URL").expect("failed to retrieve WS URL"));
 
-static KEY: LazyLock<String> =
+static CHALLENGER_PRIVATE_KEY: LazyLock<String> =
     LazyLock::new(|| env::var("CHALLENGER_PRIVATE_KEY").expect("failed to retrieve private key"));
+
+static OPERATOR_PRIVATE_KEY: LazyLock<String> = LazyLock::new(|| {
+    env::var("OPERATOR_PRIVATE_KEY").expect("failed to retrieve operator private key")
+});
 
 /// Challenger struct
 #[derive(Debug)]
@@ -42,6 +47,7 @@ pub struct Challenger {
     ws_url: String,
     tasks: HashMap<u32, Task>,
     max_response_interval_blocks: u32,
+    operator_address: Address,
 }
 
 /// Challenger implementation
@@ -58,12 +64,15 @@ impl Challenger {
             .await?
             ._0;
 
+        let operator_address = PrivateKeySigner::from_str(&OPERATOR_PRIVATE_KEY)?.address();
+
         Ok(Self {
             service_manager_address,
             rpc_url,
             ws_url,
             tasks: HashMap::new(),
             max_response_interval_blocks,
+            operator_address,
         })
     }
 
@@ -173,7 +182,7 @@ impl Challenger {
 
     /// Execute the slashing of an operator
     async fn slash_operator(&self, task: Task, task_index: u32) -> Result<()> {
-        let pr = get_signer(&KEY.to_string(), &self.rpc_url);
+        let pr = get_signer(&CHALLENGER_PRIVATE_KEY.to_string(), &self.rpc_url);
         let hello_world_contract = HelloWorldServiceManager::new(self.service_manager_address, &pr);
 
         get_logger().info(
@@ -203,7 +212,9 @@ pub async fn main() -> Result<()> {
     dotenv().ok();
     init_logger(LogLevel::Info);
 
-    let mut challenger = Challenger::new(RPC_URL.to_string(), WS_URL.to_string(), KEY.to_string())
+    register_operator(&RPC_URL, &CHALLENGER_PRIVATE_KEY).await?;
+
+    let mut challenger = Challenger::new(RPC_URL.to_string(), WS_URL.to_string())
         .await
         .unwrap();
 
