@@ -42,16 +42,12 @@ pub struct Challenger {
     ws_url: String,
     tasks: HashMap<u32, Task>,
     max_response_interval_blocks: u32,
-    operator_address: Address,
 }
 
 /// Challenger implementation
 impl Challenger {
     /// Create a new challenger
-    pub async fn new(rpc_url: String, ws_url: String, private_key: String) -> Result<Self> {
-        let signer = PrivateKeySigner::from_str(&private_key)?;
-        let operator_address = signer.address();
-
+    pub async fn new(rpc_url: String, ws_url: String) -> Result<Self> {
         let service_manager_address = get_hello_world_service_manager().unwrap();
 
         let pr = get_provider(&rpc_url);
@@ -68,7 +64,6 @@ impl Challenger {
             ws_url,
             tasks: HashMap::new(),
             max_response_interval_blocks,
-            operator_address,
         })
     }
 
