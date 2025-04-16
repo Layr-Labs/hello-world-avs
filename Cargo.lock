@@ -3620,7 +3620,10 @@ name = "hello-world-utils"
 version = "0.0.1-alpha"
 dependencies = [
  "alloy",
+ "chrono",
+ "eigensdk",
  "eyre",
+ "rand 0.9.0",
  "serde",
  "serde_json",
 ]
